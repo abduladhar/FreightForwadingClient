@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SalesmanSelect } from "@/components/common/SalesmanSelect";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { CountrySelect } from "@/components/common/CountrySelect";
 import { customerButtonClass } from "@/modules/customers/customerUi";
 
 export function CustomerForm({
@@ -50,7 +51,7 @@ export function CustomerForm({
           <Field label={t("Customer.ContactPerson", "Contact Person")}><Input value={value.contactPerson ?? ""} onChange={(e) => setValue({ ...value, contactPerson: e.target.value })} /></Field>
           <Field label={t("Customer.Email", "Email")}><Input value={value.email} onChange={(e) => setValue({ ...value, email: e.target.value })} /></Field>
           <Field label={t("Customer.Phone", "Phone")}><Input value={value.phone ?? ""} onChange={(e) => setValue({ ...value, phone: e.target.value })} /></Field>
-          <Field label={t("Customer.Country", "Country")}><Input value={value.country} onChange={(e) => setValue({ ...value, country: e.target.value })} /></Field>
+          <Field label={t("Customer.Country", "Country")}><CountrySelect value={value.country} onChange={(country) => setValue({ ...value, country })} /></Field>
           <Field label={t("Customer.City", "City")}><Input value={value.city} onChange={(e) => setValue({ ...value, city: e.target.value })} /></Field>
           <Field label={t("Customer.DefaultCurrency", "Default Currency")}>
             <select className="h-10 w-full rounded-md border px-3 text-sm disabled:bg-slate-50 disabled:text-slate-600" value={value.defaultCurrencyId ?? ""} onChange={(e) => setValue({ ...value, defaultCurrencyId: e.target.value || null })} disabled={Boolean(initialValue)}>
