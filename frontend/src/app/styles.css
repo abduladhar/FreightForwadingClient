@@ -1,0 +1,237 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: 217 91% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 94%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 95% 93%;
+    --accent-foreground: 217 91% 35%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 40%;
+    --radius: 0.5rem;
+    --app-border-color: #d9dee8;
+    --app-border-color-soft: #e7ebf2;
+    --app-bg: #f6f8fb;
+    --app-surface: #ffffff;
+    --app-surface-muted: #f9fafc;
+    --app-text: #1f2937;
+    --app-text-muted: #6b7280;
+    --app-primary: #2563eb;
+    --app-primary-hover: #1d4ed8;
+    --app-danger: #dc2626;
+    --app-success: #16a34a;
+    --app-warning: #d97706;
+    --app-radius-sm: 4px;
+    --app-radius-md: 6px;
+    --app-radius-lg: 10px;
+    --app-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+    --app-shadow-md: 0 4px 10px rgba(16, 24, 40, 0.08);
+    --app-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen overflow-x-hidden bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  body,
+  input,
+  textarea,
+  select,
+  button {
+    text-align: start;
+  }
+
+  img,
+  svg,
+  canvas {
+    max-width: 100%;
+  }
+
+  label,
+  .form-label {
+    color: var(--app-text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  input,
+  textarea,
+  select {
+    border-color: var(--app-border-color);
+    border-radius: var(--app-radius-md);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  input:hover,
+  textarea:hover,
+  select:hover {
+    border-color: var(--app-primary);
+  }
+
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    border-color: var(--app-primary);
+    box-shadow: var(--app-focus-ring);
+    outline: none;
+  }
+
+  input:disabled,
+  textarea:disabled,
+  select:disabled,
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  button {
+    border-radius: var(--app-radius-md);
+    font-weight: 500;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+  }
+
+  button:focus-visible {
+    box-shadow: var(--app-focus-ring);
+    outline: none;
+  }
+}
+
+@layer components {
+  .erp-panel {
+    background: var(--app-surface);
+    border: 1px solid var(--app-border-color);
+    border-radius: var(--app-radius-lg);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .erp-page {
+    @apply flex flex-col gap-5;
+  }
+
+  .app-page,
+  .page-content {
+    background: var(--app-bg);
+  }
+
+  .app-route-content {
+    margin-block-start: 1rem;
+  }
+
+  .app-route-content > :where(.space-y-4, .space-y-5, .space-y-6, form, [class*="rounded-"]:first-child) {
+    margin-block-start: 0;
+  }
+
+  .app-panel,
+  .app-card,
+  .app-section,
+  .form-panel,
+  .page-panel,
+  .content-panel {
+    background: var(--app-surface);
+    border: 1px solid var(--app-border-color);
+    border-radius: var(--app-radius-lg);
+    box-shadow: var(--app-shadow-sm);
+    padding: 1rem;
+  }
+
+  .app-page :where(.rounded-lg.bg-white, .rounded-xl.bg-white, .rounded-lg.bg-card, .rounded-xl.bg-card),
+  .app-page :where(.rounded-lg.shadow-sm, .rounded-xl.shadow-sm, .rounded-lg.shadow-panel, .rounded-xl.shadow-panel),
+  main :where(.rounded-lg.bg-white, .rounded-xl.bg-white, .rounded-lg.bg-card, .rounded-xl.bg-card),
+  main :where(.rounded-lg.shadow-sm, .rounded-xl.shadow-sm, .rounded-lg.shadow-panel, .rounded-xl.shadow-panel) {
+    border: 1px solid var(--app-border-color);
+  }
+
+  .app-panel + .app-panel,
+  .app-section + .app-section,
+  .form-panel + .form-panel,
+  .content-panel + .content-panel {
+    margin-block-start: 1rem;
+  }
+
+  .app-panel-title,
+  .app-section-title,
+  .form-section-title,
+  .panel-title {
+    border-block-end: 1px solid var(--app-border-color-soft);
+    color: var(--app-text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin-block-end: 0.75rem;
+    padding-block-end: 0.5rem;
+  }
+
+  .validation-error,
+  .field-validation-error,
+  [role="alert"] {
+    color: var(--app-danger);
+    font-size: 0.75rem;
+    margin-block-start: 0.25rem;
+  }
+
+  .app-page :where(table:not([role="presentation"])),
+  main :where(table:not([role="presentation"])) {
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+  }
+
+  .app-page :where(thead),
+  main :where(thead) {
+    background: var(--app-surface-muted);
+  }
+
+  .app-page :where(th),
+  main :where(th) {
+    color: var(--app-text);
+    font-weight: 600;
+  }
+
+  .app-page :where(tbody tr),
+  main :where(tbody tr) {
+    transition: background-color 0.15s ease;
+  }
+
+  .app-page :where(tbody tr:hover),
+  main :where(tbody tr:hover) {
+    background: #f8fafc;
+  }
+
+  .app-page :where(th, td),
+  main :where(th, td) {
+    border-color: var(--app-border-color-soft);
+  }
+
+  [data-radix-popper-content-wrapper] {
+    z-index: 60 !important;
+  }
+
+  [role="dialog"] {
+    border-color: var(--app-border-color);
+    border-radius: var(--app-radius-lg);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  :where([dir="rtl"]) .app-icon-start,
+  :where([dir="rtl"]) [data-icon-start] {
+    margin-inline-end: 0;
+    margin-inline-start: 0.5rem;
+  }
+}
