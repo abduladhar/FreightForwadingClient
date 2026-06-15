@@ -170,8 +170,8 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
         <CardTitle>{lt("Report Output")}</CardTitle>
         <div className="flex items-center gap-2">
           {canExport ? <ExportButtons
-            onExportPdf={() => void handleBackendExport("pdf")}
-            onExportExcel={() => void handleBackendExport("excel")}
+            onExportPdf={() => void handleExportPdf()}
+            onExportExcel={() => void handleExportExcel()}
             onExportCsv={() => void handleBackendExport("csv")}
           /> : null}
           <Button variant="outline" size="sm" onClick={() => void handleExportPdf()}>{lt("PDF")} ({lt("Client")})</Button>

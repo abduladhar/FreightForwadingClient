@@ -75,12 +75,12 @@ export function HouseShipmentNotePrintPage() {
     />
     <Card><CardContent className="pt-6">
       <PrintPreview title={`Job Card ${shipment.houseShipmentNumber}`}>
-        <div className="space-y-4 text-xs sm:text-sm">
+        <div className="mx-auto w-full max-w-[190mm] space-y-4 text-sm">
           <div className="border-b pb-3">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_1fr_160px] lg:grid-cols-[260px_1fr_260px] items-center">
-              <div className="flex justify-center sm:justify-start">{logoUrl ? <img src={logoUrl} alt="Logo" className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 object-contain" /> : <div className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28" />}</div>
-              <div className="text-center"><h3 className="text-base sm:text-lg lg:text-xl font-bold tracking-wide">{lt("HOUSE SHIPMENT JOB CARD")}</h3></div>
-              <div className="text-center sm:text-right"><p className="font-semibold">{workspace.branchName ?? "Branch"}</p><p className="text-muted-foreground break-words">{branchAddress}</p></div>
+            <div className="grid grid-cols-[150px_1fr_190px] items-center gap-3">
+              <div className="flex justify-start">{logoUrl ? <img src={logoUrl} alt="Logo" className="h-24 w-24 object-contain" /> : <div className="h-24 w-24" />}</div>
+              <div className="text-center"><h3 className="text-xl font-bold tracking-wide">{lt("HOUSE SHIPMENT JOB CARD")}</h3></div>
+              <div className="text-right"><p className="font-semibold">{workspace.branchName ?? "Branch"}</p><p className="break-words text-muted-foreground">{branchAddress}</p></div>
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
@@ -88,7 +88,7 @@ export function HouseShipmentNotePrintPage() {
               <p><span className="font-medium">{lt("Shipment No:")}</span> {shipment.houseShipmentNumber}</p>
               <p><span className="font-medium">{lt("HAWB:")}</span> {shipment.hawbNumber ?? "-"}</p>
               <p><span className="font-medium">{lt("Customer:")}</span> {customer.data?.customerName ?? shipment.customerId}</p>
-              <p><span className="font-medium">{lt("Status:")}</span> {shipment.status}</p>
+              <p><span className="font-medium">{lt("Status:")}</span> {lt(shipment.status)}</p>
             </div>
             <div className="space-y-1 rounded-md border p-2">
               <p><span className="font-medium">{lt("Origin Port:")}</span> {shipment.originPortName || shipment.origin || "-"}</p>
@@ -111,18 +111,18 @@ export function HouseShipmentNotePrintPage() {
               <p><span className="font-medium">{lt("Address:")}</span> {shipment.consigneeAddress || "-"}</p>
             </div>
           </div>
-          <div className="rounded-md border overflow-x-auto">
-            <table className="w-full min-w-[760px] text-xs">
+          <div className="rounded-md border">
+            <table className="w-full table-fixed text-xs">
               <thead className="bg-muted">
                 <tr>
-                  <th className="px-2 py-2 text-left">{lt("Package Type")}</th>
-                  <th className="px-2 py-2 text-left">{lt("Description")}</th>
-                  <th className="px-2 py-2 text-right">{lt("Packages")}</th>
-                  <th className="px-2 py-2 text-right">{lt("Gross Wt")}</th>
-                  <th className="px-2 py-2 text-right">L</th>
-                  <th className="px-2 py-2 text-right">W</th>
-                  <th className="px-2 py-2 text-right">H</th>
-                  <th className="px-2 py-2 text-right">{lt("Vol (CBM)")}</th>
+                  <th className="w-[20%] px-2 py-2 text-left">{lt("Package Type")}</th>
+                  <th className="w-[24%] px-2 py-2 text-left">{lt("Description")}</th>
+                  <th className="w-[11%] px-2 py-2 text-right">{lt("Packages")}</th>
+                  <th className="w-[11%] px-2 py-2 text-right">{lt("Gross Wt")}</th>
+                  <th className="w-[7%] px-2 py-2 text-right">L</th>
+                  <th className="w-[7%] px-2 py-2 text-right">W</th>
+                  <th className="w-[7%] px-2 py-2 text-right">H</th>
+                  <th className="w-[13%] px-2 py-2 text-right">{lt("Vol (CBM)")}</th>
                 </tr>
               </thead>
               <tbody>

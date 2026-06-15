@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
+import { createContext, useContext, useEffect, useMemo, type PropsWithChildren } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getLocalizationResources } from "@/api/languageApi";
 import { customerLocalizationFallbacks } from "@/app/customerLocalizationFallbacks";
@@ -6,6 +6,7 @@ import { currencyLocalizationFallbacks } from "@/app/currencyLocalizationFallbac
 import { menuLocalizationFallbacks } from "@/app/menuLocalizationFallbacks";
 import { uiLocalizationFallbacks } from "@/app/uiLocalizationFallbacks";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { setRuntimeLocalizationResources } from "@/modules/operationsLocalization";
 
 interface I18nContextValue {
   t: (key: string, fallback?: string) => string;
@@ -216,6 +217,10 @@ export function I18nProvider({ children }: PropsWithChildren) {
     }),
     [cultureCode, resourcesQuery.data, resourcesQuery.isLoading]
   );
+
+  useEffect(() => {
+    setRuntimeLocalizationResources(cultureCode, resourcesQuery.data ?? {});
+  }, [cultureCode, resourcesQuery.data]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

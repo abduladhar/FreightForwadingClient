@@ -276,8 +276,8 @@ export function OperationalReportPage({
         <CardTitle>{lt("Report Output")}</CardTitle>
         <div className="flex items-center gap-2">
           {canExport ? <ExportButtons
-            onExportPdf={() => void onBackendExport("pdf")}
-            onExportExcel={() => void onBackendExport("excel")}
+            onExportPdf={() => void onClientPdf()}
+            onExportExcel={() => void onClientExcel()}
             onExportCsv={() => void onBackendExport("csv")}
           /> : null}
           {canExport ? <Button variant="outline" size="sm" onClick={() => void onClientPdf()}>{lt("PDF")} ({lt("Client")})</Button> : null}

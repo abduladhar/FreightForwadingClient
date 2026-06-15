@@ -2,6 +2,8 @@ import React from "react";
 import { Document, Image, Page, StyleSheet, Text, View, pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import type { GoodsReceiptDto } from "@/api/goodsReceiptApi";
+import { lt } from "@/modules/operationsLocalization";
+import { ensurePdfFontsRegistered, getPdfFontFamily } from "@/utils/pdfFonts";
 
 export interface GoodsReceiptPdfOptions {
   fileName: string;
@@ -14,6 +16,7 @@ export interface GoodsReceiptPdfOptions {
 }
 
 export async function exportGoodsReceiptPdf(options: GoodsReceiptPdfOptions) {
+  ensurePdfFontsRegistered();
   const blob = await pdf(buildGoodsReceiptDocument(options)).toBlob();
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
 }
@@ -26,10 +29,10 @@ function buildGoodsReceiptDocument({ tenantName, branchName, branchAddress, logo
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {logoUrl ? <Image src={logoUrl} style={styles.logo} /> : <View style={styles.logoPlaceholder}><Text style={styles.logoPlaceholderText}>LOGO</Text></View>}
+            {logoUrl ? <Image src={logoUrl} style={styles.logo} /> : <View style={styles.logoPlaceholder}><Text style={styles.logoPlaceholderText}>{lt("LOGO")}</Text></View>}
           </View>
           <View style={styles.headerCenter}>
-            <Text style={styles.docTitle}>GOODS RECEIPT NOTE</Text>
+            <Text style={styles.docTitle}>{lt("GOODS RECEIPT NOTE")}</Text>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.companyName}>{tenantName}</Text>
@@ -43,7 +46,7 @@ function buildGoodsReceiptDocument({ tenantName, branchName, branchAddress, logo
             <MetaRow label="GRN No" value={goodsReceipt.goodsReceiptNumber} />
             <MetaRow label="Received DateTime" value={goodsReceipt.receivedDateTime} />
             <MetaRow label="Received From" value={goodsReceipt.receivedFrom} />
-            <MetaRow label="Status" value={goodsReceipt.status} />
+            <MetaRow label="Status" value={lt(goodsReceipt.status)} />
           </View>
           <View style={styles.metaColumn}>
             <MetaRow label="Customer" value={customerName ?? goodsReceipt.customerId} />
@@ -53,7 +56,7 @@ function buildGoodsReceiptDocument({ tenantName, branchName, branchAddress, logo
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Goods Items</Text>
+        <Text style={styles.sectionTitle}>{lt("Goods Items")}</Text>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Cell text="Package Type" w={30} header />
@@ -74,8 +77,8 @@ function buildGoodsReceiptDocument({ tenantName, branchName, branchAddress, logo
         </View>
 
         <View style={styles.footer}>
-          <Text>Prepared by: ____________________</Text>
-          <Text>Approved by: ____________________</Text>
+          <Text>{lt("Prepared by")}: ____________________</Text>
+          <Text>{lt("Approved by")}: ____________________</Text>
         </View>
       </Page>
     </Document>
@@ -85,7 +88,7 @@ function buildGoodsReceiptDocument({ tenantName, branchName, branchAddress, logo
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flexDirection: "row", marginBottom: 3 }}>
-      <Text style={{ width: 110, fontSize: 9, color: "#475569" }}>{label}</Text>
+      <Text style={{ width: 110, fontSize: 9, color: "#475569" }}>{lt(label)}</Text>
       <Text style={{ fontSize: 9 }}>{value || "-"}</Text>
     </View>
   );
@@ -94,14 +97,14 @@ function MetaRow({ label, value }: { label: string; value: string }) {
 function Cell({ text, w, header, align = "left" }: { text: string; w: number; header?: boolean; align?: "left" | "right" | "center" }) {
   return (
     <View style={{ width: `${w}%`, paddingHorizontal: 4, paddingVertical: 4, borderRightWidth: 1, borderRightColor: "#e2e8f0" }}>
-      <Text style={{ fontSize: 8.5, textAlign: align, fontWeight: header ? "bold" : "normal" }}>{text}</Text>
+      <Text style={{ fontSize: 8.5, textAlign: align, fontWeight: header ? "bold" : "normal" }}>{header ? lt(text) : text}</Text>
     </View>
   );
 }
 
 function createStyles() {
   return StyleSheet.create({
-    page: { padding: 20, fontSize: 10, color: "#0f172a" },
+    page: { padding: 20, fontSize: 10, fontFamily: getPdfFontFamily(), color: "#0f172a" },
     header: { flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#cbd5e1", paddingBottom: 10, marginBottom: 10 },
     logo: { width: 100, height: 100, objectFit: "contain" },
     logoPlaceholder: { width: 100, height: 100, borderWidth: 1, borderColor: "#cbd5e1", alignItems: "center", justifyContent: "center" },

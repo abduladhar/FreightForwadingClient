@@ -2,6 +2,8 @@ import React from "react";
 import { Document, Image, Page, StyleSheet, Text, View, pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import type { MasterShipmentProfitLossReportDto, MasterShipmentProfitLossRowDto, MasterShipmentProfitLossSectionDto } from "@/api/reportApi";
+import { lt } from "@/modules/operationsLocalization";
+import { ensurePdfFontsRegistered, getPdfFontFamily } from "@/utils/pdfFonts";
 
 export interface MasterProfitLossPdfOptions {
   fileName: string;
@@ -13,6 +15,7 @@ export interface MasterProfitLossPdfOptions {
 }
 
 export async function exportMasterProfitLossPdf(options: MasterProfitLossPdfOptions) {
+  ensurePdfFontsRegistered();
   const blob = await pdf(buildDocument(options)).toBlob();
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
 }
@@ -24,10 +27,10 @@ function buildDocument({ fileName: _fileName, tenantName, branchName, branchAddr
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {logoUrl ? <Image src={logoUrl} style={styles.logo} /> : <View style={styles.logoPlaceholder}><Text style={styles.logoPlaceholderText}>LOGO</Text></View>}
+            {logoUrl ? <Image src={logoUrl} style={styles.logo} /> : <View style={styles.logoPlaceholder}><Text style={styles.logoPlaceholderText}>{lt("LOGO")}</Text></View>}
           </View>
           <View style={styles.headerCenter}>
-            <Text style={styles.docTitle}>MASTER SHIPMENT PROFIT & LOSS</Text>
+            <Text style={styles.docTitle}>{lt("MASTER SHIPMENT PROFIT & LOSS")}</Text>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.companyName}>{tenantName}</Text>
@@ -40,7 +43,7 @@ function buildDocument({ fileName: _fileName, tenantName, branchName, branchAddr
           <View style={styles.metaColumn}>
             <MetaRow label="Master No" value={report.masterShipmentNumber} />
             <MetaRow label="Master Waybill" value={report.masterWaybillNumber ?? "-"} />
-            <MetaRow label="Mode" value={report.modeOfTransport} />
+            <MetaRow label="Mode" value={lt(report.modeOfTransport)} />
           </View>
           <View style={styles.metaColumn}>
             <MetaRow label="Origin" value={report.origin || "-"} />
@@ -66,8 +69,8 @@ function Section({ section }: { section: MasterShipmentProfitLossSectionDto }) {
   return (
     <View style={styles.section} wrap={false}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{section.sectionName}</Text>
-        <Text style={styles.sectionTotals}>Invoice {money(section.invoiceAmount)}   Bill {money(section.billAmount)}   Profit {money(section.profitAmount)}</Text>
+        <Text style={styles.sectionTitle}>{lt(section.sectionName)}</Text>
+        <Text style={styles.sectionTotals}>{lt("Invoice")} {money(section.invoiceAmount)}   {lt("Bill")} {money(section.billAmount)}   {lt("Profit")} {money(section.profitAmount)}</Text>
       </View>
       <View style={styles.table}>
         <View style={styles.tableHeader}>
@@ -81,7 +84,7 @@ function Section({ section }: { section: MasterShipmentProfitLossSectionDto }) {
           <Cell text="Profit" w={11} header align="right" />
         </View>
         {section.rows.length === 0 ? (
-          <View style={styles.emptyRow}><Text style={styles.emptyText}>No records available.</Text></View>
+          <View style={styles.emptyRow}><Text style={styles.emptyText}>{lt("No records available.")}</Text></View>
         ) : section.rows.map((row) => <Row key={`${row.sourceType}-${row.sourceId}`} row={row} />)}
       </View>
     </View>
@@ -107,7 +110,7 @@ function Row({ row }: { row: MasterShipmentProfitLossRowDto }) {
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flexDirection: "row", marginBottom: 3 }}>
-      <Text style={{ width: 90, fontSize: 9, color: "#475569" }}>{label}</Text>
+      <Text style={{ width: 90, fontSize: 9, color: "#475569" }}>{lt(label)}</Text>
       <Text style={{ flex: 1, fontSize: 9 }}>{value || "-"}</Text>
     </View>
   );
@@ -116,7 +119,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
 function SummaryBox({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flex: 1, borderWidth: 1, borderColor: "#bfdbfe", padding: 7, backgroundColor: "#eff6ff" }}>
-      <Text style={{ fontSize: 8, color: "#475569", marginBottom: 3 }}>{label}</Text>
+      <Text style={{ fontSize: 8, color: "#475569", marginBottom: 3 }}>{lt(label)}</Text>
       <Text style={{ fontSize: 12, fontWeight: "bold" }}>{value}</Text>
     </View>
   );
@@ -125,14 +128,14 @@ function SummaryBox({ label, value }: { label: string; value: string }) {
 function Cell({ text, w, header, align = "left" }: { text: string; w: number; header?: boolean; align?: "left" | "right" | "center" }) {
   return (
     <View style={{ width: `${w}%`, paddingHorizontal: 4, paddingVertical: 4, borderRightWidth: 1, borderRightColor: "#dbeafe" }}>
-      <Text style={{ fontSize: header ? 7.5 : 7.2, lineHeight: 1.15, textAlign: align, fontWeight: header ? "bold" : "normal" }}>{text}</Text>
+      <Text style={{ fontSize: header ? 7.5 : 7.2, lineHeight: 1.15, textAlign: align, fontWeight: header ? "bold" : "normal" }}>{header ? lt(text) : text}</Text>
     </View>
   );
 }
 
 function createStyles() {
   return StyleSheet.create({
-    page: { padding: 20, fontSize: 10, color: "#0f172a" },
+    page: { padding: 20, fontSize: 10, fontFamily: getPdfFontFamily(), color: "#0f172a" },
     header: { flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#cbd5e1", paddingBottom: 10, marginBottom: 10 },
     logo: { width: 92, height: 92, objectFit: "contain" },
     logoPlaceholder: { width: 92, height: 92, borderWidth: 1, borderColor: "#cbd5e1", alignItems: "center", justifyContent: "center" },
@@ -160,10 +163,10 @@ function createStyles() {
 }
 
 function labelSource(sourceType: string) {
-  if (sourceType === "MasterShipment") return "Master";
-  if (sourceType === "HouseShipment") return "House";
+  if (sourceType === "MasterShipment") return lt("Master");
+  if (sourceType === "HouseShipment") return lt("House");
   if (sourceType === "GoodsReceipt") return "GRN";
-  return sourceType;
+  return lt(sourceType);
 }
 
 function money(value: number) {

@@ -1,6 +1,8 @@
 import { pdf, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import type { PickupDto } from "@/api/pickupApi";
+import { lt } from "@/modules/operationsLocalization";
+import { ensurePdfFontsRegistered, getPdfFontFamily } from "@/utils/pdfFonts";
 
 interface PickupPdfOptions {
   fileName?: string;
@@ -15,15 +17,16 @@ interface PickupPdfOptions {
 }
 
 export async function exportPickupPdf(options: PickupPdfOptions) {
+  ensurePdfFontsRegistered();
   const doc = buildPickupDocument(options);
   const blob = await pdf(doc).toBlob();
   saveAs(blob, options.fileName || `${options.pickup.pickupNumber}.pdf`);
 }
 
-function buildPickupDocument({ tenantName, branchName, branchAddress, logoUrl, customerName, pickup, translate = (value) => value, cultureCode = "en-US" }: PickupPdfOptions) {
+function buildPickupDocument({ tenantName, branchName, branchAddress, logoUrl, customerName, pickup, translate = lt, cultureCode = "en-US" }: PickupPdfOptions) {
   const t = translate;
   const styles = StyleSheet.create({
-    page: { padding: 24, fontSize: 10, color: "#0f172a" },
+    page: { padding: 24, fontSize: 10, fontFamily: getPdfFontFamily(), color: "#0f172a" },
     header: { borderBottomWidth: 1, borderBottomColor: "#cbd5e1", paddingBottom: 10, marginBottom: 12 },
     headerGrid: { flexDirection: "row", alignItems: "center" },
     left: { width: 160, alignItems: "flex-start" },

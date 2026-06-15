@@ -1,6 +1,8 @@
 import { pdf, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
+import { lt } from "@/modules/operationsLocalization";
 import type { ResolvedLabelSize } from "@/modules/goodsReceipts/labelSizeConfig";
+import { ensurePdfFontsRegistered, getPdfFontFamily } from "@/utils/pdfFonts";
 
 export interface GoodsLabelPdfItem {
   sequenceNo: string;
@@ -25,9 +27,11 @@ export interface GoodsLabelPdfItem {
 export type GoodsLabelTemplateStyle = "classic" | "compact";
 
 export async function exportGoodsLabelsPdf(fileName: string, items: GoodsLabelPdfItem[], label: ResolvedLabelSize, templateStyle: GoodsLabelTemplateStyle = "classic") {
+  ensurePdfFontsRegistered();
   const barcodeMap = await Promise.all(items.map(async (x) => ({ key: x.sequenceNo, src: await createBarcodeDataUrl(x.barcodeValue) })));
   const barcodeByKey = new Map(barcodeMap.map((x) => [x.key, x.src]));
   const pageSize = toPdfPageSize(label);
+  const styles = createStyles();
 
   const doc = (
     <Document>
@@ -41,25 +45,25 @@ export async function exportGoodsLabelsPdf(fileName: string, items: GoodsLabelPd
             {templateStyle === "compact" ? (
               <View style={styles.compactTable}>
                 <Text style={styles.compactTitle}>{item.customerName}</Text>
-                <Text style={styles.compactText}>From: {item.receivedFrom || "-"}</Text>
-                <Text style={styles.compactText}>Date: {item.receivedDateTime || "-"}</Text>
-                <Text style={styles.compactText}>Warehouse: {item.warehouseLocation || "-"}</Text>
-                <Text style={styles.compactText}>Size: {item.length} x {item.width} x {item.height}</Text>
+                <Text style={styles.compactText}>{lt("From")}: {item.receivedFrom || "-"}</Text>
+                <Text style={styles.compactText}>{lt("Date")}: {item.receivedDateTime || "-"}</Text>
+                <Text style={styles.compactText}>{lt("Warehouse")}: {item.warehouseLocation || "-"}</Text>
+                <Text style={styles.compactText}>{lt("Size")}: {item.length} x {item.width} x {item.height}</Text>
                 <View style={styles.compactQtyWrap}>
-                  <Text style={styles.compactQtyLabel}>QTY</Text>
+                  <Text style={styles.compactQtyLabel}>{lt("QTY")}</Text>
                   <Text style={styles.compactQtyValue}>{item.qtyText || ""}</Text>
                 </View>
               </View>
             ) : (
               <View style={styles.table}>
-                <Row label="Customer Name" value={item.customerName} />
-                <Row label="Shipper Name" value={item.shipperName || item.receivedFrom || "-"} />
-                <Row label="Consignee Name" value={item.consigneeName || item.warehouseLocation || "-"} />
-                <Row label="Origin Port" value={item.originPortName || item.fromText || "-"} />
-                <Row label="Destination Port" value={item.destinationPortName || item.destinationText || "-"} />
-                <Row label="Master Waybill No" value={item.masterWaybillNo || item.sequenceNo || "-"} />
-                <Row label="Dimensions" value={`${item.length} x ${item.width} x ${item.height}`} />
-                <Row label="QTY" value={item.qtyText || ""} isLast />
+                <Row styles={styles} label="Customer Name" value={item.customerName} />
+                <Row styles={styles} label="Shipper Name" value={item.shipperName || item.receivedFrom || "-"} />
+                <Row styles={styles} label="Consignee Name" value={item.consigneeName || item.warehouseLocation || "-"} />
+                <Row styles={styles} label="Origin Port" value={item.originPortName || item.fromText || "-"} />
+                <Row styles={styles} label="Destination Port" value={item.destinationPortName || item.destinationText || "-"} />
+                <Row styles={styles} label="Master Waybill No" value={item.masterWaybillNo || item.sequenceNo || "-"} />
+                <Row styles={styles} label="Dimensions" value={`${item.length} x ${item.width} x ${item.height}`} />
+                <Row styles={styles} label="QTY" value={item.qtyText || ""} isLast />
               </View>
             )}
             <Text style={styles.sideText}></Text>
@@ -73,11 +77,11 @@ export async function exportGoodsLabelsPdf(fileName: string, items: GoodsLabelPd
   saveAs(blob, fileName);
 }
 
-function Row({ label, value, isLast }: { label: string; value: string; isLast?: boolean }) {
+function Row({ styles, label, value, isLast }: { styles: ReturnType<typeof createStyles>; label: string; value: string; isLast?: boolean }) {
   const rowStyle = isLast ? styles.rowLast : styles.row;
   return (
     <View style={rowStyle}>
-      <Text style={styles.k}>{label}</Text>
+      <Text style={styles.k}>{lt(label)}</Text>
       <Text style={styles.v}>{value}</Text>
     </View>
   );
@@ -155,22 +159,24 @@ function toPoints(value: number, unit: "mm" | "in" | "px") {
   return value * 0.75;
 }
 
-const styles = StyleSheet.create({
-  page: { padding: 8, fontSize: 8.5, color: "#111827" },
-  label: { flex: 1, borderWidth: 1, borderColor: "#d1d5db", padding: 8, position: "relative" },
-  barcodeWrap: { alignItems: "center", marginTop: 2, marginBottom: 4 },
-  barcodeImage: { width: 200, height: 44, objectFit: "contain" },
-  barcodeText: { textAlign: "center", fontSize: 10, marginBottom: 6 },
-  table: { borderWidth: 1, borderColor: "#38bdf8", borderRadius: 3, overflow: "hidden" },
-  row: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#7dd3fc" },
-  rowLast: { flexDirection: "row", borderBottomWidth: 0 },
-  k: { width: "44%", paddingVertical: 4, paddingHorizontal: 5, textAlign: "right", fontSize: 8, fontWeight: 600 },
-  v: { width: "56%", paddingVertical: 4, paddingHorizontal: 5, fontSize: 8, fontWeight: 700 },
-  compactTable: { borderWidth: 1, borderColor: "#38bdf8", borderRadius: 3, padding: 6, gap: 2 },
-  compactTitle: { fontSize: 9, fontWeight: 700, marginBottom: 2 },
-  compactText: { fontSize: 8 },
-  compactQtyWrap: { marginTop: 3, flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: "#7dd3fc", paddingTop: 4 },
-  compactQtyLabel: { fontSize: 8, fontWeight: 700 },
-  compactQtyValue: { fontSize: 9, fontWeight: 700 },
-  sideText: { position: "absolute", right: -18, top: "50%", transform: "rotate(90deg)", fontSize: 7, color: "#475569" }
-});
+function createStyles() {
+  return StyleSheet.create({
+    page: { padding: 8, fontSize: 8.5, fontFamily: getPdfFontFamily(), color: "#111827" },
+    label: { flex: 1, borderWidth: 1, borderColor: "#d1d5db", padding: 8, position: "relative" },
+    barcodeWrap: { alignItems: "center", marginTop: 2, marginBottom: 4 },
+    barcodeImage: { width: 200, height: 44, objectFit: "contain" },
+    barcodeText: { textAlign: "center", fontSize: 10, marginBottom: 6 },
+    table: { borderWidth: 1, borderColor: "#38bdf8", borderRadius: 3, overflow: "hidden" },
+    row: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#7dd3fc" },
+    rowLast: { flexDirection: "row", borderBottomWidth: 0 },
+    k: { width: "44%", paddingVertical: 4, paddingHorizontal: 5, textAlign: "right", fontSize: 8, fontWeight: 600 },
+    v: { width: "56%", paddingVertical: 4, paddingHorizontal: 5, fontSize: 8, fontWeight: 700 },
+    compactTable: { borderWidth: 1, borderColor: "#38bdf8", borderRadius: 3, padding: 6, gap: 2 },
+    compactTitle: { fontSize: 9, fontWeight: 700, marginBottom: 2 },
+    compactText: { fontSize: 8 },
+    compactQtyWrap: { marginTop: 3, flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: "#7dd3fc", paddingTop: 4 },
+    compactQtyLabel: { fontSize: 8, fontWeight: 700 },
+    compactQtyValue: { fontSize: 9, fontWeight: 700 },
+    sideText: { position: "absolute", right: -18, top: "50%", transform: "rotate(90deg)", fontSize: 7, color: "#475569" }
+  });
+}

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import type { ReactNode } from "react";
 import { Navigate, useParams } from "react-router-dom";
-import { getBranchSettings, updateBranchSettings } from "@/api/branchApi";
+import { getBranchById, getBranchSettings, updateBranchSettings } from "@/api/branchApi";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,12 +12,14 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { branchSettingsSchema, type BranchSettingsFormValues } from "@/modules/branches/branchValidation";
 import { lt } from "@/modules/operationsLocalization";
+import { BranchBankDetailsPanel } from "@/modules/branches/BranchBankDetailsPanel";
 
 export function BranchSettingsPage() {
   const { branchId } = useParams();
   const toast = useToast();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["branch-settings", branchId], queryFn: () => getBranchSettings(branchId!), enabled: Boolean(branchId) });
+  const branch = useQuery({ queryKey: ["branch", branchId], queryFn: () => getBranchById(branchId!), enabled: Boolean(branchId) });
   const form = useForm<BranchSettingsFormValues>({
     resolver: zodResolver(branchSettingsSchema),
     values: query.data
@@ -65,6 +67,7 @@ export function BranchSettingsPage() {
           </div>
         </form>
       </CardContent></Card>
+      <BranchBankDetailsPanel branchId={branchId} branchName={branch.data?.branchName ?? lt("Branch")} />
     </div>
   );
 }

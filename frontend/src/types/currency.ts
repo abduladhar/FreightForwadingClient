@@ -18,6 +18,19 @@ export interface TenantCurrency {
   isBaseCurrency: boolean;
 }
 
+export interface BranchCurrencyBankDetail {
+  currencyId: string;
+  currencyCode: string;
+  beneficiaryName: string;
+  bankName: string;
+  branchName: string;
+  swiftCode: string;
+  accountNumber: string;
+  iban: string;
+}
+
+export type BranchCurrencyBankDetailRequest = Omit<BranchCurrencyBankDetail, "currencyCode">;
+
 export interface CurrencyUpsertRequest {
   currencyCode: string;
   currencyName: string;
