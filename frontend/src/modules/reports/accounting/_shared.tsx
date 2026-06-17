@@ -24,6 +24,11 @@ import { exportPdfReport } from "@/utils/pdfExport";
 import { lt } from "@/modules/operationsLocalization";
 
 type CurrencyMode = "original" | "base" | "selected";
+type ClientExportFormat = "pdf" | "excel" | "csv";
+type ClientExportPayload = {
+  columns: Array<{ key: string; label: string }>;
+  rows: Record<string, unknown>[];
+};
 
 export function AccountingReportPage<T extends Record<string, unknown>>({
   title,
@@ -32,6 +37,9 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
   mapRows,
   summaryBuilder,
   totalsBuilder,
+  prepareClientExport,
+  showCurrency,
+  currencyField = "currencyId",
   needsAccount,
   needsCustomer,
   needsVendor
@@ -42,6 +50,9 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
   mapRows: (data: unknown) => T[];
   summaryBuilder?: (rows: T[], data: unknown) => Array<{ label: string; value: string | number }>;
   totalsBuilder?: (rows: T[]) => Array<{ label: string; value: string | number }>;
+  prepareClientExport?: (rows: T[], format: ClientExportFormat) => ClientExportPayload | Promise<ClientExportPayload | null> | null;
+  showCurrency?: boolean;
+  currencyField?: keyof T & string;
   needsAccount?: boolean;
   needsCustomer?: boolean;
   needsVendor?: boolean;
@@ -79,12 +90,44 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
     queryFn: () => getAccountingReport<unknown>(reportType, request)
   });
   const rows = useMemo(() => mapRows(report.data?.data), [report.data?.data, mapRows]);
+  const currencyById = useMemo(() => new Map((currencies.data ?? []).map((currency) => [currency.id, currency.currencyCode])), [currencies.data]);
+  const displayColumns = useMemo<ColumnDef<T>[]>(() => {
+    if (!showCurrency) return columns;
+    const hasCurrencyColumn = columns.some((column) => String(column.id ?? ("accessorKey" in column ? column.accessorKey : "")) === "currencyCode");
+    if (hasCurrencyColumn) return columns;
+    return insertAfter(columns, {
+      id: "currencyCode",
+      header: lt("Currency"),
+      cell: ({ row }) => currencyById.get(String(row.original[currencyField] ?? "")) ?? workspace.baseCurrency
+    }, ["voucherType", "particulars", "chequeOrReferenceNumber", "narration", "accountName"]);
+  }, [columns, currencyById, currencyField, showCurrency, workspace.baseCurrency]);
   const summary = summaryBuilder?.(rows, report.data?.data) ?? [];
   const totals = totalsBuilder?.(rows) ?? [];
   const canExport = hasPermission("Reports.Export");
   const canPrint = hasPermission("Reports.Print");
+  const rangeWarning = reportRangeWarning(applied.fromDate, applied.toDate, applied.financialYearId);
+  const canSafeExport = canExport && !rangeWarning;
+
+  async function exportPayload(format: ClientExportFormat): Promise<ClientExportPayload | null> {
+    if (prepareClientExport) {
+      return await prepareClientExport(rows, format);
+    }
+
+    const flatRows = rows.map(flattenRow);
+    const exportRows = showCurrency ? flatRows.map((row, index) => ({
+      ...row,
+      currencyCode: currencyById.get(String(rows[index]?.[currencyField] ?? "")) ?? workspace.baseCurrency
+    })) : flatRows;
+    const exportColumns = displayColumns.map((x) => {
+      const accessor = "accessorKey" in x ? x.accessorKey : undefined;
+      return { key: String(x.id ?? accessor ?? "value"), label: String(x.header ?? x.id ?? accessor ?? lt("Value")) };
+    });
+    return { columns: exportColumns, rows: exportRows };
+  }
 
   async function handleExportPdf() {
+    const payload = await exportPayload("pdf");
+    if (!payload) return;
     await exportPdfReport({
       fileName: `${reportType}.pdf`,
       title,
@@ -93,16 +136,13 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
       documentDate: new Date(),
       currencyCode: workspace.baseCurrency,
       cultureCode: workspace.cultureCode,
-      columns: columns.map((x) => {
-        const accessor = "accessorKey" in x ? x.accessorKey : undefined;
-        return { key: String(x.id ?? accessor ?? "value"), label: String(x.header ?? x.id ?? accessor ?? lt("Value")) };
-      }) as Array<{ key: string; label: string }>,
-      rows: rows.map((row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [k, typeof v === "object" ? JSON.stringify(v) : v])) as Record<string, unknown>)
+      columns: payload.columns,
+      rows: payload.rows
     });
   }
   async function handleExportExcel() {
-    const rowsFlat = rows.map((row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [k, typeof v === "object" ? JSON.stringify(v) : v])) as Record<string, unknown>);
-    const keys = rowsFlat[0] ? Object.keys(rowsFlat[0]) : ["value"];
+    const payload = await exportPayload("excel");
+    if (!payload) return;
     await exportExcelReport({
       fileName: `${reportType}.xlsx`,
       reportTitle: title,
@@ -110,11 +150,17 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
       branchName: workspace.branchName ?? lt("Branch"),
       dateFrom: applied.fromDate || undefined,
       dateTo: applied.toDate || undefined,
-      sheets: [{ sheetName: lt("Report"), columns: keys.map((k) => ({ key: k as never, header: lt(k) })), rows: rowsFlat }]
+      sheets: [{
+        sheetName: lt("Report"),
+        columns: payload.columns.map((column) => ({ key: column.key as never, header: column.label })),
+        rows: payload.rows
+      }]
     });
   }
   async function handleExportCsv() {
-    const rowsFlat = rows.map((row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [k, typeof v === "object" ? JSON.stringify(v) : v])) as Record<string, unknown>);
+    const payload = await exportPayload("csv");
+    if (!payload) return;
+    const rowsFlat = payload.rows.map((row) => Object.fromEntries(payload.columns.map((column) => [column.label, row[column.key]])));
     exportFullCsv(rowsFlat, `${reportType}.csv`);
   }
   async function handlePrintPreview() {
@@ -170,21 +216,22 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
         <CardTitle>{lt("Report Output")}</CardTitle>
         <div className="flex items-center gap-2">
           {canExport ? <ExportButtons
-            onExportPdf={() => void handleExportPdf()}
-            onExportExcel={() => void handleExportExcel()}
-            onExportCsv={() => void handleBackendExport("csv")}
+            onExportPdf={!rangeWarning ? () => void handleExportPdf() : undefined}
+            onExportExcel={!rangeWarning ? () => void handleExportExcel() : undefined}
+            onExportCsv={!rangeWarning ? () => void (prepareClientExport ? handleExportCsv() : handleBackendExport("csv")) : undefined}
           /> : null}
-          <Button variant="outline" size="sm" onClick={() => void handleExportPdf()}>{lt("PDF")} ({lt("Client")})</Button>
-          <Button variant="outline" size="sm" onClick={() => void handleExportExcel()}>{lt("Excel")} ({lt("Client")})</Button>
-          <Button variant="outline" size="sm" onClick={() => void handleExportCsv()}>{lt("CSV")} ({lt("Client")})</Button>
+          <Button variant="outline" size="sm" onClick={() => void handleExportPdf()} disabled={!canSafeExport}>{lt("PDF")} ({lt("Client")})</Button>
+          <Button variant="outline" size="sm" onClick={() => void handleExportExcel()} disabled={!canSafeExport}>{lt("Excel")} ({lt("Client")})</Button>
+          <Button variant="outline" size="sm" onClick={() => void handleExportCsv()} disabled={!canSafeExport}>{lt("CSV")} ({lt("Client")})</Button>
           {canPrint ? <Button variant="outline" size="sm" onClick={() => void handlePrintPreview()}>{lt("Print Preview")}</Button> : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {rangeWarning ? <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{rangeWarning}</div> : null}
         {summary.length ? <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">{summary.map((x) => <div key={x.label} className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{x.label}</p><p className="text-lg font-semibold">{x.value}</p></div>)}</div> : null}
         <DataTable
           data={rows}
-          columns={columns}
+          columns={displayColumns}
           totalCount={rows.length}
           pageNumber={pageNumber}
           pageSize={pageSize}
@@ -207,6 +254,24 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1"><p className="text-xs text-muted-foreground">{label}</p>{children}</div>;
+}
+
+function reportRangeWarning(fromDate: string, toDate: string, financialYearId: string) {
+  if (financialYearId) return "";
+  if (!fromDate || !toDate) return lt("Exports require a bounded from/to date range at production scale.");
+  const days = Math.floor((new Date(toDate).getTime() - new Date(fromDate).getTime()) / 86400000);
+  if (days > 366) return lt("Exports over 366 days should run from reporting summary tables.");
+  return "";
+}
+
+function flattenRow(row: Record<string, unknown>) {
+  return Object.fromEntries(Object.entries(row).map(([key, value]) => [key, typeof value === "object" ? JSON.stringify(value) : value])) as Record<string, unknown>;
+}
+
+function insertAfter<T extends Record<string, unknown>>(columns: ColumnDef<T>[], column: ColumnDef<T>, preferredKeys: string[]) {
+  const index = columns.findIndex((candidate) => preferredKeys.includes(String(candidate.id ?? ("accessorKey" in candidate ? candidate.accessorKey : ""))));
+  if (index < 0) return [...columns, column];
+  return [...columns.slice(0, index + 1), column, ...columns.slice(index + 1)];
 }
 
 function buildRequest(filters: {

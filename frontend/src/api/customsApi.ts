@@ -4,6 +4,7 @@ import type { ApiResponse, PagedResponse } from "@/api/apiResponse";
 export interface CustomsClearanceSearchParams {
   pageNumber?: number;
   pageSize?: number;
+  cursor?: string | null;
   search?: string;
   status?: string;
   shipmentType?: string;
@@ -121,6 +122,7 @@ export async function applyCustomsDutyCalculation(id: string, request: CustomsDu
 export interface CustomsJobSearchParams {
   pageNumber?: number;
   pageSize?: number;
+  cursor?: string | null;
   search?: string;
   jobNumber?: string;
   declarationNumber?: string;

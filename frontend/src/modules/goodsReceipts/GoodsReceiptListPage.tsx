@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router-dom";
 import { Eye, FilePlus2, FileText, MoreHorizontal, Pencil, Plus, Printer, QrCode, Receipt, SlidersHorizontal } from "lucide-react";
 import { searchGoodsReceipts, type GoodsReceiptDto } from "@/api/goodsReceiptApi";
+import { searchWarehouseLocations, searchWarehouses } from "@/api/warehouseApi";
 import { PermissionButton } from "@/auth/PermissionButton";
 import { useAuth } from "@/auth/useAuth";
 import { AuditTrailButton } from "@/components/common/AuditTrailButton";
@@ -16,17 +17,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCursorPagination } from "@/hooks/useCursorPagination";
 import { lt } from "@/modules/operationsLocalization";
 
 type FlagFilterValue = "" | "true" | "false";
 
 export function GoodsReceiptListPage() {
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const paging = useCursorPagination(25);
   const [search, setSearch] = useState("");
   const [customer, setCustomer] = useState("");
   const [grnNumber, setGrnNumber] = useState("");
-  const [warehouse, setWarehouse] = useState("");
+  const [warehouseId, setWarehouseId] = useState("");
   const [warehouseLocation, setWarehouseLocation] = useState("");
   const [invoiceDefined, setInvoiceDefined] = useState<FlagFilterValue>("");
   const [billDefined, setBillDefined] = useState<FlagFilterValue>("");
@@ -34,16 +35,27 @@ export function GoodsReceiptListPage() {
   const [billFullyPaid, setBillFullyPaid] = useState<FlagFilterValue>("");
   const [showFilters, setShowFilters] = useState(false);
   const { hasPermission } = useAuth();
+  const warehouses = useQuery({ queryKey: ["goods-receipt-filter-warehouses"], queryFn: () => searchWarehouses({ pageNumber: 1, pageSize: 500, isActive: true }) });
+  const warehouseLocations = useQuery({
+    queryKey: ["goods-receipt-filter-locations", warehouseId],
+    queryFn: () => searchWarehouseLocations({ pageNumber: 1, pageSize: 500, isActive: true, warehouseId: warehouseId || undefined }),
+    enabled: Boolean(warehouseId)
+  });
+  const locationOptions = useMemo(
+    () => (warehouseLocations.data?.items ?? []).map((location) => ({ value: warehouseLocationValue(location), label: warehouseLocationLabel(location) })),
+    [warehouseLocations.data?.items]
+  );
 
   const query = useQuery({
-    queryKey: ["goods-receipts", pageNumber, pageSize, search, customer, grnNumber, warehouse, warehouseLocation, invoiceDefined, billDefined, invoiceFullyReceived, billFullyPaid],
+    queryKey: ["goods-receipts", paging.pageNumber, paging.pageSize, paging.cursor, search, customer, grnNumber, warehouseId, warehouseLocation, invoiceDefined, billDefined, invoiceFullyReceived, billFullyPaid],
     queryFn: () => searchGoodsReceipts({
-      pageNumber,
-      pageSize,
+      pageNumber: paging.pageNumber,
+      pageSize: paging.pageSize,
+      cursor: paging.cursor,
       search,
       customer: customer || undefined,
       grnNumber: grnNumber || undefined,
-      warehouse: warehouse || undefined,
+      warehouseId: warehouseId || undefined,
       warehouseLocation: warehouseLocation || undefined,
       invoiceDefined: toBooleanFilter(invoiceDefined),
       billDefined: toBooleanFilter(billDefined),
@@ -81,14 +93,24 @@ export function GoodsReceiptListPage() {
           {showFilters ? (
             <div className="mb-4 rounded-lg border bg-slate-50/60 p-3">
               <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
-                <FilterField label={lt("Customer")}><Input value={customer} placeholder={lt("Customer name/code")} onChange={(event) => { setCustomer(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Goods Receipt Note Number")}><Input value={grnNumber} placeholder={lt("Goods Receipt Note No...")} onChange={(event) => { setGrnNumber(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Warehouse")}><Input value={warehouse} placeholder={lt("Warehouse name/code")} onChange={(event) => { setWarehouse(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Warehouse Location")}><Input value={warehouseLocation} placeholder={lt("Rack/bin/location")} onChange={(event) => { setWarehouseLocation(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FlagSelect label={lt("Invoice Defined")} value={invoiceDefined} onChange={setInvoiceDefined} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Bill Defined")} value={billDefined} onChange={setBillDefined} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Invoice Fully Received")} value={invoiceFullyReceived} onChange={setInvoiceFullyReceived} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Bill Fully Paid")} value={billFullyPaid} onChange={setBillFullyPaid} resetPage={() => setPageNumber(1)} />
+                <FilterField label={lt("Customer")}><Input value={customer} placeholder={lt("Customer name/code")} onChange={(event) => { setCustomer(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Goods Receipt Note Number")}><Input value={grnNumber} placeholder={lt("Goods Receipt Note No...")} onChange={(event) => { setGrnNumber(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Warehouse")}>
+                  <select className="h-10 w-full rounded-md border px-3 text-sm" value={warehouseId} onChange={(event) => { setWarehouseId(event.target.value); setWarehouseLocation(""); paging.reset(); }}>
+                    <option value="">{lt("All warehouses")}</option>
+                    {(warehouses.data?.items ?? []).map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.warehouseCode} - {warehouse.warehouseName}</option>)}
+                  </select>
+                </FilterField>
+                <FilterField label={lt("Warehouse Location")}>
+                  <select className="h-10 w-full rounded-md border px-3 text-sm" value={warehouseLocation} onChange={(event) => { setWarehouseLocation(event.target.value); paging.reset(); }} disabled={!warehouseId || warehouseLocations.isLoading}>
+                    <option value="">{!warehouseId ? lt("Select warehouse first") : warehouseLocations.isLoading ? lt("Loading locations...") : lt("All locations")}</option>
+                    {locationOptions.map((location) => <option key={location.value} value={location.value}>{location.label}</option>)}
+                  </select>
+                </FilterField>
+                <FlagSelect label={lt("Invoice Defined")} value={invoiceDefined} onChange={setInvoiceDefined} resetPage={paging.reset} />
+                <FlagSelect label={lt("Bill Defined")} value={billDefined} onChange={setBillDefined} resetPage={paging.reset} />
+                <FlagSelect label={lt("Invoice Fully Received")} value={invoiceFullyReceived} onChange={setInvoiceFullyReceived} resetPage={paging.reset} />
+                <FlagSelect label={lt("Bill Fully Paid")} value={billFullyPaid} onChange={setBillFullyPaid} resetPage={paging.reset} />
               </div>
             </div>
           ) : null}
@@ -96,11 +118,16 @@ export function GoodsReceiptListPage() {
             data={query.data?.items ?? []}
             columns={columns}
             totalCount={query.data?.totalCount ?? 0}
-            pageNumber={query.data?.pageNumber ?? pageNumber}
-            pageSize={query.data?.pageSize ?? pageSize}
+            pageNumber={paging.pageNumber}
+            pageSize={query.data?.pageSize ?? paging.pageSize}
             search={search}
-            onSearchChange={setSearch}
-            onPaginationChange={(pn, ps) => { setPageNumber(pn); setPageSize(ps); }}
+            onSearchChange={(value) => { setSearch(value); paging.reset(); }}
+            onPaginationChange={(_, ps) => paging.setPageSize(ps)}
+            paginationMode="cursor"
+            nextCursor={query.data?.nextCursor}
+            canPreviousCursorPage={paging.canPrevious}
+            onNextCursorPage={() => paging.next(query.data?.nextCursor)}
+            onPreviousCursorPage={paging.previous}
             isLoading={query.isLoading}
             isError={query.isError}
             onRetry={() => void query.refetch()}
@@ -190,6 +217,17 @@ function FinanceStatusRow({ label, value }: { label: string; value: ReactNode })
 
 function FilterField({ label, children }: { label: string; children: ReactNode }) {
   return <div className="space-y-1"><Label>{label}</Label>{children}</div>;
+}
+
+function warehouseLocationValue(location: { locationCode: string; rack?: string | null; bin?: string | null }) {
+  return [location.locationCode, location.rack, location.bin].filter(Boolean).join(" / ");
+}
+
+function warehouseLocationLabel(location: { locationCode: string; rack?: string | null; bin?: string | null }) {
+  const parts = [location.locationCode];
+  if (location.rack) parts.push(`${lt("Rack")}: ${location.rack}`);
+  if (location.bin) parts.push(`${lt("Bin")}: ${location.bin}`);
+  return parts.join(" - ");
 }
 
 function FlagSelect({ label, value, onChange, resetPage }: { label: string; value: FlagFilterValue; onChange: (value: FlagFilterValue) => void; resetPage: () => void }) {

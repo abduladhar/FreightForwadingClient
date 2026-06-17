@@ -4,6 +4,7 @@ import { getAgentPortalDashboard } from "@/api/portalApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { AgentPortalPageHeader, AgentPortalStatCard } from "@/modules/portals/agent/_shared";
+import { lt } from "@/modules/operationsLocalization";
 import { formatCurrencyAmount } from "@/utils/currencyFormat";
 
 export function AgentPortalDashboardPage() {
@@ -13,30 +14,30 @@ export function AgentPortalDashboardPage() {
 
   return (
     <div className="space-y-4">
-      <AgentPortalPageHeader title="Agent Portal" description="Assigned shipments, POD updates, destination charges, and commission visibility." />
+      <AgentPortalPageHeader title={lt("Agent Portal")} description={lt("Assigned shipments, POD updates, destination charges, and commission visibility.")} />
       <div className="grid gap-4 md:grid-cols-3">
-        <AgentPortalStatCard title="Assigned Shipments" value={d?.assignedShipments ?? 0} />
-        <AgentPortalStatCard title="In Transit" value={d?.inTransitShipments ?? 0} />
-        <AgentPortalStatCard title="Delivered" value={d?.deliveredShipments ?? 0} />
-        <AgentPortalStatCard title="Pending POD" value={d?.pendingPod ?? 0} />
+        <AgentPortalStatCard title={lt("Assigned Shipments")} value={d?.assignedShipments ?? 0} />
+        <AgentPortalStatCard title={lt("In Transit")} value={d?.inTransitShipments ?? 0} />
+        <AgentPortalStatCard title={lt("Delivered")} value={d?.deliveredShipments ?? 0} />
+        <AgentPortalStatCard title={lt("Pending POD")} value={d?.pendingPod ?? 0} />
         <AgentPortalStatCard
-          title="Commission Amount"
+          title={lt("Commission Amount")}
           value={formatCurrencyAmount(d?.commissionAmount ?? 0, { cultureCode: workspace.cultureCode, currencyCode: workspace.baseCurrency })}
         />
         <AgentPortalStatCard
-          title="Destination Charges"
+          title={lt("Destination Charges")}
           value={formatCurrencyAmount(d?.destinationCharges ?? 0, { cultureCode: workspace.cultureCode, currencyCode: workspace.baseCurrency })}
         />
       </div>
       <Card>
-        <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{lt("Quick Actions")}</CardTitle></CardHeader>
         <CardContent className="grid gap-2 md:grid-cols-2">
-          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/assigned-shipments">Assigned Shipments</Link>
-          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/shipments/status">Update Shipment Status</Link>
-          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/shipments/pod">Upload POD</Link>
-          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/destination-charges">Destination Charges</Link>
-          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/commission-statement">Commission Statement</Link>
-          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/documents">Download Documents</Link>
+          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/assigned-shipments">{lt("Assigned Shipments")}</Link>
+          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/shipments/status">{lt("Update Shipment Status")}</Link>
+          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/shipments/pod">{lt("Upload POD")}</Link>
+          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/destination-charges">{lt("Destination Charges")}</Link>
+          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/commission-statement">{lt("Commission Statement")}</Link>
+          <Link className="rounded-md border p-3 hover:bg-slate-50" to="/agent-portal/documents">{lt("Download Documents")}</Link>
         </CardContent>
       </Card>
     </div>

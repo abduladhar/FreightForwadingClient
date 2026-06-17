@@ -101,6 +101,7 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
   const agents = useQuery({ queryKey: ["profit-agents"], queryFn: () => searchAgents({ pageNumber: 1, pageSize: 500, isActive: true }) });
   const salesmen = useQuery({ queryKey: ["profit-salesmen"], queryFn: () => getEmployees(true, true) });
   const currencies = useQuery({ queryKey: ["profit-currencies"], queryFn: getCurrencies });
+  const currencyById = useMemo(() => new Map((currencies.data ?? []).map((currency) => [currency.id, currency.currencyCode])), [currencies.data]);
 
   const request = useMemo<ProfitReportRequest>(() => ({
     pageNumber,
@@ -134,10 +135,28 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
   });
 
   const rows = (query.data?.data ?? []) as T[];
+  const baseCurrencyCode = currencyById.get(query.data?.baseCurrencyId ?? "") ?? workspace.baseCurrency;
+  const reportCurrencyCode = currencyById.get(query.data?.reportCurrencyId ?? "") ?? baseCurrencyCode;
+  const displayColumns = useMemo<ColumnDef<T>[]>(() => {
+    const hasCurrencyColumn = columns.some((column) => String(column.id ?? ("accessorKey" in column ? column.accessorKey : "")) === "reportCurrencyCode");
+    if (hasCurrencyColumn) return columns;
+    const currencyColumns: ColumnDef<T>[] = [
+      {
+        id: "transactionCurrencyCode",
+        header: lt("Transaction Currency"),
+        cell: ({ row }) => currencyById.get(String((row.original as ShipmentProfitDto).transactionCurrencyId ?? "")) ?? "-"
+      },
+      { id: "baseCurrencyCode", header: lt("Base Currency"), cell: () => baseCurrencyCode },
+      { id: "reportCurrencyCode", header: lt("Report Currency"), cell: () => reportCurrencyCode }
+    ];
+    return insertAfter(columns, currencyColumns, ["destination", "groupName"]);
+  }, [baseCurrencyCode, columns, currencyById, reportCurrencyCode]);
   const summary = buildSummary(rows);
   const canExport = hasPermission("Reports.Export");
+  const rangeWarning = reportRangeWarning(applied.fromDate, applied.toDate);
 
   async function exportPdf() {
+    const exportRows = rows.map((row) => withCurrencyCodes(row as unknown as Record<string, unknown>, currencyById, baseCurrencyCode, reportCurrencyCode));
     await exportPdfReport({
       fileName: `${mode}.pdf`,
       title,
@@ -146,12 +165,12 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
       documentDate: new Date(),
       currencyCode: workspace.baseCurrency,
       cultureCode: workspace.cultureCode,
-      columns: columns.map((x) => ({ key: String(x.id ?? ("accessorKey" in x ? x.accessorKey : "value") ?? "value"), label: String(x.header ?? x.id ?? lt("Value")) })),
-      rows: rows as unknown as Record<string, unknown>[]
+      columns: displayColumns.map((x) => ({ key: String(x.id ?? ("accessorKey" in x ? x.accessorKey : "value") ?? "value"), label: String(x.header ?? x.id ?? lt("Value")) })),
+      rows: exportRows
     });
   }
   async function exportExcel() {
-    const mapped = rows as unknown as Record<string, unknown>[];
+    const mapped = rows.map((row) => withCurrencyCodes(row as unknown as Record<string, unknown>, currencyById, baseCurrencyCode, reportCurrencyCode));
     const keys = mapped[0] ? Object.keys(mapped[0]) : ["groupName"];
     await exportExcelReport({
       fileName: `${mode}.xlsx`,
@@ -164,7 +183,7 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
     });
   }
   function exportCsv() {
-    exportFullCsv(rows as unknown as Record<string, unknown>[], `${mode}.csv`);
+    exportFullCsv(rows.map((row) => withCurrencyCodes(row as unknown as Record<string, unknown>, currencyById, baseCurrencyCode, reportCurrencyCode)), `${mode}.csv`);
   }
   function printPreview() {
     setPrintContent(JSON.stringify(rows, null, 2));
@@ -220,15 +239,16 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle>{lt("Report Output")}</CardTitle>
         <div className="flex items-center gap-2">
-          {canExport ? <ExportButtons onExportPdf={() => void exportPdf()} onExportExcel={() => void exportExcel()} onExportCsv={() => exportCsv()} /> : null}
+          {canExport ? <ExportButtons onExportPdf={!rangeWarning ? () => void exportPdf() : undefined} onExportExcel={!rangeWarning ? () => void exportExcel() : undefined} onExportCsv={!rangeWarning ? () => exportCsv() : undefined} /> : null}
           {hasPermission("Reports.Print") ? <Button variant="outline" size="sm" onClick={printPreview}>{lt("Print Preview")}</Button> : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {rangeWarning ? <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{rangeWarning}</div> : null}
         {summary.length ? <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">{summary.map((x) => <div key={x.label} className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{x.label}</p><p className="text-lg font-semibold">{x.value}</p></div>)}</div> : null}
         <DataTable
           data={rows}
-          columns={columns}
+          columns={displayColumns}
           totalCount={rows.length}
           pageNumber={pageNumber}
           pageSize={pageSize}
@@ -270,4 +290,26 @@ function buildSummary(rows: Array<ShipmentProfitDto | ProfitGroupRow>) {
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return <div className="space-y-1"><p className="text-xs text-muted-foreground">{label}</p>{children}</div>;
+}
+
+function reportRangeWarning(fromDate: string, toDate: string) {
+  if (!fromDate || !toDate) return lt("Profit exports require a bounded from/to date range at production scale.");
+  const days = Math.floor((new Date(toDate).getTime() - new Date(fromDate).getTime()) / 86400000);
+  if (days > 366) return lt("Profit exports over 366 days should run from reporting summary tables.");
+  return "";
+}
+
+function withCurrencyCodes(row: Record<string, unknown>, currencyById: Map<string, string>, baseCurrencyCode: string, reportCurrencyCode: string): Record<string, unknown> {
+  return {
+    ...row,
+    transactionCurrencyCode: currencyById.get(String(row.transactionCurrencyId ?? "")) ?? "",
+    baseCurrencyCode,
+    reportCurrencyCode
+  };
+}
+
+function insertAfter<TData, TValue>(columns: ColumnDef<TData, TValue>[], insertColumns: ColumnDef<TData, TValue>[], preferredKeys: string[]) {
+  const index = columns.findIndex((candidate) => preferredKeys.includes(String(candidate.id ?? ("accessorKey" in candidate ? candidate.accessorKey : ""))));
+  if (index < 0) return [...columns, ...insertColumns];
+  return [...columns.slice(0, index + 1), ...insertColumns, ...columns.slice(index + 1)];
 }

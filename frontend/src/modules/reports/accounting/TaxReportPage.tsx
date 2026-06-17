@@ -8,7 +8,7 @@ export function TaxReportPage() {
     const d = (data as { byInvoice?: Array<{ key: string; taxableAmount: number; taxAmount: number }>; byBill?: Array<{ key: string; taxableAmount: number; taxAmount: number }>; byParty?: Array<{ key: string; taxableAmount: number; taxAmount: number }>; byTaxPercentage?: Array<{ key: string; taxableAmount: number; taxAmount: number }> }) ?? {};
     const map = (src: string, rows?: Array<{ key: string; taxableAmount: number; taxAmount: number }>) => (rows ?? []).map((x) => ({ ...x, source: src }));
     return [...map("Invoice", d.byInvoice), ...map("Bill", d.byBill), ...map("Party", d.byParty), ...map("Tax %", d.byTaxPercentage)];
-  }} columns={columns} summaryBuilder={(rows, data) => {
+  }} columns={columns} showCurrency summaryBuilder={(rows, data) => {
     const payload = data as { outputTax?: number; inputTax?: number; taxPayable?: number; taxReceivable?: number; netTax?: number } | undefined;
     if (payload) {
       return [

@@ -53,11 +53,13 @@ const englishFallbacks: Record<string, string> = {
   "Login.EnterEmailFirst": "Enter your email or username first.",
   "Login.PasswordResetRequested": "Password reset requested",
   "Login.PasswordResetRequestedDetail": "If the account exists, reset instructions will be sent.",
-  "Login.PasswordResetFailed": "Password reset request failed. Please try again."
+  "Login.PasswordResetFailed": "Password reset request failed. Please try again.",
+  "Common.Refresh": "Refresh"
 };
 
 const localizedFallbacks: Record<string, Record<string, string>> = {
   "ar-QA": {
+    "Common.Refresh": "تحديث",
     "Navigation.dashboard.Label": "لوحة التحكم",
     "Navigation.masters.Label": "البيانات الرئيسية",
     "Navigation.rate-quotation.Label": "الأسعار وعروض الأسعار",
@@ -73,6 +75,7 @@ const localizedFallbacks: Record<string, Record<string, string>> = {
     "Navigation.settings.Label": "الإعدادات"
   },
   "hi-IN": {
+    "Common.Refresh": "रीफ़्रेश",
     "Navigation.dashboard.Label": "डैशबोर्ड",
     "Navigation.masters.Label": "मास्टर",
     "Navigation.rate-quotation.Label": "रेट और कोटेशन",
@@ -88,6 +91,7 @@ const localizedFallbacks: Record<string, Record<string, string>> = {
     "Navigation.settings.Label": "सेटिंग्स"
   },
   "fr-FR": {
+    "Common.Refresh": "Actualiser",
     "Navigation.dashboard.Label": "Tableau de bord",
     "Navigation.masters.Label": "Référentiels",
     "Navigation.rate-quotation.Label": "Tarifs et devis",
@@ -103,6 +107,7 @@ const localizedFallbacks: Record<string, Record<string, string>> = {
     "Navigation.settings.Label": "Paramètres"
   },
   "es-ES": {
+    "Common.Refresh": "Actualizar",
     "Navigation.dashboard.Label": "Panel",
     "Navigation.masters.Label": "Maestros",
     "Navigation.rate-quotation.Label": "Tarifas y cotizaciones",
@@ -118,6 +123,7 @@ const localizedFallbacks: Record<string, Record<string, string>> = {
     "Navigation.settings.Label": "Configuración"
   },
   "zh-CN": {
+    "Common.Refresh": "刷新",
     "Navigation.dashboard.Label": "仪表板",
     "Navigation.masters.Label": "主数据",
     "Navigation.rate-quotation.Label": "费率和报价",
@@ -133,6 +139,7 @@ const localizedFallbacks: Record<string, Record<string, string>> = {
     "Navigation.settings.Label": "设置"
   },
   "tr-TR": {
+    "Common.Refresh": "Yenile",
     "Navigation.dashboard.Label": "Pano",
     "Navigation.masters.Label": "Ana veriler",
     "Navigation.rate-quotation.Label": "Fiyat ve teklif",
@@ -148,6 +155,7 @@ const localizedFallbacks: Record<string, Record<string, string>> = {
     "Navigation.settings.Label": "Ayarlar"
   },
   "pt-PT": {
+    "Common.Refresh": "Atualizar",
     "Navigation.dashboard.Label": "Painel",
     "Navigation.masters.Label": "Cadastros",
     "Navigation.rate-quotation.Label": "Tarifas e cotações",
@@ -163,6 +171,7 @@ const localizedFallbacks: Record<string, Record<string, string>> = {
     "Navigation.settings.Label": "Configurações"
   },
   "ru-RU": {
+    "Common.Refresh": "Обновить",
     "Navigation.dashboard.Label": "Панель",
     "Navigation.masters.Label": "Справочники",
     "Navigation.rate-quotation.Label": "Тарифы и предложения",

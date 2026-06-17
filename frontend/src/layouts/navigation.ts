@@ -165,21 +165,6 @@ export const navigationGroups: NavigationGroup[] = [
     ]
   },
   {
-    id: "documents",
-    label: "Documents",
-    items: [
-      item("document-management", "Document Management", "/documents", Files, "DocumentManagement.Read", "Shipment and finance documents with controls.")
-    ]
-  },
-  {
-    id: "portals",
-    label: "Portals",
-    items: [
-      item("customer-portal", "Customer Portal", "/customer-portal", Globe, "CustomerPortal.Read", "Customer-facing quotations, tracking, and statements."),
-      item("agent-portal", "Agent Portal", "/agent-portal", Globe, "AgentPortal.Read", "Agent shipments, POD, and commission views.")
-    ]
-  },
-  {
     id: "administration",
     label: "Administration",
     items: [

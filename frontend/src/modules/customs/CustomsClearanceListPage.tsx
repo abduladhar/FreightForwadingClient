@@ -16,14 +16,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCursorPagination } from "@/hooks/useCursorPagination";
 import { lt } from "@/modules/operationsLocalization";
 
 type FlagFilterValue = "" | "true" | "false";
 
 export function CustomsClearanceListPage() {
   const { hasPermission } = useAuth();
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const paging = useCursorPagination(25);
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [status, setStatus] = useState("");
@@ -42,10 +42,11 @@ export function CustomsClearanceListPage() {
   const [pendingBillPosting, setPendingBillPosting] = useState<FlagFilterValue>("");
 
   const query = useQuery({
-    queryKey: ["customs-jobs", pageNumber, pageSize, search, status, clearanceType, jobNumber, shipmentReferenceNo, invoiceDefined, billDefined, invoiceFullyReceived, billFullyPaid, invoiceCancelled, billCancelled, unpaidInvoice, unpaidBill, pendingInvoicePosting, pendingBillPosting],
+    queryKey: ["customs-jobs", paging.pageNumber, paging.pageSize, paging.cursor, search, status, clearanceType, jobNumber, shipmentReferenceNo, invoiceDefined, billDefined, invoiceFullyReceived, billFullyPaid, invoiceCancelled, billCancelled, unpaidInvoice, unpaidBill, pendingInvoicePosting, pendingBillPosting],
     queryFn: () => searchCustomsJobs({
-      pageNumber,
-      pageSize,
+      pageNumber: paging.pageNumber,
+      pageSize: paging.pageSize,
+      cursor: paging.cursor,
       search,
       status: status || undefined,
       clearanceType: clearanceType || undefined,
@@ -104,30 +105,30 @@ export function CustomsClearanceListPage() {
           {showFilters ? (
             <div className="rounded-lg border bg-slate-50/60 p-3">
               <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
-                <FilterField label={lt("Job Number")}><Input value={jobNumber} onChange={(event) => { setJobNumber(event.target.value); setPageNumber(1); }} placeholder={lt("Customs job number")} /></FilterField>
-                <FilterField label={lt("Reference No")}><Input value={shipmentReferenceNo} onChange={(event) => { setShipmentReferenceNo(event.target.value); setPageNumber(1); }} placeholder={lt("Shipment reference no")} /></FilterField>
+                <FilterField label={lt("Job Number")}><Input value={jobNumber} onChange={(event) => { setJobNumber(event.target.value); paging.reset(); }} placeholder={lt("Customs job number")} /></FilterField>
+                <FilterField label={lt("Reference No")}><Input value={shipmentReferenceNo} onChange={(event) => { setShipmentReferenceNo(event.target.value); paging.reset(); }} placeholder={lt("Shipment reference no")} /></FilterField>
                 <FilterField label={lt("Clearance Type")}>
-                  <select className="h-10 w-full rounded-md border px-3 text-sm" value={clearanceType} onChange={(event) => { setClearanceType(event.target.value); setPageNumber(1); }}>
+                  <select className="h-10 w-full rounded-md border px-3 text-sm" value={clearanceType} onChange={(event) => { setClearanceType(event.target.value); paging.reset(); }}>
                     <option value="">{lt("All clearance types")}</option>
                     <option value="Import">{lt("Import")}</option><option value="Export">{lt("Export")}</option><option value="Transit">{lt("Transit")}</option><option value="ReExport">{lt("ReExport")}</option>
                   </select>
                 </FilterField>
                 <FilterField label={lt("Status")}>
-                  <select className="h-10 w-full rounded-md border px-3 text-sm" value={status} onChange={(event) => { setStatus(event.target.value); setPageNumber(1); }}>
+                  <select className="h-10 w-full rounded-md border px-3 text-sm" value={status} onChange={(event) => { setStatus(event.target.value); paging.reset(); }}>
                     <option value="">{lt("All statuses")}</option>
                     {["Draft", "Document Pending", "Ready to Submit", "Submitted", "Under Review", "Query Raised", "Inspection", "Duty Assessed", "Duty Paid", "Cleared", "Rejected", "Cancelled"].map((value) => <option key={value}>{value}</option>)}
                   </select>
                 </FilterField>
-                <FlagSelect label={lt("Invoice Defined")} value={invoiceDefined} onChange={setInvoiceDefined} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Bill Defined")} value={billDefined} onChange={setBillDefined} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Invoice Fully Received")} value={invoiceFullyReceived} onChange={setInvoiceFullyReceived} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Bill Fully Paid")} value={billFullyPaid} onChange={setBillFullyPaid} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Invoice Cancelled")} value={invoiceCancelled} onChange={setInvoiceCancelled} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Bill Cancelled")} value={billCancelled} onChange={setBillCancelled} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Unpaid Invoice")} value={unpaidInvoice} onChange={setUnpaidInvoice} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Unpaid Bill")} value={unpaidBill} onChange={setUnpaidBill} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Pending Invoice To Post")} value={pendingInvoicePosting} onChange={setPendingInvoicePosting} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Pending Bill To Post")} value={pendingBillPosting} onChange={setPendingBillPosting} resetPage={() => setPageNumber(1)} />
+                <FlagSelect label={lt("Invoice Defined")} value={invoiceDefined} onChange={setInvoiceDefined} resetPage={paging.reset} />
+                <FlagSelect label={lt("Bill Defined")} value={billDefined} onChange={setBillDefined} resetPage={paging.reset} />
+                <FlagSelect label={lt("Invoice Fully Received")} value={invoiceFullyReceived} onChange={setInvoiceFullyReceived} resetPage={paging.reset} />
+                <FlagSelect label={lt("Bill Fully Paid")} value={billFullyPaid} onChange={setBillFullyPaid} resetPage={paging.reset} />
+                <FlagSelect label={lt("Invoice Cancelled")} value={invoiceCancelled} onChange={setInvoiceCancelled} resetPage={paging.reset} />
+                <FlagSelect label={lt("Bill Cancelled")} value={billCancelled} onChange={setBillCancelled} resetPage={paging.reset} />
+                <FlagSelect label={lt("Unpaid Invoice")} value={unpaidInvoice} onChange={setUnpaidInvoice} resetPage={paging.reset} />
+                <FlagSelect label={lt("Unpaid Bill")} value={unpaidBill} onChange={setUnpaidBill} resetPage={paging.reset} />
+                <FlagSelect label={lt("Pending Invoice To Post")} value={pendingInvoicePosting} onChange={setPendingInvoicePosting} resetPage={paging.reset} />
+                <FlagSelect label={lt("Pending Bill To Post")} value={pendingBillPosting} onChange={setPendingBillPosting} resetPage={paging.reset} />
               </div>
             </div>
           ) : null}
@@ -136,11 +137,16 @@ export function CustomsClearanceListPage() {
             data={query.data?.items ?? []}
             columns={columns}
             totalCount={query.data?.totalCount ?? 0}
-            pageNumber={query.data?.pageNumber ?? pageNumber}
-            pageSize={query.data?.pageSize ?? pageSize}
+            pageNumber={paging.pageNumber}
+            pageSize={query.data?.pageSize ?? paging.pageSize}
             search={search}
-            onSearchChange={(value) => { setSearch(value); setPageNumber(1); }}
-            onPaginationChange={(pn, ps) => { setPageNumber(pn); setPageSize(ps); }}
+            onSearchChange={(value) => { setSearch(value); paging.reset(); }}
+            onPaginationChange={(_, ps) => paging.setPageSize(ps)}
+            paginationMode="cursor"
+            nextCursor={query.data?.nextCursor}
+            canPreviousCursorPage={paging.canPrevious}
+            onNextCursorPage={() => paging.next(query.data?.nextCursor)}
+            onPreviousCursorPage={paging.previous}
             isLoading={query.isLoading}
             isError={query.isError}
             onRetry={() => void query.refetch()}

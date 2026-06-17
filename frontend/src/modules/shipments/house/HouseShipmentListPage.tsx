@@ -16,13 +16,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCursorPagination } from "@/hooks/useCursorPagination";
 import { lt } from "@/modules/operationsLocalization";
 
 type FlagFilterValue = "" | "true" | "false";
 
 export function HouseShipmentListPage() {
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const paging = useCursorPagination(25);
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [customer, setCustomer] = useState("");
@@ -42,10 +42,11 @@ export function HouseShipmentListPage() {
   const { hasPermission } = useAuth();
 
   const query = useQuery({
-    queryKey: ["house-shipments", pageNumber, pageSize, search, customer, houseWaybillNo, consigneeName, shipperName, originPort, destinationPort, consigneePhoneNo, shipperPhoneNo, invoiceDefined, billDefined, unpaidInvoice, unpaidBill, invoiceStatus, billStatus],
+    queryKey: ["house-shipments", paging.pageNumber, paging.pageSize, paging.cursor, search, customer, houseWaybillNo, consigneeName, shipperName, originPort, destinationPort, consigneePhoneNo, shipperPhoneNo, invoiceDefined, billDefined, unpaidInvoice, unpaidBill, invoiceStatus, billStatus],
     queryFn: () => searchHouseShipments({
-      pageNumber,
-      pageSize,
+      pageNumber: paging.pageNumber,
+      pageSize: paging.pageSize,
+      cursor: paging.cursor,
       search,
       customer: customer || undefined,
       houseWaybillNo: houseWaybillNo || undefined,
@@ -66,12 +67,12 @@ export function HouseShipmentListPage() {
 
   useEffect(() => {
     const handler = () => {
-      setPageNumber(1);
+      paging.reset();
       void query.refetch();
     };
     window.addEventListener("house-shipments:refresh", handler);
     return () => window.removeEventListener("house-shipments:refresh", handler);
-  }, [query]);
+  }, [paging.reset, query]);
 
   const columns: ColumnDef<HouseShipmentDto>[] = [
     { accessorKey: "hawbNumber", header: lt("HAWB") },
@@ -100,20 +101,20 @@ export function HouseShipmentListPage() {
           {showFilters ? (
             <div className="rounded-lg border bg-slate-50/60 p-3">
               <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
-                <FilterField label={lt("HAWB")}><Input value={houseWaybillNo} placeholder={lt("House waybill no")} onChange={(event) => { setHouseWaybillNo(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Customer")}><Input value={customer} placeholder={lt("Customer name/code")} onChange={(event) => { setCustomer(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Consignee")}><Input value={consigneeName} placeholder={lt("Consignee name")} onChange={(event) => { setConsigneeName(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Shipper")}><Input value={shipperName} placeholder={lt("Shipper name")} onChange={(event) => { setShipperName(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Origin Port")}><Input value={originPort} placeholder={lt("Origin port")} onChange={(event) => { setOriginPort(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Destination Port")}><Input value={destinationPort} placeholder={lt("Destination port")} onChange={(event) => { setDestinationPort(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Consignee Phone")}><Input value={consigneePhoneNo} placeholder={lt("Phone no")} onChange={(event) => { setConsigneePhoneNo(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FilterField label={lt("Shipper Phone")}><Input value={shipperPhoneNo} placeholder={lt("Phone no")} onChange={(event) => { setShipperPhoneNo(event.target.value); setPageNumber(1); }} /></FilterField>
-                <FlagSelect label={lt("Invoice Defined")} value={invoiceDefined} onChange={setInvoiceDefined} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Bill Defined")} value={billDefined} onChange={setBillDefined} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Unpaid Invoice")} value={unpaidInvoice} onChange={setUnpaidInvoice} resetPage={() => setPageNumber(1)} />
-                <FlagSelect label={lt("Unpaid Bill")} value={unpaidBill} onChange={setUnpaidBill} resetPage={() => setPageNumber(1)} />
-                <StatusSelect label={lt("Invoice Status")} value={invoiceStatus} onChange={setInvoiceStatus} resetPage={() => setPageNumber(1)} />
-                <StatusSelect label={lt("Bill Status")} value={billStatus} onChange={setBillStatus} resetPage={() => setPageNumber(1)} />
+                <FilterField label={lt("HAWB")}><Input value={houseWaybillNo} placeholder={lt("House waybill no")} onChange={(event) => { setHouseWaybillNo(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Customer")}><Input value={customer} placeholder={lt("Customer name/code")} onChange={(event) => { setCustomer(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Consignee")}><Input value={consigneeName} placeholder={lt("Consignee name")} onChange={(event) => { setConsigneeName(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Shipper")}><Input value={shipperName} placeholder={lt("Shipper name")} onChange={(event) => { setShipperName(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Origin Port")}><Input value={originPort} placeholder={lt("Origin port")} onChange={(event) => { setOriginPort(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Destination Port")}><Input value={destinationPort} placeholder={lt("Destination port")} onChange={(event) => { setDestinationPort(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Consignee Phone")}><Input value={consigneePhoneNo} placeholder={lt("Phone no")} onChange={(event) => { setConsigneePhoneNo(event.target.value); paging.reset(); }} /></FilterField>
+                <FilterField label={lt("Shipper Phone")}><Input value={shipperPhoneNo} placeholder={lt("Phone no")} onChange={(event) => { setShipperPhoneNo(event.target.value); paging.reset(); }} /></FilterField>
+                <FlagSelect label={lt("Invoice Defined")} value={invoiceDefined} onChange={setInvoiceDefined} resetPage={paging.reset} />
+                <FlagSelect label={lt("Bill Defined")} value={billDefined} onChange={setBillDefined} resetPage={paging.reset} />
+                <FlagSelect label={lt("Unpaid Invoice")} value={unpaidInvoice} onChange={setUnpaidInvoice} resetPage={paging.reset} />
+                <FlagSelect label={lt("Unpaid Bill")} value={unpaidBill} onChange={setUnpaidBill} resetPage={paging.reset} />
+                <StatusSelect label={lt("Invoice Status")} value={invoiceStatus} onChange={setInvoiceStatus} resetPage={paging.reset} />
+                <StatusSelect label={lt("Bill Status")} value={billStatus} onChange={setBillStatus} resetPage={paging.reset} />
               </div>
             </div>
           ) : null}
@@ -121,11 +122,16 @@ export function HouseShipmentListPage() {
             data={query.data?.items ?? []}
             columns={columns}
             totalCount={query.data?.totalCount ?? 0}
-            pageNumber={query.data?.pageNumber ?? pageNumber}
-            pageSize={query.data?.pageSize ?? pageSize}
+            pageNumber={paging.pageNumber}
+            pageSize={query.data?.pageSize ?? paging.pageSize}
             search={search}
-            onSearchChange={setSearch}
-            onPaginationChange={(pn, ps) => { setPageNumber(pn); setPageSize(ps); }}
+            onSearchChange={(value) => { setSearch(value); paging.reset(); }}
+            onPaginationChange={(_, ps) => paging.setPageSize(ps)}
+            paginationMode="cursor"
+            nextCursor={query.data?.nextCursor}
+            canPreviousCursorPage={paging.canPrevious}
+            onNextCursorPage={() => paging.next(query.data?.nextCursor)}
+            onPreviousCursorPage={paging.previous}
             isLoading={query.isLoading}
             isError={query.isError}
             onRetry={() => void query.refetch()}

@@ -4,6 +4,7 @@ import type { ApiResponse, PagedResponse } from "@/api/apiResponse";
 export interface DirectShipmentSearchParams {
   pageNumber?: number;
   pageSize?: number;
+  cursor?: string | null;
   search?: string;
   customerId?: string;
   customer?: string;
@@ -165,6 +166,14 @@ export interface DirectShipmentDto {
   unpaidBillCount: number;
 }
 
+export interface DirectShipmentPartyLookupDto {
+  partyType: "Shipper" | "Consignee" | string;
+  name: string;
+  phoneNo: string;
+  address: string;
+  lastDirectShipmentNumber: string;
+}
+
 export interface DirectShipmentStatusRequest { status: string }
 export interface DirectShipmentCancelRequest { reason?: string | null }
 export interface DirectShipmentDocumentRequest { documentReference: string }
@@ -176,6 +185,10 @@ const basePath = "/api/direct-shipments";
 export async function searchDirectShipments(params: DirectShipmentSearchParams) {
   const response = await httpClient.get<ApiResponse<PagedResponse<DirectShipmentDto>>>(basePath, { params: { sortBy: "CreatedDate", sortDirection: "desc", ...params } });
   return response.data.data;
+}
+export async function searchDirectShipmentParties(params: { partyType?: "Shipper" | "Consignee"; search: string; pageSize?: number }) {
+  const response = await httpClient.get<ApiResponse<DirectShipmentPartyLookupDto[]>>(`${basePath}/parties/search`, { params });
+  return response.data.data ?? [];
 }
 export async function getDirectShipment(id: string) {
   const response = await httpClient.get<ApiResponse<DirectShipmentDto>>(`${basePath}/${id}`);

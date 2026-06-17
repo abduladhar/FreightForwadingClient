@@ -33,6 +33,11 @@ interface DataTableProps<TData> {
   filters?: ReactNode;
   onSearchChange?: (value: string) => void;
   onPaginationChange: (pageNumber: number, pageSize: number) => void;
+  paginationMode?: "offset" | "cursor";
+  nextCursor?: string | null;
+  canPreviousCursorPage?: boolean;
+  onNextCursorPage?: () => void;
+  onPreviousCursorPage?: () => void;
   onSortingChange?: (sorting: SortingState) => void;
   onRetry?: () => void;
   rowActions?: (row: TData) => ReactNode;
@@ -52,6 +57,11 @@ export function DataTable<TData>({
   filters,
   onSearchChange,
   onPaginationChange,
+  paginationMode = "offset",
+  nextCursor,
+  canPreviousCursorPage,
+  onNextCursorPage,
+  onPreviousCursorPage,
   onSortingChange,
   onRetry,
   rowActions
@@ -92,6 +102,7 @@ export function DataTable<TData>({
     pageCount: Math.max(1, Math.ceil(totalCount / pageSize))
   });
 
+  const isCursorMode = paginationMode === "cursor";
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
   const startItem = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1;
   const endItem = Math.min(totalCount, pageNumber * pageSize);
@@ -281,7 +292,9 @@ export function DataTable<TData>({
 
       <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900 lg:flex-row lg:items-center">
         <div className="text-sm text-muted-foreground">
-          {m("Showing")} {startItem} {m("to")} {endItem} {m("of")} {totalCount}
+          {isCursorMode
+            ? <>{m("Showing")} {data.length} {m("rows")} - {m("Page")} {pageNumber}</>
+            : <>{m("Showing")} {startItem} {m("to")} {endItem} {m("of")} {totalCount}</>}
         </div>
         <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
           <span className="text-sm text-muted-foreground">{m("Rows")}:</span>
@@ -293,14 +306,24 @@ export function DataTable<TData>({
             value={pageSize}
             onChange={(event) => onPaginationChange(1, Number(event.target.value) || pageSize)}
           />
-          <Button variant="outline" size="sm" onClick={() => onPaginationChange(Math.max(1, pageNumber - 1), pageSize)} disabled={pageNumber <= 1}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => isCursorMode ? onPreviousCursorPage?.() : onPaginationChange(Math.max(1, pageNumber - 1), pageSize)}
+            disabled={isCursorMode ? !canPreviousCursorPage : pageNumber <= 1}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="whitespace-nowrap text-sm">{m("Page")} {pageNumber} / {pageCount}</span>
-          <Button variant="outline" size="sm" onClick={() => onPaginationChange(Math.min(pageCount, pageNumber + 1), pageSize)} disabled={pageNumber >= pageCount}>
+          <span className="whitespace-nowrap text-sm">{m("Page")} {pageNumber}{isCursorMode ? "" : ` / ${pageCount}`}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => isCursorMode ? onNextCursorPage?.() : onPaginationChange(Math.min(pageCount, pageNumber + 1), pageSize)}
+            disabled={isCursorMode ? !nextCursor : pageNumber >= pageCount}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <DropdownMenu>
+          {!isCursorMode ? <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-4 w-4" />
@@ -310,7 +333,7 @@ export function DataTable<TData>({
               <DropdownMenuItem onClick={() => onPaginationChange(1, pageSize)}>{m("First page")}</DropdownMenuItem>
               <DropdownMenuItem onClick={() => onPaginationChange(pageCount, pageSize)}>{m("Last page")}</DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> : null}
         </div>
       </div>
     </div>

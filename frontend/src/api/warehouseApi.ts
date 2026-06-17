@@ -20,7 +20,7 @@ export async function createWarehouse(request: WarehouseRequest) { const respons
 export async function updateWarehouse(id: string, request: WarehouseRequest) { const response = await httpClient.put<ApiResponse<WarehouseDto>>(`/api/warehouses/${id}`, request); return response.data.data; }
 export async function deleteWarehouse(id: string) { await httpClient.delete(`/api/warehouses/${id}`); }
 
-export async function searchWarehouseLocations(params: { pageNumber?: number; pageSize?: number; search?: string; isActive?: boolean }) {
+export async function searchWarehouseLocations(params: { pageNumber?: number; pageSize?: number; search?: string; isActive?: boolean; warehouseId?: string }) {
   const response = await httpClient.get<ApiResponse<PagedResponse<WarehouseLocationDto>>>("/api/warehouses/locations", { params });
   return response.data.data;
 }

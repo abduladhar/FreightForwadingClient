@@ -128,6 +128,7 @@ export function OperationalReportPage({
   const salesmen = useQuery({ queryKey: ["op-report-salesmen"], queryFn: () => getEmployees(true, true) });
   const carriers = useQuery({ queryKey: ["op-report-carriers"], queryFn: () => searchCarriers({ pageNumber: 1, pageSize: 500, isActive: true }) });
   const currencies = useQuery({ queryKey: ["op-report-currencies"], queryFn: getCurrencies });
+  const currencyById = useMemo(() => new Map((currencies.data ?? []).map((currency) => [currency.id, currency.currencyCode])), [currencies.data]);
 
   const request = useMemo<OperationalReportRequest>(() => ({
     pageNumber,
@@ -156,8 +157,19 @@ export function OperationalReportPage({
   });
 
   const rows = report.data?.data ?? [];
+  const displayColumns = useMemo<ColumnDef<OperationalReportRow>[]>(() => {
+    const hasCurrencyColumn = columns.some((column) => String(column.id ?? ("accessorKey" in column ? column.accessorKey : "")) === "currencyCode");
+    if (hasCurrencyColumn) return columns;
+    return insertAfter(columns, {
+      id: "currencyCode",
+      header: lt("Currency"),
+      cell: ({ row }) => currencyById.get(String(row.original.currencyId ?? "")) ?? workspace.baseCurrency
+    }, ["modeOfTransport", "status", "shipmentType"]);
+  }, [columns, currencyById, workspace.baseCurrency]);
   const summary = summaryBuilder?.(rows) ?? defaultSummary(rows);
   const canExport = hasPermission("Reports.Export");
+  const rangeWarning = reportRangeWarning(applied.fromDate, applied.toDate, applied.financialYearId);
+  const canSafeExport = canExport && !rangeWarning;
 
   async function onBackendExport(format: "pdf" | "excel" | "csv") {
     const result = await exportOperationalReport(reportType, { ...request, exportFormat: format });
@@ -177,7 +189,7 @@ export function OperationalReportPage({
   }
 
   async function onClientPdf() {
-    const exportRows = rows.map((row) => Object.fromEntries(Object.entries(row)) as Record<string, unknown>);
+    const exportRows = rows.map((row) => ({ ...Object.fromEntries(Object.entries(row)), currencyCode: currencyById.get(String(row.currencyId ?? "")) ?? workspace.baseCurrency }) as Record<string, unknown>);
     await exportPdfReport({
       fileName: `${reportType}.pdf`,
       title,
@@ -186,12 +198,12 @@ export function OperationalReportPage({
       documentDate: new Date(),
       currencyCode: workspace.baseCurrency,
       cultureCode: workspace.cultureCode,
-      columns: columns.map((x) => ({ key: String(x.id ?? ("accessorKey" in x ? x.accessorKey : "value") ?? "value"), label: String(x.header ?? x.id ?? lt("Value")) })),
+      columns: displayColumns.map((x) => ({ key: String(x.id ?? ("accessorKey" in x ? x.accessorKey : "value") ?? "value"), label: String(x.header ?? x.id ?? lt("Value")) })),
       rows: exportRows
     });
   }
   async function onClientExcel() {
-    const mapped = rows.map((x) => ({ ...x, eventDate: x.eventDate ?? "" }));
+    const mapped = rows.map((x) => ({ ...x, eventDate: x.eventDate ?? "", currencyCode: currencyById.get(String(x.currencyId ?? "")) ?? workspace.baseCurrency }));
     const keys = mapped[0] ? Object.keys(mapped[0]) : ["referenceNumber"];
     await exportExcelReport({
       fileName: `${reportType}.xlsx`,
@@ -204,7 +216,7 @@ export function OperationalReportPage({
     });
   }
   function onClientCsv() {
-    const exportRows = rows.map((row) => Object.fromEntries(Object.entries(row)) as Record<string, unknown>);
+    const exportRows = rows.map((row) => ({ ...Object.fromEntries(Object.entries(row)), currencyCode: currencyById.get(String(row.currencyId ?? "")) ?? workspace.baseCurrency }) as Record<string, unknown>);
     exportFullCsv(exportRows, `${reportType}.csv`);
   }
 
@@ -276,21 +288,22 @@ export function OperationalReportPage({
         <CardTitle>{lt("Report Output")}</CardTitle>
         <div className="flex items-center gap-2">
           {canExport ? <ExportButtons
-            onExportPdf={() => void onClientPdf()}
-            onExportExcel={() => void onClientExcel()}
-            onExportCsv={() => void onBackendExport("csv")}
+            onExportPdf={!rangeWarning ? () => void onClientPdf() : undefined}
+            onExportExcel={!rangeWarning ? () => void onClientExcel() : undefined}
+            onExportCsv={!rangeWarning ? () => void onBackendExport("csv") : undefined}
           /> : null}
-          {canExport ? <Button variant="outline" size="sm" onClick={() => void onClientPdf()}>{lt("PDF")} ({lt("Client")})</Button> : null}
-          {canExport ? <Button variant="outline" size="sm" onClick={() => void onClientExcel()}>{lt("Excel")} ({lt("Client")})</Button> : null}
-          {canExport ? <Button variant="outline" size="sm" onClick={() => void onClientCsv()}>{lt("CSV")} ({lt("Client")})</Button> : null}
+          {canExport ? <Button variant="outline" size="sm" onClick={() => void onClientPdf()} disabled={!canSafeExport}>{lt("PDF")} ({lt("Client")})</Button> : null}
+          {canExport ? <Button variant="outline" size="sm" onClick={() => void onClientExcel()} disabled={!canSafeExport}>{lt("Excel")} ({lt("Client")})</Button> : null}
+          {canExport ? <Button variant="outline" size="sm" onClick={() => void onClientCsv()} disabled={!canSafeExport}>{lt("CSV")} ({lt("Client")})</Button> : null}
           {hasPermission("Reports.Print") ? <Button variant="outline" size="sm" onClick={() => void onPrintPreview()}>{lt("Print Preview")}</Button> : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {rangeWarning ? <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{rangeWarning}</div> : null}
         {summary.length ? <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">{summary.map((x) => <div key={x.label} className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{x.label}</p><p className="text-lg font-semibold">{x.value}</p></div>)}</div> : null}
         <DataTable
           data={rows}
-          columns={columns}
+          columns={displayColumns}
           totalCount={rows.length}
           pageNumber={pageNumber}
           pageSize={pageSize}
@@ -319,8 +332,22 @@ function defaultSummary(rows: OperationalReportRow[]) {
   ];
 }
 
+function insertAfter<TData, TValue>(columns: ColumnDef<TData, TValue>[], column: ColumnDef<TData, TValue>, preferredKeys: string[]) {
+  const index = columns.findIndex((candidate) => preferredKeys.includes(String(candidate.id ?? ("accessorKey" in candidate ? candidate.accessorKey : ""))));
+  if (index < 0) return [...columns, column];
+  return [...columns.slice(0, index + 1), column, ...columns.slice(index + 1)];
+}
+
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return <div className="space-y-1"><p className="text-xs text-muted-foreground">{label}</p>{children}</div>;
+}
+
+function reportRangeWarning(fromDate: string, toDate: string, financialYearId: string) {
+  if (financialYearId) return "";
+  if (!fromDate || !toDate) return lt("Exports require a bounded from/to date range at production scale.");
+  const days = Math.floor((new Date(toDate).getTime() - new Date(fromDate).getTime()) / 86400000);
+  if (days > 366) return lt("Exports over 366 days should run from reporting summary tables.");
+  return "";
 }
 
 function safeDecodeBase64(input: string) {

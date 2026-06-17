@@ -1,12 +1,12 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { LocateFixed, Plus, Search, Trash2 } from "lucide-react";
 import { getQuotation } from "@/api/quotationApi";
 import { getActiveShippingPortsForDropdown } from "@/api/shippingPortApi";
 import { getActivePackageTypesForDropdown } from "@/api/packageTypeApi";
 import { getActiveCountriesForDropdown } from "@/api/countryApi";
 import { getCustomer } from "@/api/customerApi";
-import type { DirectShipmentItemRequest, DirectShipmentRequest, DirectShipmentUpdateRequest } from "@/api/directShipmentApi";
+import { searchDirectShipmentParties, type DirectShipmentItemRequest, type DirectShipmentPartyLookupDto, type DirectShipmentRequest, type DirectShipmentUpdateRequest } from "@/api/directShipmentApi";
 import { DirectGoodsSelectionTable } from "@/modules/shipments/direct/DirectGoodsSelectionTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -176,12 +176,24 @@ export function DirectShipmentForm({
       <div className="md:col-span-3 grid gap-4 md:grid-cols-2">
         <div className="rounded-lg border p-3 space-y-3">
           <h3 className="text-sm font-semibold">{lt("Shipper Information")}</h3>
+          <PartyLookup
+            partyType="Shipper"
+            currentName={value.shipment.shipperName}
+            currentPhone={value.shipment.shipperPhoneNumber}
+            onApply={(party) => setValue({ ...value, shipment: { ...value.shipment, shipperName: party.name, shipperPhoneNumber: party.phoneNo, shipperAddress: party.address } })}
+          />
           <Field label={lt("Shipper Name")}><Input value={(value.shipment.shipperName ?? "")} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, shipperName: e.target.value } })} /></Field>
           <Field label={lt("Shipper Phone Number")}><Input value={(value.shipment.shipperPhoneNumber ?? "")} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, shipperPhoneNumber: e.target.value } })} /></Field>
           <Field label={lt("Shipper Address")}><Textarea rows={3} value={(value.shipment.shipperAddress ?? "")} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, shipperAddress: e.target.value } })} /></Field>
         </div>
         <div className="rounded-lg border p-3 space-y-3">
           <h3 className="text-sm font-semibold">{lt("Consignee Information")}</h3>
+          <PartyLookup
+            partyType="Consignee"
+            currentName={value.shipment.consigneeName}
+            currentPhone={value.shipment.consigneePhoneNumber}
+            onApply={(party) => setValue({ ...value, shipment: { ...value.shipment, consigneeName: party.name, consigneePhoneNumber: party.phoneNo, consigneeAddress: party.address } })}
+          />
           <Field label={lt("Consignee Name")}><Input value={(value.shipment.consigneeName ?? "")} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, consigneeName: e.target.value } })} /></Field>
           <Field label={lt("Consignee Phone Number")}><Input value={(value.shipment.consigneePhoneNumber ?? "")} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, consigneePhoneNumber: e.target.value } })} /></Field>
           <Field label={lt("Consignee Address")}><Textarea rows={3} value={(value.shipment.consigneeAddress ?? "")} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, consigneeAddress: e.target.value } })} /></Field>
@@ -322,6 +334,69 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 function ItemField({ label, children }: { label: string; children: ReactNode }) {
   return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</Label>{children}</div>;
 }
+
+function PartyLookup({
+  partyType,
+  currentName,
+  currentPhone,
+  onApply
+}: {
+  partyType: "Shipper" | "Consignee";
+  currentName?: string | null;
+  currentPhone?: string | null;
+  onApply: (party: DirectShipmentPartyLookupDto) => void;
+}) {
+  const [queryText, setQueryText] = useState("");
+  const lookup = useQuery({
+    queryKey: ["direct-shipment-party-lookup", partyType, queryText],
+    queryFn: () => searchDirectShipmentParties({ partyType, search: queryText, pageSize: 8 }),
+    enabled: queryText.trim().length >= 2
+  });
+  const quickSearches = [currentName, currentPhone].map((x) => x?.trim()).filter((x): x is string => Boolean(x && x.length >= 2));
+
+  return (
+    <div className="space-y-2 rounded-md border bg-slate-50/70 p-2">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+        <Input
+          value={queryText}
+          onChange={(e) => setQueryText(e.target.value)}
+          placeholder={lt(`Search ${partyType.toLowerCase()} name or phone`)}
+          className="pl-8"
+        />
+      </div>
+      {quickSearches.length ? (
+        <div className="flex flex-wrap gap-2">
+          {quickSearches.map((item) => (
+            <Button key={item} type="button" size="sm" variant="outline" onClick={() => setQueryText(item)}>
+              <LocateFixed className="h-3.5 w-3.5" />
+              {item}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+      {lookup.data?.length ? (
+        <div className="max-h-48 overflow-auto rounded-md border bg-white">
+          {lookup.data.map((party) => (
+            <button
+              key={`${party.partyType}-${party.name}-${party.phoneNo}-${party.lastDirectShipmentNumber}`}
+              type="button"
+              className="block w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-slate-50"
+              onClick={() => onApply(party)}
+            >
+              <span className="block font-medium text-slate-900">{party.name || party.phoneNo || "-"}</span>
+              <span className="block text-xs text-slate-600">{party.phoneNo || "-"} · {party.lastDirectShipmentNumber}</span>
+              {party.address ? <span className="line-clamp-2 block text-xs text-slate-500">{party.address}</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : queryText.trim().length >= 2 && !lookup.isLoading ? (
+        <p className="text-xs text-muted-foreground">{lt("No previous party found.")}</p>
+      ) : null}
+    </div>
+  );
+}
+
 function FilterableSelect({
   value,
   onChange,
