@@ -52,12 +52,15 @@ export function MasterShipmentForm({
     },
     selectedHouseShipments: []
   });
-  const shippingPorts = useQuery({ queryKey: ["master-shipment-shipping-ports"], queryFn: () => getActiveShippingPortsForDropdown() });
   const carriers = useQuery({
     queryKey: ["master-shipment-carriers"],
     queryFn: () => searchCarriers({ pageNumber: 1, pageSize: 500, isActive: true })
   });
   const mode = value.shipment.modeOfTransport;
+  const shippingPorts = useQuery({
+    queryKey: ["master-shipment-shipping-ports", mode],
+    queryFn: () => getActiveShippingPortsForDropdown(undefined, mode)
+  });
   const legacyCarrierValue = !value.shipment.carrierId && value.shipment.carrierName ? "__legacy_carrier__" : "";
   const carrierOptions = [
     ...(legacyCarrierValue ? [{ value: legacyCarrierValue, label: value.shipment.carrierName! }] : []),
@@ -78,13 +81,15 @@ export function MasterShipmentForm({
             shipment: {
               ...value.shipment,
               modeOfTransport: nextMode,
+              originPortGuid: null,
+              destinationPortGuid: null,
               flightNumber: nextMode === "Air" ? value.shipment.flightNumber : null,
               vesselName: nextMode === "Sea" ? value.shipment.vesselName : null,
               voyageNumber: nextMode === "Sea" ? value.shipment.voyageNumber : null,
               truckNumber: nextMode === "Road" ? value.shipment.truckNumber : null
             }
           });
-        }}><option>{lt("Air")}</option><option>{lt("Sea")}</option><option>{lt("Road")}</option><option>{lt("Courier")}</option></select></Field>
+        }}><option value="Air">{lt("Air")}</option><option value="Sea">{lt("Sea")}</option><option value="Road">{lt("Road")}</option><option value="Courier">{lt("Courier")}</option></select></Field>
         <Field label={lt("Carrier")}>
           <FilterableSelect
             value={value.shipment.carrierId ?? legacyCarrierValue}
@@ -222,6 +227,7 @@ export function MasterShipmentForm({
               <Button type="button" variant="ghost" onClick={() => setIsAssignModalOpen(false)}>{lt("Close")}</Button>
             </div>
             <HouseShipmentSelectionTable
+              transportMode={value.shipment.modeOfTransport}
               defaultLoadMode={assignMode}
               hideOtherModeSwitch
               isOpen={isAssignModalOpen}

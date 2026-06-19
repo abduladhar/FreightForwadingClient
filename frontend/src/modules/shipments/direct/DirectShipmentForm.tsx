@@ -36,7 +36,6 @@ export function DirectShipmentForm({
   isSubmitting?: boolean;
 }) {
   const toast = useToast();
-  const shippingPorts = useQuery({ queryKey: ["direct-shipment-shipping-ports"], queryFn: () => getActiveShippingPortsForDropdown() });
   const packageTypes = useQuery({ queryKey: ["direct-shipment-package-types"], queryFn: () => getActivePackageTypesForDropdown() });
   const countries = useQuery({ queryKey: ["direct-shipment-countries"], queryFn: () => getActiveCountriesForDropdown() });
   const [value, setValue] = useState<DirectShipmentFormValue>(initialValue ?? {
@@ -72,6 +71,10 @@ export function DirectShipmentForm({
     documentReference: ""
   });
   const mode = value.shipment.modeOfTransport;
+  const shippingPorts = useQuery({
+    queryKey: ["direct-shipment-shipping-ports", mode],
+    queryFn: () => getActiveShippingPortsForDropdown(undefined, mode)
+  });
   const [showGrnLoader, setShowGrnLoader] = useState(false);
   const [isLoadingQuotation, setIsLoadingQuotation] = useState(false);
 
@@ -166,6 +169,10 @@ export function DirectShipmentForm({
           shipment: {
             ...value.shipment,
             modeOfTransport: nextMode,
+            originPortGuid: null,
+            destinationPortGuid: null,
+            origin: "",
+            destination: "",
             flightNumber: nextMode === "Air" ? value.shipment.flightNumber : null,
             vesselName: nextMode === "Sea" ? value.shipment.vesselName : null,
             truckNumber: nextMode === "Road" ? value.shipment.truckNumber : null,

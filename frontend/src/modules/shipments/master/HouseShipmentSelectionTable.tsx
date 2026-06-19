@@ -38,12 +38,14 @@ export type AssignmentRow = {
 
 export function HouseShipmentSelectionTable({
   onApply,
+  transportMode,
   defaultLoadMode = "house",
   hideOtherModeSwitch = false,
   existingAssignments = [],
   isOpen: _isOpen = false,
 }: {
   onApply: (rows: AssignmentRow[], mode: "house" | "grn") => void;
+  transportMode?: string;
   defaultLoadMode?: "house" | "grn";
   hideOtherModeSwitch?: boolean;
   existingAssignments?: AssignmentRow[];
@@ -59,7 +61,10 @@ export function HouseShipmentSelectionTable({
   const [selected, setSelected] = useState<Record<string, AssignmentRow>>({});
 
   const customers = useQuery({ queryKey: ["master-customers"], queryFn: () => searchCustomers({ pageNumber: 1, pageSize: 200, isActive: true }) });
-  const shippingPorts = useQuery({ queryKey: ["master-shipping-ports-filter"], queryFn: () => getActiveShippingPortsForDropdown() });
+  const shippingPorts = useQuery({
+    queryKey: ["master-shipping-ports-filter", transportMode],
+    queryFn: () => getActiveShippingPortsForDropdown(undefined, transportMode)
+  });
   const houses = useQuery({
     queryKey: ["master-house-selector", customerId, fromDate, toDate, hawbSearch],
     queryFn: () => searchHouseShipments({ pageNumber: 1, pageSize: 500, customerId: customerId || undefined, search: hawbSearch || undefined }),

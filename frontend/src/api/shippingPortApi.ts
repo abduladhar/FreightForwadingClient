@@ -68,7 +68,12 @@ export async function deleteShippingPort(id: string) {
   await httpClient.delete(`/api/shipping-ports/delete-shipping-port/${id}`);
 }
 
-export async function getActiveShippingPortsForDropdown(search?: string) {
-  const response = await httpClient.get<ApiResponse<ShippingPortDto[]>>("/api/shipping-ports/active-dropdown", { params: { search } });
+export async function getActiveShippingPortsForDropdown(search?: string, portType?: string) {
+  const response = await httpClient.get<ApiResponse<ShippingPortDto[]>>("/api/shipping-ports/active-dropdown", {
+    params: {
+      search: search || undefined,
+      portType: portType || undefined
+    }
+  });
   return response.data.data;
 }

@@ -41,7 +41,6 @@ export function HouseShipmentForm({
   enableGoodsSelection?: boolean;
 }) {
   const toast = useToast();
-  const shippingPorts = useQuery({ queryKey: ["house-shipment-shipping-ports"], queryFn: () => getActiveShippingPortsForDropdown() });
   const packageTypes = useQuery({ queryKey: ["house-shipment-package-types"], queryFn: () => getActivePackageTypesForDropdown() });
   const countries = useQuery({ queryKey: ["house-shipment-countries"], queryFn: () => getActiveCountriesForDropdown() });
 
@@ -71,6 +70,10 @@ export function HouseShipmentForm({
     labelTemplateCode: "DEFAULT",
     documents: [],
     selectedGoods: []
+  });
+  const shippingPorts = useQuery({
+    queryKey: ["house-shipment-shipping-ports", value.transportMode],
+    queryFn: () => getActiveShippingPortsForDropdown(undefined, value.transportMode)
   });
 
   useEffect(() => {
@@ -258,7 +261,17 @@ export function HouseShipmentForm({
           />
         </Field>
         <Field label={lt("Transport Mode")}>
-          <select className="h-10 w-full rounded-md border px-3 text-sm" value={value.transportMode} onChange={(e) => setValue({ ...value, transportMode: e.target.value })}>
+          <select className="h-10 w-full rounded-md border px-3 text-sm" value={value.transportMode} onChange={(e) => setValue({
+            ...value,
+            transportMode: e.target.value,
+            shipment: {
+              ...value.shipment,
+              originPortGuid: null,
+              destinationPortGuid: null,
+              origin: "",
+              destination: ""
+            }
+          })}>
             <option value="Air">{lt("Air")}</option><option value="Sea">{lt("Sea")}</option><option value="Road">{lt("Road")}</option><option value="Courier">{lt("Courier")}</option>
           </select>
         </Field>

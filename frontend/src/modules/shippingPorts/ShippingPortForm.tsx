@@ -83,6 +83,7 @@ export function ShippingPortForm({
           <option value="Sea">{m("Sea")}</option>
           <option value="Air">{m("Air")}</option>
           <option value="Road">{m("Road")}</option>
+          <option value="Courier">{m("Courier")}</option>
           <option value="Inland">{m("Inland")}</option>
         </select>
       </Field>

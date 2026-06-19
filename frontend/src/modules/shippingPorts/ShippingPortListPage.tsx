@@ -92,6 +92,7 @@ export function ShippingPortListPage() {
               <option value="Sea">{m("Sea")}</option>
               <option value="Air">{m("Air")}</option>
               <option value="Road">{m("Road")}</option>
+              <option value="Courier">{m("Courier")}</option>
               <option value="Inland">{m("Inland")}</option>
             </select>
             <select className="h-10 rounded-md border px-3 text-sm" value={active} onChange={(event) => setActive(event.target.value as "" | "true" | "false")}>
