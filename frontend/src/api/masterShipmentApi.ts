@@ -4,6 +4,7 @@ import type { ApiResponse, PagedResponse } from "@/api/apiResponse";
 export interface MasterShipmentSearchParams {
   pageNumber?: number;
   pageSize?: number;
+  cursor?: string | null;
   search?: string;
   status?: string;
   modeOfTransport?: string;

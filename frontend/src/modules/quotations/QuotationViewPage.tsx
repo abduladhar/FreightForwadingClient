@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowRightLeft, CheckCircle2, Mail, Pencil, Printer, Send, XCircle } from "lucide-react";
+import { getShipmentDocuments } from "@/api/documentApi";
 import { cancelQuotation, getQuotation, sendQuotationEmail, submitQuotation } from "@/api/quotationApi";
 import { getCurrencies } from "@/api/currencyApi";
 import { PermissionButton } from "@/auth/PermissionButton";
 import { AuditTrailButton } from "@/components/common/AuditTrailButton";
 import { CurrencyAmount } from "@/components/common/CurrencyAmount";
+import { DocumentUploadPanel } from "@/components/common/DocumentUploadPanel";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +22,7 @@ export function QuotationViewPage() {
   const [emailTo, setEmailTo] = useState("");
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["quotation", quotationId], queryFn: () => getQuotation(quotationId!), enabled: Boolean(quotationId) });
+  const documents = useQuery({ queryKey: ["documents", "Quotation", quotationId], queryFn: () => getShipmentDocuments("Quotation", quotationId!), enabled: Boolean(quotationId) });
   const currencies = useQuery({ queryKey: ["quotation-currencies"], queryFn: getCurrencies });
   const submit = useMutation({ mutationFn: submitQuotation, onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["quotation", quotationId] }) });
   const cancel = useMutation({ mutationFn: ({ id, reason }: { id: string; reason?: string }) => cancelQuotation(id, reason), onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["quotation", quotationId] }) });
@@ -69,6 +72,7 @@ export function QuotationViewPage() {
             </div>
           </CardContent>
         </Card>
+        <DocumentUploadPanel moduleName="Quotation" entityId={quotationId} referenceNumber={quotation.quotationNumber} defaultDocumentName={q("Quotation Document")} defaultDocumentCategory={q("Quotation")} emptyText={q("No documents uploaded for this quotation.")} documents={documents.data ?? []} onRefresh={() => void documents.refetch()} />
       </> : <Card className={masterDataPanelClass}><CardContent className={`${masterDataPanelContentClass} text-sm text-muted-foreground`}>{q("Loading quotation...")}</CardContent></Card>}
     </div>
   );

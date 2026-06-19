@@ -16,21 +16,21 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useCursorPagination } from "@/hooks/useCursorPagination";
 import { lt } from "@/modules/operationsLocalization";
 
 export function InvoiceListPage() {
   const [searchParams] = useSearchParams();
   const sourceType = searchParams.get("sourceType") ?? undefined;
   const sourceId = searchParams.get("sourceId") ?? undefined;
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const paging = useCursorPagination(25);
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
   const { hasPermission } = useAuth();
   const currencies = useQuery({ queryKey: ["tenant-currencies", "invoice-list"], queryFn: getTenantCurrencies });
   const query = useQuery({
-    queryKey: ["invoices", pageNumber, pageSize, search, sourceType, sourceId],
-    queryFn: () => searchInvoices({ pageNumber, pageSize, search, sourceType, sourceId })
+    queryKey: ["invoices", paging.pageNumber, paging.pageSize, paging.cursor, search, sourceType, sourceId],
+    queryFn: () => searchInvoices({ pageNumber: paging.pageNumber, pageSize: paging.pageSize, cursor: paging.cursor, search, sourceType, sourceId })
   });
   useEffect(() => {
     const refresh = () => {
@@ -58,7 +58,7 @@ export function InvoiceListPage() {
     { accessorKey: "status", header: lt("Status"), cell: ({ row }) => <StatusBadge status={row.original.status} /> }
   ];
 
-  return <div className="space-y-4"><PageHeader title={lt("Customer Invoices")} description={description} actions={<><AuditTrailButton /><PermissionButton asChild permission="Invoice.Create"><Link to="/invoices/new?sourceType=Custom"><FilePlus2 className="h-4 w-4" />{lt("Custom Invoice")}</Link></PermissionButton><PermissionButton asChild permission="Invoice.Create"><Link to={createInvoicePath}><Plus className="h-4 w-4" />{lt("New Invoice")}</Link></PermissionButton></>} />{sourceType && sourceId ? <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">{lt("Showing invoices for")} <span className="font-semibold">{displaySourceType(sourceType)}</span>. <Link className="underline" to="/invoices">{lt("Clear filter")}</Link></div> : null}<Card><CardContent className="pt-6"><DataTable data={query.data?.items ?? []} columns={columns} totalCount={query.data?.totalCount ?? 0} pageNumber={query.data?.pageNumber ?? pageNumber} pageSize={query.data?.pageSize ?? pageSize} search={search} onSearchChange={setSearch} onPaginationChange={(pn, ps) => { setPageNumber(pn); setPageSize(ps); }} isLoading={query.isLoading} isError={query.isError} onRetry={() => void query.refetch()} rowActions={(row) => <InvoiceActions row={row} hasPermission={hasPermission} approve={() => void approve.mutateAsync(row.id)} cancel={async () => { await cancel.mutateAsync({ id: row.id, reason: "Cancelled from list action" }); }} />} /></CardContent></Card></div>;
+  return <div className="space-y-4"><PageHeader title={lt("Customer Invoices")} description={description} actions={<><AuditTrailButton /><PermissionButton asChild permission="Invoice.Create"><Link to="/invoices/new?sourceType=Custom"><FilePlus2 className="h-4 w-4" />{lt("Custom Invoice")}</Link></PermissionButton><PermissionButton asChild permission="Invoice.Create"><Link to={createInvoicePath}><Plus className="h-4 w-4" />{lt("New Invoice")}</Link></PermissionButton></>} />{sourceType && sourceId ? <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">{lt("Showing invoices for")} <span className="font-semibold">{displaySourceType(sourceType)}</span>. <Link className="underline" to="/invoices">{lt("Clear filter")}</Link></div> : null}<Card><CardContent className="pt-6"><DataTable data={query.data?.items ?? []} columns={columns} totalCount={query.data?.totalCount ?? 0} pageNumber={paging.pageNumber} pageSize={query.data?.pageSize ?? paging.pageSize} search={search} onSearchChange={(value) => { setSearch(value); paging.reset(); }} onPaginationChange={(_, ps) => paging.setPageSize(ps)} paginationMode="cursor" nextCursor={query.data?.nextCursor} canPreviousCursorPage={paging.canPrevious} onNextCursorPage={() => paging.next(query.data?.nextCursor)} onPreviousCursorPage={paging.previous} isLoading={query.isLoading} isError={query.isError} onRetry={() => void query.refetch()} rowActions={(row) => <InvoiceActions row={row} hasPermission={hasPermission} approve={() => void approve.mutateAsync(row.id)} cancel={async () => { await cancel.mutateAsync({ id: row.id, reason: "Cancelled from list action" }); }} />} /></CardContent></Card></div>;
 }
 
 function InvoiceActions({ row, hasPermission, approve, cancel }: { row: InvoiceDto; hasPermission: (permission?: string | string[]) => boolean; approve: () => void; cancel: () => Promise<void> }) {

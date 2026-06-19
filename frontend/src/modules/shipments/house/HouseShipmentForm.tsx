@@ -1,12 +1,12 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { LocateFixed, Trash2 } from "lucide-react";
+import { LocateFixed, Search, Trash2 } from "lucide-react";
 import { getQuotation } from "@/api/quotationApi";
 import { getActiveShippingPortsForDropdown } from "@/api/shippingPortApi";
 import { getActivePackageTypesForDropdown } from "@/api/packageTypeApi";
 import { getActiveCountriesForDropdown } from "@/api/countryApi";
 import { getCustomer } from "@/api/customerApi";
-import type { HouseShipmentRequest, HouseShipmentUpdateRequest, HouseShipmentItemRequest } from "@/api/houseShipmentApi";
+import { searchHouseShipmentParties, type HouseShipmentPartyLookupDto, type HouseShipmentRequest, type HouseShipmentUpdateRequest, type HouseShipmentItemRequest } from "@/api/houseShipmentApi";
 import { GoodsSelectionTable } from "@/modules/shipments/house/GoodsSelectionTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -325,6 +325,12 @@ export function HouseShipmentForm({
         <div className="md:col-span-3 grid gap-4 md:grid-cols-2">
           <div className="space-y-3 rounded-md border p-3">
             <h3 className="text-sm font-medium">{lt("Shipper Information")}</h3>
+            <PartyLookup
+              partyType="Shipper"
+              currentName={(value.shipment as HouseShipmentRequest).shipperName ?? ""}
+              currentPhone={(value.shipment as HouseShipmentRequest).shipperContactNo ?? ""}
+              onApply={(party) => setValue({ ...value, shipment: { ...value.shipment, shipperName: party.name, shipperContactNo: party.phoneNo, shipperAddress: party.address } })}
+            />
             <Field label={lt("Shipper Name")}><Input value={(value.shipment as HouseShipmentRequest).shipperName ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, shipperName: e.target.value } })} /></Field>
             <Field label={lt("Shipper Contact No")}><Input value={(value.shipment as HouseShipmentRequest).shipperContactNo ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, shipperContactNo: e.target.value } })} /></Field>
             <Field label={lt("Shipper Address")}>
@@ -337,6 +343,12 @@ export function HouseShipmentForm({
           </div>
           <div className="space-y-3 rounded-md border p-3">
             <h3 className="text-sm font-medium">{lt("Consignee Information")}</h3>
+            <PartyLookup
+              partyType="Consignee"
+              currentName={(value.shipment as HouseShipmentRequest).consigneeName ?? ""}
+              currentPhone={(value.shipment as HouseShipmentRequest).consigneeContactNo ?? ""}
+              onApply={(party) => setValue({ ...value, shipment: { ...value.shipment, consigneeName: party.name, consigneeContactNo: party.phoneNo, consigneeAddress: party.address } })}
+            />
             <Field label={lt("Consignee Name")}><Input value={(value.shipment as HouseShipmentRequest).consigneeName ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, consigneeName: e.target.value } })} /></Field>
             <Field label={lt("Consignee Contact No")}><Input value={(value.shipment as HouseShipmentRequest).consigneeContactNo ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, consigneeContactNo: e.target.value } })} /></Field>
             <Field label={lt("Consignee Address")}>
@@ -609,6 +621,70 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function ItemField({ label, children }: { label: string; children: ReactNode }) {
   return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</Label>{children}</div>;
+}
+
+function PartyLookup({
+  partyType,
+  currentName,
+  currentPhone,
+  onApply
+}: {
+  partyType: "Shipper" | "Consignee";
+  currentName: string;
+  currentPhone: string;
+  onApply: (party: HouseShipmentPartyLookupDto) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const queryText = search.trim();
+  const query = useQuery({
+    queryKey: ["house-shipment-party-lookup", partyType, queryText],
+    queryFn: () => searchHouseShipmentParties({ partyType, search: queryText, pageSize: 8 }),
+    enabled: queryText.length >= 2
+  });
+  const quickTerms = [currentName, currentPhone].map((x) => x.trim()).filter(Boolean);
+
+  return (
+    <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50/70 p-2">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+          <Input
+            className="pl-8"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={lt("Search name or phone")}
+          />
+        </div>
+      </div>
+      {quickTerms.length ? (
+        <div className="flex flex-wrap gap-2">
+          {quickTerms.map((term) => (
+            <Button key={term} type="button" variant="outline" size="sm" onClick={() => setSearch(term)}>
+              {term}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+      {queryText.length >= 2 ? (
+        <div className="max-h-48 overflow-y-auto rounded-md border bg-white">
+          {query.isLoading ? <div className="px-3 py-2 text-sm text-muted-foreground">{lt("Searching...")}</div> : null}
+          {!query.isLoading && (query.data ?? []).length === 0 ? <div className="px-3 py-2 text-sm text-muted-foreground">{lt("No matching saved party found.")}</div> : null}
+          {(query.data ?? []).map((party) => (
+            <button
+              key={`${party.partyType}-${party.name}-${party.phoneNo}-${party.lastHouseShipmentNumber}`}
+              type="button"
+              className="block w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-slate-50"
+              onClick={() => onApply(party)}
+            >
+              <span className="block font-medium">{party.name || party.phoneNo}</span>
+              <span className="block text-xs text-muted-foreground">{[party.phoneNo, party.lastHouseShipmentNumber].filter(Boolean).join(" - ")}</span>
+              {party.address ? <span className="mt-1 block line-clamp-2 text-xs text-slate-600">{party.address}</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function FilterableSelect({

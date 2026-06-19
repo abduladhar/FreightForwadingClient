@@ -32,6 +32,18 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
+const languageDisplayNames: Record<string, { english: string; native: string }> = {
+  "en-US": { english: "English", native: "English" },
+  "ar-QA": { english: "Arabic", native: "العربية" },
+  "hi-IN": { english: "Hindi", native: "हिन्दी" },
+  "fr-FR": { english: "French", native: "Français" },
+  "es-ES": { english: "Spanish", native: "Español" },
+  "zh-CN": { english: "Chinese Simplified", native: "简体中文" },
+  "tr-TR": { english: "Turkish", native: "Türkçe" },
+  "pt-PT": { english: "Portuguese", native: "Português" },
+  "ru-RU": { english: "Russian", native: "Русский" }
+};
+
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,16 +76,21 @@ export function LoginPage() {
       ? languagesQuery.data
       : [
           { id: "en", languageCode: "EN", cultureCode: "en-US", name: "English", nativeName: "English", isRightToLeft: false, isDefault: true, sortOrder: 1 },
-          { id: "ar", languageCode: "AR", cultureCode: "ar-QA", name: "Arabic", nativeName: "Arabic", isRightToLeft: true, isDefault: false, sortOrder: 2 },
-          { id: "hi", languageCode: "HI", cultureCode: "hi-IN", name: "Hindi", nativeName: "Hindi", isRightToLeft: false, isDefault: false, sortOrder: 3 },
-          { id: "fr", languageCode: "FR", cultureCode: "fr-FR", name: "French", nativeName: "French", isRightToLeft: false, isDefault: false, sortOrder: 4 },
-          { id: "es", languageCode: "ES", cultureCode: "es-ES", name: "Spanish", nativeName: "Spanish", isRightToLeft: false, isDefault: false, sortOrder: 5 },
-          { id: "zh", languageCode: "ZH", cultureCode: "zh-CN", name: "Chinese Simplified", nativeName: "Chinese Simplified", isRightToLeft: false, isDefault: false, sortOrder: 6 },
-          { id: "tr", languageCode: "TR", cultureCode: "tr-TR", name: "Turkish", nativeName: "Turkish", isRightToLeft: false, isDefault: false, sortOrder: 7 },
-          { id: "pt", languageCode: "PT", cultureCode: "pt-PT", name: "Portuguese", nativeName: "Portuguese", isRightToLeft: false, isDefault: false, sortOrder: 8 },
-          { id: "ru", languageCode: "RU", cultureCode: "ru-RU", name: "Russian", nativeName: "Russian", isRightToLeft: false, isDefault: false, sortOrder: 9 }
+          { id: "ar", languageCode: "AR", cultureCode: "ar-QA", name: "Arabic", nativeName: "العربية", isRightToLeft: true, isDefault: false, sortOrder: 2 },
+          { id: "hi", languageCode: "HI", cultureCode: "hi-IN", name: "Hindi", nativeName: "हिन्दी", isRightToLeft: false, isDefault: false, sortOrder: 3 },
+          { id: "fr", languageCode: "FR", cultureCode: "fr-FR", name: "French", nativeName: "Français", isRightToLeft: false, isDefault: false, sortOrder: 4 },
+          { id: "es", languageCode: "ES", cultureCode: "es-ES", name: "Spanish", nativeName: "Español", isRightToLeft: false, isDefault: false, sortOrder: 5 },
+          { id: "zh", languageCode: "ZH", cultureCode: "zh-CN", name: "Chinese Simplified", nativeName: "简体中文", isRightToLeft: false, isDefault: false, sortOrder: 6 },
+          { id: "tr", languageCode: "TR", cultureCode: "tr-TR", name: "Turkish", nativeName: "Türkçe", isRightToLeft: false, isDefault: false, sortOrder: 7 },
+          { id: "pt", languageCode: "PT", cultureCode: "pt-PT", name: "Portuguese", nativeName: "Português", isRightToLeft: false, isDefault: false, sortOrder: 8 },
+          { id: "ru", languageCode: "RU", cultureCode: "ru-RU", name: "Russian", nativeName: "Русский", isRightToLeft: false, isDefault: false, sortOrder: 9 }
         ];
-    return [...rows].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+    return rows
+      .map((language) => {
+        const display = languageDisplayNames[language.cultureCode];
+        return display ? { ...language, name: display.english, nativeName: display.native } : language;
+      })
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
   }, [languagesQuery.data]);
   const selectedLanguage = languageOptions.find((item) => item.languageCode === selectedLanguageCode) ?? languageOptions[0];
 
@@ -181,7 +198,7 @@ export function LoginPage() {
             >
               {languageOptions.map((language) => (
                 <option key={language.cultureCode} value={language.languageCode}>
-                  {language.name} - {language.nativeName} ({language.cultureCode})
+                  {language.name} - {language.nativeName}
                 </option>
               ))}
             </select>
@@ -221,6 +238,11 @@ export function LoginPage() {
           <Button className="w-full" type="submit" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? t("Login.SigningIn", "Signing in...") : t("Login.Continue", "Continue to ERP")}
           </Button>
+          <div className="text-center">
+            <Link className="text-sm font-medium text-blue-700 hover:text-blue-900" to="/quotation-request">
+              {t("Login.RequestQuotation", "Request a quotation")}
+            </Link>
+          </div>
           <p className="text-center text-xs text-muted-foreground">
             {t("Login.SecurityNote", "Protected by tenant isolation, branch scope, and permission policies.")}{" "}
             <Link className="font-medium text-blue-700" to="/login">{t("Login.NeedHelp", "Need help?")}</Link>

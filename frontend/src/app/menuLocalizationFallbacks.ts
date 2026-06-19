@@ -1142,6 +1142,24 @@ for (const [cultureCode, translations] of Object.entries(settingsMenuOverrides))
   };
 }
 
+const emailConfigurationMenuOverrides: Record<string, string> = {
+  "ar-QA": "إعدادات البريد الإلكتروني",
+  "hi-IN": "ईमेल कॉन्फ़िगरेशन",
+  "fr-FR": "Configuration e-mail",
+  "es-ES": "Configuración de correo",
+  "zh-CN": "电子邮件配置",
+  "tr-TR": "E-posta yapılandırması",
+  "pt-PT": "Configuração de e-mail",
+  "ru-RU": "Настройка электронной почты"
+};
+
+for (const [cultureCode, label] of Object.entries(emailConfigurationMenuOverrides)) {
+  menuLocalizationFallbacks[cultureCode] = {
+    ...menuLocalizationFallbacks[cultureCode],
+    "Navigation.settings.Item.email-configuration.Label": label
+  };
+}
+
 for (const [culture, values] of Object.entries(administrationMenuOverrides)) {
   Object.assign(menuLocalizationFallbacks[culture] ?? (menuLocalizationFallbacks[culture] = {}), values);
 }

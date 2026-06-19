@@ -2,6 +2,7 @@ import { Document, Page, StyleSheet, Text, View, pdf } from "@react-pdf/renderer
 import { saveAs } from "file-saver";
 import type { CustomerReceiptDto } from "@/api/receiptApi";
 import { lt } from "@/modules/operationsLocalization";
+import { ensurePdfFontsRegistered, getPdfFontFamily } from "@/utils/pdfFonts";
 
 export interface CustomerReceiptPdfOptions {
   fileName: string;
@@ -14,6 +15,7 @@ export interface CustomerReceiptPdfOptions {
 }
 
 export async function exportCustomerReceiptPdf(options: CustomerReceiptPdfOptions) {
+  ensurePdfFontsRegistered();
   const blob = await pdf(buildCustomerReceiptDocument(options)).toBlob();
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
 }
@@ -128,7 +130,7 @@ const amountValueStyle = { fontSize: 11, fontWeight: "bold" as const, color: "#0
 
 function createStyles() {
   return StyleSheet.create({
-    page: { padding: 24, fontSize: 10, color: "#0f172a" },
+    page: { padding: 24, fontSize: 10, fontFamily: getPdfFontFamily(), color: "#0f172a" },
     header: { borderBottomWidth: 1, borderBottomColor: "#cbd5e1", paddingBottom: 12, marginBottom: 14, alignItems: "center" },
     title: { fontSize: 20, fontWeight: "bold", letterSpacing: 0.8 },
     subtitle: { marginTop: 4, color: "#64748b", fontSize: 10 },

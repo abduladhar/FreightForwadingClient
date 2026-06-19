@@ -29,7 +29,7 @@ export function TenantCurrencySetupPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Tenant Currency Setup" description="Enable currencies and define base currency for the tenant." actions={<AuditTrailButton />} />
+      <PageHeader title={t("Page.Title.TenantCurrencySetup", "Tenant Currency Setup")} description={t("Currency.TenantSetupDescription", "Enable currencies and define base currency for the tenant.")} actions={<AuditTrailButton />} />
       <Card className={currencyPanelClass}><CardContent className={`${currencyPanelContentClass} overflow-auto`}>
         <table className="min-w-full text-sm">
           <thead><tr className="border-b bg-slate-50 dark:bg-slate-900"><th className="px-3 py-2 text-left">{t("Currency.Currency", "Currency")}</th><th className="px-3 py-2">{t("Currency.Enabled", "Enabled")}</th><th className="px-3 py-2">{t("Currency.Base", "Base")}</th></tr></thead>

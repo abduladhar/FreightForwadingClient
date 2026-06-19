@@ -11,6 +11,7 @@ import {
   Files,
   Globe,
   LayoutDashboard,
+  Mail,
   PackageCheck,
   Plane,
   Receipt,
@@ -82,6 +83,7 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Rate & Quotation",
     items: [
       item("rate-master", "Rate Master", "/rate-masters", ClipboardList, "RateMaster.Read", "Rate cards, slabs, and surcharge setup."),
+      item("quotation-requests", "Quotation Requests", "/quotation-requests", ClipboardList, "Quotation.Read", "Client quotation requests and uploaded attachments."),
       item("quotations", "Quotations", "/quotations", BookOpenText, "Quotation.Read", "Quotation pipeline, approvals, and conversions.")
     ]
   },
@@ -151,16 +153,9 @@ export const navigationGroups: NavigationGroup[] = [
       item("reports-op-house", "House Shipment Report", "/reports/operations/house-shipment", BarChart3, "Reports.Read", "House shipment execution report."),
       item("reports-op-master", "Master Shipment Report", "/reports/operations/master-shipment", BarChart3, "Reports.Read", "Master shipment consolidation report."),
       item("reports-op-direct", "Direct Shipment Report", "/reports/operations/direct-shipment", BarChart3, "Reports.Read", "Direct shipment operations report."),
-      item("reports-op-air", "Air Freight Report", "/reports/operations/air-freight", BarChart3, "Reports.Read", "Air movement and MAWB/HAWB report."),
-      item("reports-op-sea", "Sea Freight Report", "/reports/operations/sea-freight", BarChart3, "Reports.Read", "Sea movement and container report."),
-      item("reports-op-road", "Road Freight Report", "/reports/operations/road-freight", BarChart3, "Reports.Read", "Road trip, route, and POD report."),
-      item("reports-op-courier", "Courier Report", "/reports/operations/courier", BarChart3, "Reports.Read", "Courier piece and delivery report."),
       item("reports-op-customs", "Customs Report", "/reports/operations/customs-clearance", BarChart3, "Reports.Read", "Customs clearance and duty report."),
-      item("reports-op-container", "Container Report", "/reports/operations/container", BarChart3, "Reports.Read", "Container status and utilization report."),
-      item("reports-op-unbilled", "Unbilled Shipment", "/reports/operations/unbilled-shipment", BarChart3, "Reports.Read", "Pending billing shipment report."),
       item("reports-op-pending-bill", "Pending Bill Report", "/reports/operations/pending-bill", BarChart3, "Reports.Read", "Pending vendor bill operational report."),
       item("reports-op-pending-pod", "Pending POD Report", "/reports/operations/pending-pod", BarChart3, "Reports.Read", "Pending POD follow-up report."),
-      item("reports-op-pending-doc", "Pending Document Report", "/reports/operations/pending-document", BarChart3, "Reports.Read", "Pending document compliance report."),
       item("reports-op-ageing", "Shipment Ageing", "/reports/operations/shipment-ageing", BarChart3, "Reports.Read", "Shipment ageing and turnaround report."),
       item("reports-profit-shipment", "Shipment Profit", "/reports/operations/shipment-profit", BarChart3, "Profit.Read", "Shipment-wise profitability report."),
       item("reports-profit-customer", "Customer Profit", "/reports/operations/customer-wise-profit", BarChart3, "Profit.Read", "Customer-wise profitability report."),
@@ -169,21 +164,6 @@ export const navigationGroups: NavigationGroup[] = [
       item("reports-profit-branch", "Branch Profit", "/reports/operations/branch-wise-profit", BarChart3, "Profit.Read", "Branch-wise profitability report."),
       item("reports-profit-route", "Route Profit", "/reports/operations/route-wise-profit", BarChart3, "Profit.Read", "Route-wise profitability report."),
       item("reports-profit-destination", "Destination Profit", "/reports/operations/destination-wise-profit", BarChart3, "Profit.Read", "Destination-wise profitability report.")
-    ]
-  },
-  {
-    id: "documents",
-    label: "Documents",
-    items: [
-      item("document-management", "Document Management", "/documents", Files, "DocumentManagement.Read", "Shipment and finance documents with controls.")
-    ]
-  },
-  {
-    id: "portals",
-    label: "Portals",
-    items: [
-      item("customer-portal", "Customer Portal", "/customer-portal", Globe, "CustomerPortal.Read", "Customer-facing quotations, tracking, and statements."),
-      item("agent-portal", "Agent Portal", "/agent-portal", Globe, "AgentPortal.Read", "Agent shipments, POD, and commission views.")
     ]
   },
   {
@@ -232,6 +212,7 @@ export const navigationGroups: NavigationGroup[] = [
       item("warehouse-damaged-goods", "Damaged Goods", "/warehouses/damaged-goods", Settings, "Warehouse.Update", "Record and track damaged goods."),
       item("warehouse-returned-goods", "Returned Goods", "/warehouses/returned-goods", Settings, "Warehouse.Update", "Record and track returned goods."),
       item("numbering-settings", "Numbering Settings", "/settings/numbering", Settings, "Tenant.Read", "Document numbering formats by module and branch."),
+      item("email-configuration", "Email Configuration", "/settings/email-configuration", Mail, "Tenant.Read", "SMTP sender setup for HTML and PDF customer reports."),
       item("print-templates", "Print Templates", "/settings/print-templates", Settings, "Tenant.Read", "Print template list and designer."),
       item("label-templates", "Label Templates", "/settings/label-templates", Settings, "Tenant.Read", "Destination-aware shipment label templates."),
       item("approval-workflows", "Approval Workflows", "/settings/approval-workflows", Settings, "Tenant.Read", "Single/multi-level approval workflow designer.")

@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { SalesmanSelect } from "@/components/common/SalesmanSelect";
 import { CustomerAutocomplete } from "@/components/common/CustomerAutocomplete";
 import { searchPickups } from "@/api/pickupApi";
-import { searchWarehouses } from "@/api/warehouseApi";
+import { searchWarehouseLocations, searchWarehouses } from "@/api/warehouseApi";
 import { getActivePackageTypesForDropdown } from "@/api/packageTypeApi";
 import { getActiveCountriesForDropdown } from "@/api/countryApi";
 import type { GoodsReceiptItemRequest, GoodsReceiptRequest } from "@/api/goodsReceiptApi";
@@ -19,6 +19,16 @@ export function GoodsReceiptForm({ initialValue, onSubmit, onSaveItem, isSubmitt
   const packageTypes = useQuery({ queryKey: ["gr-package-types"], queryFn: () => getActivePackageTypesForDropdown() });
   const countries = useQuery({ queryKey: ["gr-countries"], queryFn: () => getActiveCountriesForDropdown() });
   const [value, setValue] = useState<GoodsReceiptRequest>(initialValue ? { ...initialValue, receivedDateTime: toDateTimeLocalValue(initialValue.receivedDateTime) } : { customerId: "", salesmanId: null, pickupId: null, receivedFrom: "", receivedDateTime: "", warehouseId: null, warehouseLocation: "", remarks: "", items: [createEmptyItem()] });
+  const locations = useQuery({
+    queryKey: ["gr-warehouse-locations", value.warehouseId],
+    queryFn: () => searchWarehouseLocations({ pageNumber: 1, pageSize: 500, isActive: true, warehouseId: value.warehouseId || undefined }),
+    enabled: Boolean(value.warehouseId)
+  });
+  const locationOptions = (locations.data?.items ?? []).map((x) => ({ value: warehouseLocationValue(x), label: warehouseLocationLabel(x) }));
+  const selectedLocation = value.warehouseLocation ?? "";
+  const locationOptionsWithCurrent = selectedLocation && !locationOptions.some((x) => x.value === selectedLocation)
+    ? [{ value: selectedLocation, label: selectedLocation }, ...locationOptions]
+    : locationOptions;
   async function saveItem(item: GoodsReceiptItemRequest) {
     if (!onSaveItem) return;
     if (item.operationMode === "Delete" && (!item.id || item.id === EMPTY_GUID)) {
@@ -45,8 +55,17 @@ export function GoodsReceiptForm({ initialValue, onSubmit, onSaveItem, isSubmitt
       <Field label={lt("Link")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.pickupId ?? ""} onChange={(e) => setValue({ ...value, pickupId: e.target.value || null })}><option value="">{lt("Direct receipt")}</option>{(pickups.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.pickupNumber}</option>)}</select></Field>
       <Field label={lt("Received From")}><Input value={value.receivedFrom} onChange={(e) => setValue({ ...value, receivedFrom: e.target.value })} /></Field>
       <Field label={lt("Received DateTime")}><Input type="datetime-local" value={value.receivedDateTime} onChange={(e) => setValue({ ...value, receivedDateTime: e.target.value })} /></Field>
-      <Field label={lt("Warehouse")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.warehouseId ?? ""} onChange={(e) => setValue({ ...value, warehouseId: e.target.value || null })}><option value="">{lt("Optional")}</option>{(warehouses.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.warehouseCode} - {x.warehouseName}</option>)}</select></Field>
-      <Field label={lt("Warehouse Location")}><Input value={value.warehouseLocation ?? ""} onChange={(e) => setValue({ ...value, warehouseLocation: e.target.value })} placeholder={lt("Rack/Bin reference")} /></Field>
+      <Field label={lt("Warehouse")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.warehouseId ?? ""} onChange={(e) => setValue({ ...value, warehouseId: e.target.value || null, warehouseLocation: "" })}><option value="">{lt("Optional")}</option>{(warehouses.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.warehouseCode} - {x.warehouseName}</option>)}</select></Field>
+      <Field label={lt("Bin / Location")}>
+        {value.warehouseId ? (
+          <select className="h-10 w-full rounded-md border px-3 text-sm" value={value.warehouseLocation ?? ""} onChange={(e) => setValue({ ...value, warehouseLocation: e.target.value })} disabled={locations.isLoading}>
+            <option value="">{locations.isLoading ? lt("Loading bins...") : lt("Select bin")}</option>
+            {locationOptionsWithCurrent.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}
+          </select>
+        ) : (
+          <Input value={value.warehouseLocation ?? ""} onChange={(e) => setValue({ ...value, warehouseLocation: e.target.value })} placeholder={lt("Select warehouse to choose bin")} />
+        )}
+      </Field>
       <Field label={lt("Remarks")}><Input value={value.remarks ?? ""} onChange={(e) => setValue({ ...value, remarks: e.target.value })} /></Field>
     </div>
     <div className="space-y-2">
@@ -150,6 +169,17 @@ function updateItem(items: GoodsReceiptRequest["items"], index: number, key: key
 
 function createEmptyItem(): GoodsReceiptItemRequest {
   return { id: null, operationMode: "New", packageTypeGuid: null, packageTypeName: null, hsCode: "", countryOfOrigin: "", description: "", receivedPieces: 0, receivedWeight: 0, length: 0, width: 0, height: 0 };
+}
+
+function warehouseLocationValue(location: { locationCode: string; rack?: string | null; bin?: string | null }) {
+  return [location.locationCode, location.rack, location.bin].filter(Boolean).join(" / ");
+}
+
+function warehouseLocationLabel(location: { locationCode: string; rack?: string | null; bin?: string | null }) {
+  const parts = [location.locationCode];
+  if (location.rack) parts.push(`${lt("Rack")}: ${location.rack}`);
+  if (location.bin) parts.push(`${lt("Bin")}: ${location.bin}`);
+  return parts.join(" - ");
 }
 
 function normalizeMode(mode: GoodsReceiptItemRequest["operationMode"], id?: string | null): "New" | "Update" | "Delete" {

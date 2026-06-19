@@ -3,6 +3,7 @@ import { Document, Page, Text, View, StyleSheet, Image, pdf } from "@react-pdf/r
 import { saveAs } from "file-saver";
 import { lt } from "@/modules/operationsLocalization";
 import { formatDate } from "@/utils/dateFormat";
+import { ensurePdfFontsRegistered, getPdfFontFamily } from "@/utils/pdfFonts";
 
 export interface PdfColumn<T extends Record<string, unknown>> {
   key: keyof T;
@@ -25,11 +26,13 @@ export interface PdfExportOptions<T extends Record<string, unknown>> {
   cultureCode?: string;
   rtl?: boolean;
   signatureLabel?: string;
+  translate?: (value: string) => string;
   columns: PdfColumn<T>[];
   rows: T[];
 }
 
 export async function exportPdfReport<T extends Record<string, unknown>>(options: PdfExportOptions<T>) {
+  ensurePdfFontsRegistered();
   const doc = buildPdfDocument(options);
   const blob = await pdf(doc).toBlob();
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
@@ -37,6 +40,7 @@ export async function exportPdfReport<T extends Record<string, unknown>>(options
 
 function buildPdfDocument<T extends Record<string, unknown>>(options: PdfExportOptions<T>) {
   const styles = createStyles(Boolean(options.rtl));
+  const t = options.translate ?? lt;
   const tableColumnsWidth = options.columns.map((column) => column.width ?? `${(100 / options.columns.length).toFixed(2)}%`);
 
   return React.createElement(
@@ -57,7 +61,7 @@ function buildPdfDocument<T extends Record<string, unknown>>(options: PdfExportO
         React.createElement(
           View,
           { style: styles.headerContent },
-          React.createElement(Text, { style: styles.title }, options.title),
+          React.createElement(Text, { style: styles.title }, t(options.title)),
           React.createElement(Text, { style: styles.subTitle }, options.tenantName),
           React.createElement(Text, { style: styles.subTitle }, options.branchName),
           options.branchAddress ? React.createElement(Text, { style: styles.subTitle }, options.branchAddress) : null
@@ -66,9 +70,9 @@ function buildPdfDocument<T extends Record<string, unknown>>(options: PdfExportO
       React.createElement(
         View,
         { style: styles.meta },
-        options.documentNumber ? React.createElement(Text, null, `Document No: ${options.documentNumber}`) : null,
-        options.documentDate ? React.createElement(Text, null, `Date: ${formatDate(options.documentDate, { cultureCode: options.cultureCode })}`) : null,
-        options.currencyCode ? React.createElement(Text, null, `${lt("Currency")}: ${options.currencyCode}`) : null
+        options.documentNumber ? React.createElement(Text, null, `${t("Document No")}: ${options.documentNumber}`) : null,
+        options.documentDate ? React.createElement(Text, null, `${t("Date")}: ${formatDate(options.documentDate, { cultureCode: options.cultureCode })}`) : null,
+        options.currencyCode ? React.createElement(Text, null, `${t("Currency")}: ${options.currencyCode}`) : null
       ),
       React.createElement(
         View,
@@ -80,7 +84,7 @@ function buildPdfDocument<T extends Record<string, unknown>>(options: PdfExportO
             React.createElement(
               View,
               { key: `head-${String(column.key)}`, style: { ...styles.cell, width: tableColumnsWidth[index] } },
-              React.createElement(Text, { style: styles.tableHeaderText }, column.label)
+              React.createElement(Text, { style: styles.tableHeaderText }, t(column.label))
             )
           )
         ),
@@ -101,14 +105,14 @@ function buildPdfDocument<T extends Record<string, unknown>>(options: PdfExportO
       React.createElement(
         View,
         { style: styles.signatureSection },
-        React.createElement(Text, null, options.signatureLabel ?? "Authorized Signature"),
+        React.createElement(Text, null, t(options.signatureLabel ?? "Authorized Signature")),
         React.createElement(View, { style: styles.signatureLine })
       ),
       React.createElement(
         View,
         { style: styles.footer, fixed: true },
-        options.footerText ? React.createElement(Text, null, options.footerText) : null,
-        React.createElement(Text, { render: ({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}` })
+        options.footerText ? React.createElement(Text, null, t(options.footerText)) : null,
+        React.createElement(Text, { render: ({ pageNumber, totalPages }) => `${t("Page")} ${pageNumber} ${t("of")} ${totalPages}` })
       )
     )
   );
@@ -121,6 +125,7 @@ function createStyles(rtl: boolean) {
       paddingBottom: 30,
       paddingHorizontal: 24,
       fontSize: 10,
+      fontFamily: getPdfFontFamily(),
       direction: rtl ? "rtl" : "ltr"
     },
     header: {

@@ -2,11 +2,13 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { FilePlus2, FileText, Pencil, Plus, RefreshCw, Send, Sigma } from "lucide-react";
+import { getShipmentDocuments } from "@/api/documentApi";
 import { getCustomsJob, searchCustomsConfigurations, submitCustomsDeclaration, type CustomsClearanceJobDto, type CustomsConfigurationDto } from "@/api/customsApi";
 import { getTenantCurrencies } from "@/api/currencyApi";
 import { getActivePackageTypesForDropdown } from "@/api/packageTypeApi";
 import { PermissionButton } from "@/auth/PermissionButton";
 import { AuditTrailButton } from "@/components/common/AuditTrailButton";
+import { DocumentUploadPanel } from "@/components/common/DocumentUploadPanel";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,7 @@ export function CustomsClearanceViewPage() {
   const toast = useToast();
   const [tab, setTab] = useState("Overview");
   const query = useQuery({ queryKey: ["customs-job", customsId], queryFn: () => getCustomsJob(customsId!), enabled: Boolean(customsId) });
+  const documents = useQuery({ queryKey: ["documents", "CustomsClearance", customsId], queryFn: () => getShipmentDocuments("CustomsClearance", customsId!), enabled: Boolean(customsId) });
   const currencyQuery = useQuery({ queryKey: ["tenant-currencies", "customs"], queryFn: getTenantCurrencies });
   const packageTypeQuery = useQuery({ queryKey: ["package-types", "customs"], queryFn: () => getActivePackageTypesForDropdown() });
   const configurationQuery = useQuery({ queryKey: ["customs-configurations", "view"], queryFn: () => searchCustomsConfigurations({ pageNumber: 1, pageSize: 300 }) });
@@ -68,6 +71,7 @@ export function CustomsClearanceViewPage() {
         <Kpi label={lt("Payable / Paid")} value={`${totals.payable.toFixed(2)} / ${totals.paid.toFixed(2)}`} />
       </div>
       <Card><CardContent className="pt-4"><div className="flex flex-wrap gap-2">{tabs.map((t) => <Button key={t} variant={tab === t ? "default" : "outline"} size="sm" onClick={() => setTab(t)}>{lt(t)}</Button>)}</div></CardContent></Card>
+      <DocumentUploadPanel moduleName="CustomsClearance" entityId={customsId} referenceNumber={x.jobNumber} defaultDocumentName={lt("Customs Clearance Document")} defaultDocumentCategory={lt("Customs Clearance")} emptyText={lt("No documents uploaded for this customs clearance.")} documents={documents.data ?? []} onRefresh={() => void documents.refetch()} />
       <CustomsTab
         job={x}
         tab={tab}

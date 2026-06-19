@@ -4,6 +4,7 @@ import type { ApiResponse, PagedResponse } from "@/api/apiResponse";
 export interface HouseShipmentSearchParams {
   pageNumber?: number;
   pageSize?: number;
+  cursor?: string | null;
   search?: string;
   customerId?: string;
   customer?: string;
@@ -168,6 +169,14 @@ export interface HouseShipmentDto {
   unpaidBillCount: number;
 }
 
+export interface HouseShipmentPartyLookupDto {
+  partyType: "Shipper" | "Consignee" | string;
+  name: string;
+  phoneNo: string;
+  address: string;
+  lastHouseShipmentNumber: string;
+}
+
 export interface ShipmentStatusRequest {
   status: string;
 }
@@ -201,6 +210,11 @@ const basePath = "/api/house-shipments";
 export async function searchHouseShipments(params: HouseShipmentSearchParams) {
   const response = await httpClient.get<ApiResponse<PagedResponse<HouseShipmentDto>>>(basePath, { params: { sortBy: "CreatedDate", sortDirection: "desc", ...params } });
   return response.data.data;
+}
+
+export async function searchHouseShipmentParties(params: { partyType?: "Shipper" | "Consignee"; search: string; pageSize?: number }) {
+  const response = await httpClient.get<ApiResponse<HouseShipmentPartyLookupDto[]>>(`${basePath}/parties/search`, { params });
+  return response.data.data ?? [];
 }
 
 export async function getHouseShipment(id: string) {

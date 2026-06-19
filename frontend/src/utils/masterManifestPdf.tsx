@@ -2,6 +2,8 @@ import React from "react";
 import { Document, Image, Page, StyleSheet, Text, View, pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import type { MasterShipmentDto } from "@/api/masterShipmentApi";
+import { lt } from "@/modules/operationsLocalization";
+import { ensurePdfFontsRegistered, getPdfFontFamily } from "@/utils/pdfFonts";
 
 export interface MasterManifestPdfOptions {
   fileName: string;
@@ -13,6 +15,7 @@ export interface MasterManifestPdfOptions {
 }
 
 export async function exportMasterManifestPdf(options: MasterManifestPdfOptions) {
+  ensurePdfFontsRegistered();
   const blob = await pdf(buildMasterManifestDocument(options)).toBlob();
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
 }
@@ -24,10 +27,10 @@ function buildMasterManifestDocument({ tenantName, branchName, branchAddress, lo
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {logoUrl ? <Image src={logoUrl} style={styles.logo} /> : <View style={styles.logoPlaceholder}><Text style={styles.logoPlaceholderText}>LOGO</Text></View>}
+            {logoUrl ? <Image src={logoUrl} style={styles.logo} /> : <View style={styles.logoPlaceholder}><Text style={styles.logoPlaceholderText}>{lt("LOGO")}</Text></View>}
           </View>
           <View style={styles.headerCenter}>
-            <Text style={styles.docTitle}>MASTER SHIPMENT MANIFEST</Text>
+            <Text style={styles.docTitle}>{lt("MASTER SHIPMENT MANIFEST")}</Text>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.companyName}>{tenantName}</Text>
@@ -40,10 +43,10 @@ function buildMasterManifestDocument({ tenantName, branchName, branchAddress, lo
           <View style={styles.metaColumn}>
             <MetaRow label="MAWB" value={masterShipment.mawbNumber ?? "-"} />
             <MetaRow label="MBL" value={masterShipment.mblNumber ?? "-"} />
-            <MetaRow label="Status" value={masterShipment.status} />
+            <MetaRow label="Status" value={lt(masterShipment.status)} />
           </View>
           <View style={styles.metaColumn}>
-            <MetaRow label="Mode" value={masterShipment.modeOfTransport} />
+            <MetaRow label="Mode" value={lt(masterShipment.modeOfTransport)} />
             <MetaRow label="Carrier" value={masterShipment.carrierName ?? "-"} />
             <MetaRow label="Origin Port" value={masterShipment.originPortName || "-"} />
             <MetaRow label="Destination Port" value={masterShipment.destinationPortName || "-"} />
@@ -65,7 +68,7 @@ function buildMasterManifestDocument({ tenantName, branchName, branchAddress, lo
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Manifest Items</Text>
+        <Text style={styles.sectionTitle}>{lt("Manifest Items")}</Text>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Cell text="HAWB" w={14} header />
@@ -98,7 +101,7 @@ function buildMasterManifestDocument({ tenantName, branchName, branchAddress, lo
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flexDirection: "row", marginBottom: 3 }}>
-      <Text style={{ width: 110, fontSize: 9, color: "#475569" }}>{label}</Text>
+      <Text style={{ width: 110, fontSize: 9, color: "#475569" }}>{lt(label)}</Text>
       <Text style={{ fontSize: 9 }}>{value || "-"}</Text>
     </View>
   );
@@ -107,7 +110,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
 function Cell({ text, w, header, align = "left" }: { text: string; w: number; header?: boolean; align?: "left" | "right" | "center" }) {
   return (
     <View style={{ width: `${w}%`, paddingHorizontal: 4, paddingVertical: 4, borderRightWidth: 1, borderRightColor: "#e2e8f0" }}>
-      <Text style={{ fontSize: 8, lineHeight: 1.2, textAlign: align, fontWeight: header ? "bold" : "normal" }}>{text}</Text>
+      <Text style={{ fontSize: 8, lineHeight: 1.2, textAlign: align, fontWeight: header ? "bold" : "normal" }}>{header ? lt(text) : text}</Text>
     </View>
   );
 }
@@ -123,7 +126,7 @@ function wrapForPdf(value: string, chunkSize: number) {
 
 function createStyles() {
   return StyleSheet.create({
-    page: { padding: 20, fontSize: 10, color: "#0f172a" },
+    page: { padding: 20, fontSize: 10, fontFamily: getPdfFontFamily(), color: "#0f172a" },
     header: { flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#cbd5e1", paddingBottom: 10, marginBottom: 10 },
     logo: { width: 100, height: 100, objectFit: "contain" },
     logoPlaceholder: { width: 100, height: 100, borderWidth: 1, borderColor: "#cbd5e1", alignItems: "center", justifyContent: "center" },

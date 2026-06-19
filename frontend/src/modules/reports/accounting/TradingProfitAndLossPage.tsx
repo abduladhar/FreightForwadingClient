@@ -7,7 +7,7 @@ export function TradingProfitAndLossPage() {
   return <AccountingReportPage<Row> title={lt("Trading P&L")} reportType="trading-profit-and-loss" mapRows={(data) => {
     const payload = data as { rows?: Row[] } | undefined;
     return payload?.rows ?? [];
-  }} columns={columns} summaryBuilder={(rows, data) => {
+  }} columns={columns} showCurrency summaryBuilder={(rows, data) => {
     const payload = data as { tradingIncome?: number; directCost?: number; tradingProfit?: number; indirectExpenses?: number; netProfit?: number } | undefined;
     if (payload) {
       return [

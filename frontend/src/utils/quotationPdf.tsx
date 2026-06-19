@@ -2,6 +2,7 @@ import React from "react";
 import { Document, Image, Page, StyleSheet, Text, View, pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import type { QuotationDto } from "@/api/quotationApi";
+import { ensurePdfFontsRegistered, getPdfFontFamily } from "@/utils/pdfFonts";
 
 export interface QuotationPdfOptions {
   fileName: string;
@@ -15,6 +16,7 @@ export interface QuotationPdfOptions {
 }
 
 export async function exportQuotationPdf(options: QuotationPdfOptions) {
+  ensurePdfFontsRegistered();
   const blob = await pdf(buildQuotationDocument(options)).toBlob();
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
 }
@@ -158,7 +160,7 @@ function Cell({ text, w, header, align = "left", rtl }: { text: string; w: numbe
 
 function createStyles(isRightToLeft: boolean) {
   return StyleSheet.create({
-    page: { padding: 20, fontSize: 10, color: "#0f172a", direction: isRightToLeft ? "rtl" : "ltr" },
+    page: { padding: 20, fontSize: 10, fontFamily: getPdfFontFamily(), color: "#0f172a", direction: isRightToLeft ? "rtl" : "ltr" },
     header: { flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#cbd5e1", paddingBottom: 10, marginBottom: 10 },
     logo: { width: 100, height: 100, objectFit: "contain" },
     logoPlaceholder: { width: 100, height: 100, borderWidth: 1, borderColor: "#cbd5e1", alignItems: "center", justifyContent: "center" },

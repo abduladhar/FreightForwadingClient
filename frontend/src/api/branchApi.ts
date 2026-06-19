@@ -1,6 +1,7 @@
 import { httpClient } from "@/api/httpClient";
 import type { ApiResponse } from "@/api/apiResponse";
 import type { Branch, BranchOption, BranchSettings, BranchSettingsUpdateRequest, BranchUpsertRequest } from "@/types/branch";
+import type { BranchCurrencyBankDetail, BranchCurrencyBankDetailRequest } from "@/types/currency";
 
 export async function getBranches() {
   const response = await httpClient.get<ApiResponse<Branch[]>>("/api/branches", {
@@ -44,5 +45,17 @@ export async function getBranchSettings(branchId: string) {
 
 export async function updateBranchSettings(branchId: string, request: BranchSettingsUpdateRequest) {
   const response = await httpClient.put<ApiResponse<BranchSettings>>(`/api/branches/${branchId}/settings`, request);
+  return response.data.data;
+}
+
+export async function getBranchCurrencyBankDetails(branchId: string) {
+  const response = await httpClient.get<ApiResponse<BranchCurrencyBankDetail[]>>(`/api/branches/${branchId}/bank-details`, {
+    headers: { "X-Suppress-Error-Toast": "true" }
+  });
+  return response.data.data ?? [];
+}
+
+export async function setBranchCurrencyBankDetails(branchId: string, currencyId: string, request: BranchCurrencyBankDetailRequest) {
+  const response = await httpClient.put<ApiResponse<BranchCurrencyBankDetail>>(`/api/branches/${branchId}/bank-details/${currencyId}`, request);
   return response.data.data;
 }

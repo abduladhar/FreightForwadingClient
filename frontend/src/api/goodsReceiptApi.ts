@@ -119,6 +119,7 @@ export interface AvailableGoodsDto {
 export async function searchGoodsReceipts(params: {
   pageNumber?: number;
   pageSize?: number;
+  cursor?: string | null;
   search?: string;
   status?: string;
   customerId?: string;

@@ -16,17 +16,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useCursorPagination } from "@/hooks/useCursorPagination";
 import { lt } from "@/modules/operationsLocalization";
 
 export function VendorBillListPage() {
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const paging = useCursorPagination(25);
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
   const { hasPermission } = useAuth();
   const currencies = useQuery({ queryKey: ["tenant-currencies", "vendor-bill-list"], queryFn: getTenantCurrencies });
   const currencyCodes = new Map((currencies.data ?? []).map((currency) => [currency.currencyId, currency.currencyCode]));
-  const query = useQuery({ queryKey: ["vendor-bills", pageNumber, pageSize, search], queryFn: () => searchVendorBills({ pageNumber, pageSize, search }) });
+  const query = useQuery({ queryKey: ["vendor-bills", paging.pageNumber, paging.pageSize, paging.cursor, search], queryFn: () => searchVendorBills({ pageNumber: paging.pageNumber, pageSize: paging.pageSize, cursor: paging.cursor, search }) });
   useEffect(() => {
     const refresh = () => {
       void queryClient.invalidateQueries({ queryKey: ["vendor-bills"] });
@@ -48,7 +48,7 @@ export function VendorBillListPage() {
     { accessorKey: "outstandingAmount", header: lt("Outstanding"), cell: ({ row }) => <CurrencyAmount value={row.original.outstandingAmount} currency={currencyCodes.get(row.original.billCurrencyId)} /> },
     { accessorKey: "status", header: lt("Status"), cell: ({ row }) => <StatusBadge status={row.original.status} /> }
   ];
-  return <div className="space-y-4"><PageHeader title={lt("Vendor Bills")} description={lt("Vendor bill processing with expected-cost review and approvals.")} actions={<><AuditTrailButton /><PermissionButton asChild permission="VendorBill.Create"><Link to="/vendor-bills/new"><Plus className="h-4 w-4" />{lt("New Vendor Bill")}</Link></PermissionButton></>} /><Card><CardContent className="pt-6"><DataTable data={query.data?.items ?? []} columns={columns} totalCount={query.data?.totalCount ?? 0} pageNumber={query.data?.pageNumber ?? pageNumber} pageSize={query.data?.pageSize ?? pageSize} search={search} onSearchChange={setSearch} onPaginationChange={(pn, ps) => { setPageNumber(pn); setPageSize(ps); }} isLoading={query.isLoading} isError={query.isError} onRetry={() => void query.refetch()} rowActions={(row) => <VendorBillActions row={row} hasPermission={hasPermission} approve={() => void approve.mutateAsync(row.id)} cancel={async () => { await cancel.mutateAsync({ id: row.id, reason: "Cancelled from list action" }); }} />} /></CardContent></Card></div>;
+  return <div className="space-y-4"><PageHeader title={lt("Vendor Bills")} description={lt("Vendor bill processing with expected-cost review and approvals.")} actions={<><AuditTrailButton /><PermissionButton asChild permission="VendorBill.Create"><Link to="/vendor-bills/new"><Plus className="h-4 w-4" />{lt("New Vendor Bill")}</Link></PermissionButton></>} /><Card><CardContent className="pt-6"><DataTable data={query.data?.items ?? []} columns={columns} totalCount={query.data?.totalCount ?? 0} pageNumber={paging.pageNumber} pageSize={query.data?.pageSize ?? paging.pageSize} search={search} onSearchChange={(value) => { setSearch(value); paging.reset(); }} onPaginationChange={(_, ps) => paging.setPageSize(ps)} paginationMode="cursor" nextCursor={query.data?.nextCursor} canPreviousCursorPage={paging.canPrevious} onNextCursorPage={() => paging.next(query.data?.nextCursor)} onPreviousCursorPage={paging.previous} isLoading={query.isLoading} isError={query.isError} onRetry={() => void query.refetch()} rowActions={(row) => <VendorBillActions row={row} hasPermission={hasPermission} approve={() => void approve.mutateAsync(row.id)} cancel={async () => { await cancel.mutateAsync({ id: row.id, reason: "Cancelled from list action" }); }} />} /></CardContent></Card></div>;
 }
 
 function VendorBillActions({ row, hasPermission, approve, cancel }: { row: VendorBillDto; hasPermission: (permission?: string | string[]) => boolean; approve: () => void; cancel: () => Promise<void> }) {

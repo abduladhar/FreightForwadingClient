@@ -16,4 +16,6 @@ export interface PagedResponse<T> {
   pageSize: number;
   totalCount: number;
   totalPages: number;
+  nextCursor?: string | null;
+  isCursorPage?: boolean;
 }

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { CountrySelect } from "@/components/common/CountrySelect";
 import { useMasterDataI18n } from "@/modules/masterDataI18n";
 import { masterDataButtonClass, masterDataPanelClass, masterDataPanelContentClass } from "@/modules/masterDataUi";
 
@@ -32,7 +33,7 @@ export function VendorForm({ initialValue, onSubmit, isSubmitting }: { initialVa
     <Field label={m("Email")}><Input value={value.email} onChange={(e) => setValue({ ...value, email: e.target.value })} /></Field>
     <Field label={m("Contact Person")}><Input value={value.contactPerson ?? ""} onChange={(e) => setValue({ ...value, contactPerson: e.target.value })} /></Field>
     <Field label={m("Phone")}><Input value={value.phone ?? ""} onChange={(e) => setValue({ ...value, phone: e.target.value })} /></Field>
-    <Field label={m("Country")}><Input value={value.country} onChange={(e) => setValue({ ...value, country: e.target.value })} /></Field>
+    <Field label={m("Country")}><CountrySelect value={value.country} onChange={(country) => setValue({ ...value, country })} /></Field>
     <Field label={m("City")}><Input value={value.city} onChange={(e) => setValue({ ...value, city: e.target.value })} /></Field>
     <Field label={m("Default Currency")}>
       <select className="h-10 w-full rounded-md border px-3 text-sm disabled:bg-slate-50 disabled:text-slate-600" value={value.defaultCurrencyId ?? ""} onChange={(e) => setValue({ ...value, defaultCurrencyId: e.target.value || null })} disabled={Boolean(initialValue)}>

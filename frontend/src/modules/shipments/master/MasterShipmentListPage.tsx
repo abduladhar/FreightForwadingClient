@@ -17,13 +17,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCursorPagination } from "@/hooks/useCursorPagination";
 import { lt } from "@/modules/operationsLocalization";
 
 type FlagFilterValue = "" | "true" | "false";
 
 export function MasterShipmentListPage() {
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const paging = useCursorPagination(25);
   const [search, setSearch] = useState("");
   const [originPort, setOriginPort] = useState("");
   const [destinationPort, setDestinationPort] = useState("");
@@ -37,10 +37,11 @@ export function MasterShipmentListPage() {
   const { hasPermission } = useAuth();
 
   const query = useQuery({
-    queryKey: ["master-shipments", pageNumber, pageSize, search, originPort, destinationPort, masterWaybillNo, invoiceDefined, billDefined, invoiceFullyReceived, billFullyPaid, invoiceCancelled, billCancelled],
+    queryKey: ["master-shipments", paging.pageNumber, paging.pageSize, paging.cursor, search, originPort, destinationPort, masterWaybillNo, invoiceDefined, billDefined, invoiceFullyReceived, billFullyPaid, invoiceCancelled, billCancelled],
     queryFn: () => searchMasterShipments({
-      pageNumber,
-      pageSize,
+      pageNumber: paging.pageNumber,
+      pageSize: paging.pageSize,
+      cursor: paging.cursor,
       search,
       originPort: originPort || undefined,
       destinationPort: destinationPort || undefined,
@@ -58,12 +59,12 @@ export function MasterShipmentListPage() {
 
   useEffect(() => {
     const handler = () => {
-      setPageNumber(1);
+      paging.reset();
       void query.refetch();
     };
     window.addEventListener("master-shipments:refresh", handler);
     return () => window.removeEventListener("master-shipments:refresh", handler);
-  }, [query]);
+  }, [paging.reset, query]);
 
   const columns: ColumnDef<MasterShipmentDto>[] = [
     { accessorKey: "masterShipmentNumber", header: lt("Master No") },
@@ -97,33 +98,35 @@ export function MasterShipmentListPage() {
         <CardContent className="space-y-4 pt-6">
           <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-9">
             <FilterField label={lt("Origin Port")}>
-              <Input value={originPort} placeholder={lt("Dubai Port")} onChange={(event) => { setOriginPort(event.target.value); setPageNumber(1); }} />
+              <Input value={originPort} placeholder={lt("Dubai Port")} onChange={(event) => { setOriginPort(event.target.value); paging.reset(); }} />
             </FilterField>
             <FilterField label={lt("Destination Port")}>
-              <Input value={destinationPort} placeholder={lt("Chennai Port")} onChange={(event) => { setDestinationPort(event.target.value); setPageNumber(1); }} />
+              <Input value={destinationPort} placeholder={lt("Chennai Port")} onChange={(event) => { setDestinationPort(event.target.value); paging.reset(); }} />
             </FilterField>
             <FilterField label={lt("Master Waybill No")}>
-              <Input value={masterWaybillNo} placeholder="MAWB / MBL" onChange={(event) => { setMasterWaybillNo(event.target.value); setPageNumber(1); }} />
+              <Input value={masterWaybillNo} placeholder="MAWB / MBL" onChange={(event) => { setMasterWaybillNo(event.target.value); paging.reset(); }} />
             </FilterField>
-            <FlagSelect label={lt("Invoice Defined")} value={invoiceDefined} onChange={setInvoiceDefined} resetPage={() => setPageNumber(1)} />
-            <FlagSelect label={lt("Bill Defined")} value={billDefined} onChange={setBillDefined} resetPage={() => setPageNumber(1)} />
-            <FlagSelect label={lt("Invoice Fully Received")} value={invoiceFullyReceived} onChange={setInvoiceFullyReceived} resetPage={() => setPageNumber(1)} />
-            <FlagSelect label={lt("Bill Fully Paid")} value={billFullyPaid} onChange={setBillFullyPaid} resetPage={() => setPageNumber(1)} />
-            <FlagSelect label={lt("Invoice Cancelled")} value={invoiceCancelled} onChange={setInvoiceCancelled} resetPage={() => setPageNumber(1)} />
-            <FlagSelect label={lt("Bill Cancelled")} value={billCancelled} onChange={setBillCancelled} resetPage={() => setPageNumber(1)} />
+            <FlagSelect label={lt("Invoice Defined")} value={invoiceDefined} onChange={setInvoiceDefined} resetPage={paging.reset} />
+            <FlagSelect label={lt("Bill Defined")} value={billDefined} onChange={setBillDefined} resetPage={paging.reset} />
+            <FlagSelect label={lt("Invoice Fully Received")} value={invoiceFullyReceived} onChange={setInvoiceFullyReceived} resetPage={paging.reset} />
+            <FlagSelect label={lt("Bill Fully Paid")} value={billFullyPaid} onChange={setBillFullyPaid} resetPage={paging.reset} />
+            <FlagSelect label={lt("Invoice Cancelled")} value={invoiceCancelled} onChange={setInvoiceCancelled} resetPage={paging.reset} />
+            <FlagSelect label={lt("Bill Cancelled")} value={billCancelled} onChange={setBillCancelled} resetPage={paging.reset} />
           </div>
           <DataTable
             data={query.data?.items ?? []}
             columns={columns}
             totalCount={query.data?.totalCount ?? 0}
-            pageNumber={query.data?.pageNumber ?? pageNumber}
-            pageSize={query.data?.pageSize ?? pageSize}
+            pageNumber={paging.pageNumber}
+            pageSize={query.data?.pageSize ?? paging.pageSize}
             search={search}
-            onSearchChange={setSearch}
-            onPaginationChange={(pn, ps) => {
-              setPageNumber(pn);
-              setPageSize(ps);
-            }}
+            onSearchChange={(value) => { setSearch(value); paging.reset(); }}
+            onPaginationChange={(_, ps) => paging.setPageSize(ps)}
+            paginationMode="cursor"
+            nextCursor={query.data?.nextCursor}
+            canPreviousCursorPage={paging.canPrevious}
+            onNextCursorPage={() => paging.next(query.data?.nextCursor)}
+            onPreviousCursorPage={paging.previous}
             isLoading={query.isLoading}
             isError={query.isError}
             onRetry={() => void query.refetch()}
