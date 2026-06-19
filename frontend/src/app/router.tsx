@@ -111,6 +111,9 @@ import { QuotationViewPage } from "@/modules/quotations/QuotationViewPage";
 import { QuotationApprovalPage } from "@/modules/quotations/QuotationApprovalPage";
 import { QuotationCalculationPreviewPage } from "@/modules/quotations/QuotationCalculationPreviewPage";
 import { QuotationPrintPreviewPage } from "@/modules/quotations/QuotationPrintPreviewPage";
+import { QuotationRequestListPage } from "@/modules/quotationRequests/QuotationRequestListPage";
+import { QuotationRequestViewPage } from "@/modules/quotationRequests/QuotationRequestViewPage";
+import { QuotationRequestEditPage } from "@/modules/quotationRequests/QuotationRequestEditPage";
 import { PickupListPage } from "@/modules/pickups/PickupListPage";
 import { PickupCreatePage } from "@/modules/pickups/PickupCreatePage";
 import { PickupEditPage } from "@/modules/pickups/PickupEditPage";
@@ -187,6 +190,7 @@ import { DocumentUploadPage } from "@/modules/documents/DocumentUploadPage";
 import { DocumentPreviewPage } from "@/modules/documents/DocumentPreviewPage";
 import { DocumentCategoryPage } from "@/modules/documents/DocumentCategoryPage";
 import { MandatoryDocumentChecklistPage } from "@/modules/documents/MandatoryDocumentChecklistPage";
+import { PublicDocumentUploadPage } from "@/modules/documents/PublicDocumentUploadPage";
 import { ShipmentTrackingPage } from "@/modules/tracking/ShipmentTrackingPage";
 import { ShipmentTrackingTimelinePage } from "@/modules/tracking/ShipmentTrackingTimelinePage";
 import { PublicTrackingPage } from "@/modules/tracking/PublicTrackingPage";
@@ -277,6 +281,8 @@ import { CustomerPortalInvoicesPage } from "@/modules/portals/customer/CustomerP
 import { CustomerPortalStatementOfAccountPage } from "@/modules/portals/customer/CustomerPortalStatementOfAccountPage";
 import { CustomerPortalOutstandingPage } from "@/modules/portals/customer/CustomerPortalOutstandingPage";
 import { CustomerPortalPaymentHistoryPage } from "@/modules/portals/customer/CustomerPortalPaymentHistoryPage";
+import { PublicQuotationRequestCreatePage } from "@/modules/quotationRequests/PublicQuotationRequestCreatePage";
+import { PublicQuotationRequestUploadPage } from "@/modules/quotationRequests/PublicQuotationRequestUploadPage";
 import { AgentPortalDashboardPage } from "@/modules/portals/agent/AgentPortalDashboardPage";
 import { AgentAssignedShipmentsPage } from "@/modules/portals/agent/AgentAssignedShipmentsPage";
 import { AgentShipmentStatusUpdatePage } from "@/modules/portals/agent/AgentShipmentStatusUpdatePage";
@@ -327,6 +333,7 @@ import { NotificationTemplateEditPage } from "@/modules/notifications/Notificati
 import { NotificationHistoryPage } from "@/modules/notifications/NotificationHistoryPage";
 import { UserNotificationPage } from "@/modules/notifications/UserNotificationPage";
 import { NumberingSettingsPage } from "@/modules/settings/NumberingSettingsPage";
+import { EmailConfigurationPage } from "@/modules/settings/EmailConfigurationPage";
 import { PrintTemplateListPage } from "@/modules/settings/PrintTemplateListPage";
 import { PrintTemplateDesignerPage } from "@/modules/settings/PrintTemplateDesignerPage";
 import { LabelTemplateListPage } from "@/modules/settings/LabelTemplateListPage";
@@ -345,6 +352,18 @@ export const router = createBrowserRouter([
         <LoginPage />
       </AuthLayout>
     )
+  },
+  {
+    path: "/quotation-request",
+    element: <PublicQuotationRequestCreatePage />
+  },
+  {
+    path: "/quotation-request/:token/upload",
+    element: <PublicQuotationRequestUploadPage />
+  },
+  {
+    path: "/document-upload/:token",
+    element: <PublicDocumentUploadPage />
   },
   {
     path: "/",
@@ -449,6 +468,9 @@ export const router = createBrowserRouter([
       { path: "rate-masters/:rateMasterId", element: <RequirePermission permission="RateMaster.Read"><RateMasterViewPage /></RequirePermission> },
       { path: "rate-masters/:rateMasterId/edit", element: <RequirePermission permission="RateMaster.Update"><RateMasterEditPage /></RequirePermission> },
       { path: "rate-masters/:rateMasterId/calculator", element: <RequirePermission permission="RateMaster.Read"><RateCalculatorPreviewPage /></RequirePermission> },
+      { path: "quotation-requests", element: <RequirePermission permission="Quotation.Read"><QuotationRequestListPage /></RequirePermission> },
+      { path: "quotation-requests/:requestId", element: <RequirePermission permission="Quotation.Read"><QuotationRequestViewPage /></RequirePermission> },
+      { path: "quotation-requests/:requestId/edit", element: <RequirePermission permission="Quotation.Update"><QuotationRequestEditPage /></RequirePermission> },
       { path: "quotations", element: <RequirePermission permission="Quotation.Read"><QuotationListPage /></RequirePermission> },
       { path: "quotations/new", element: <RequirePermission permission="Quotation.Create"><QuotationCreatePage /></RequirePermission> },
       { path: "quotations/:quotationId", element: <RequirePermission permission="Quotation.Read"><QuotationViewPage /></RequirePermission> },
@@ -662,6 +684,7 @@ export const router = createBrowserRouter([
       { path: "notifications/history", element: <RequirePermission permission="Notification.Read"><NotificationHistoryPage /></RequirePermission> },
       { path: "notifications/me", element: <RequirePermission permission="Notification.Read"><UserNotificationPage /></RequirePermission> },
       { path: "settings/numbering", element: <RequirePermission permission="Tenant.Read"><NumberingSettingsPage /></RequirePermission> },
+      { path: "settings/email-configuration", element: <RequirePermission permission="Tenant.Read"><EmailConfigurationPage /></RequirePermission> },
       { path: "settings/print-templates", element: <RequirePermission permission="Tenant.Read"><PrintTemplateListPage /></RequirePermission> },
       { path: "settings/print-templates/designer", element: <RequirePermission permission="Tenant.Update"><PrintTemplateDesignerPage /></RequirePermission> },
       { path: "settings/label-templates", element: <RequirePermission permission="Tenant.Read"><LabelTemplateListPage /></RequirePermission> },

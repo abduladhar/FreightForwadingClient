@@ -13,24 +13,25 @@ import { useActiveShipmentsQuery, type ShipmentRow } from "@/modules/operations/
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useMoney } from "@/hooks/useMoney";
 import { useToast } from "@/components/ui/toast";
+import { lt } from "@/modules/operationsLocalization";
 
 export function OperationsConsolePage() {
-  useDocumentTitle("Operations");
+  useDocumentTitle(lt("Operations"));
   const money = useMoney();
   const language = useLanguage();
   const shipmentsQuery = useActiveShipmentsQuery();
   const toast = useToast();
   const columns: ColumnDef<ShipmentRow>[] = [
-    { accessorKey: "number", header: "Shipment" },
-    { accessorKey: "customer", header: "Customer" },
-    { accessorKey: "mode", header: "Mode" },
-    { accessorKey: "origin", header: "Origin" },
-    { accessorKey: "destination", header: "Destination" },
-    { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+    { accessorKey: "number", header: lt("Shipment") },
+    { accessorKey: "customer", header: lt("Customer") },
+    { accessorKey: "mode", header: lt("Mode"), cell: ({ row }) => lt(row.original.mode) },
+    { accessorKey: "origin", header: lt("Origin") },
+    { accessorKey: "destination", header: lt("Destination") },
+    { accessorKey: "status", header: lt("Status"), cell: ({ row }) => <StatusBadge status={row.original.status} /> },
     { accessorKey: "eta", header: "ETA", cell: ({ row }) => language.formatLocalizedDate(row.original.eta) },
     {
       accessorKey: "profit",
-      header: "Profit",
+      header: lt("Profit"),
       cell: ({ row }) => {
         const numericProfit = Number(row.original.profit);
         return money(Number.isFinite(numericProfit) ? numericProfit : 0);
@@ -41,13 +42,13 @@ export function OperationsConsolePage() {
   return (
     <div className="erp-page">
       <PageHeader
-        title="Operations console"
-        description="Shipment execution workspace for house, master, direct, freight-specific, and document activity."
+        title={lt("Operations console")}
+        description={lt("Shipment execution workspace for house, master, direct, freight-specific, and document activity.")}
         actions={
           <>
-            <Button variant="outline"><Upload className="h-4 w-4" /> Import manifest</Button>
+            <Button variant="outline"><Upload className="h-4 w-4" /> {lt("Import manifest")}</Button>
             <PermissionButton permission={["HouseShipment.Create", "DirectShipment.Create", "MasterShipment.Create"]}>
-              <Plus className="h-4 w-4" /> New shipment
+              <Plus className="h-4 w-4" /> {lt("New shipment")}
             </PermissionButton>
           </>
         }
@@ -55,8 +56,8 @@ export function OperationsConsolePage() {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Active shipment board</CardTitle>
-          <Button variant="outline" size="sm"><Download className="h-4 w-4" /> Export</Button>
+          <CardTitle>{lt("Active shipment board")}</CardTitle>
+          <Button variant="outline" size="sm"><Download className="h-4 w-4" /> {lt("Export")}</Button>
         </CardHeader>
         <CardContent>
           <DataTable
@@ -69,7 +70,7 @@ export function OperationsConsolePage() {
             isError={shipmentsQuery.isError}
             onRetry={() => void shipmentsQuery.refetch()}
             onPaginationChange={() => undefined}
-            searchPlaceholder="Search shipment board"
+            searchPlaceholder={lt("Search shipment board")}
           />
         </CardContent>
       </Card>
@@ -84,7 +85,7 @@ export function OperationsConsolePage() {
           }}
           onChange={(files) => {
             if (!files.length) return;
-            toast.success("Files staged", `${files.length} file(s) ready for upload.`);
+            toast.success(lt("Files staged"), `${files.length} ${lt("file(s) ready for upload.")}`);
           }}
         />
         <ShipmentCodePanel shipmentNumber="HS-HQ-2026-00428" />

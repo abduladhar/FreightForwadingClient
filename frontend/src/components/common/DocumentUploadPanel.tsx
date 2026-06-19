@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Trash2, UploadCloud } from "lucide-react";
-import { completeDocumentUpload, createSignedDocumentUpload, deleteDocument, getDocumentDownloadUrl, uploadDocumentToSignedUrl, type DocumentModule, type DocumentRecord } from "@/api/documentApi";
+import { Copy, Download, Link2, Trash2, UploadCloud } from "lucide-react";
+import { completeDocumentUpload, createPublicDocumentUploadLink, createSignedDocumentUpload, deleteDocument, getDocumentDownloadUrl, uploadDocumentToSignedUrl, type DocumentModule, type DocumentRecord } from "@/api/documentApi";
 import { PermissionButton } from "@/auth/PermissionButton";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ type DocumentUploadPanelProps = {
   description?: string;
   defaultDocumentName?: string;
   defaultDocumentCategory?: string;
+  referenceNumber?: string;
   emptyText?: string;
   createPermission?: string;
   deletePermission?: string;
@@ -31,6 +32,7 @@ export function DocumentUploadPanel({
   description = "Upload one document at a time. Files are stored in S3 with signed upload and download URLs.",
   defaultDocumentName = "Document",
   defaultDocumentCategory = "General",
+  referenceNumber = "",
   emptyText = "No documents uploaded.",
   createPermission = "DocumentManagement.Create",
   deletePermission = "DocumentManagement.Delete",
@@ -44,7 +46,11 @@ export function DocumentUploadPanel({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCreatingLink, setIsCreatingLink] = useState(false);
+  const [recipientType, setRecipientType] = useState<"Client" | "Employee">("Client");
+  const [shareLink, setShareLink] = useState("");
   const previousDefaultsRef = useRef({ documentName: defaultDocumentName, documentCategory: defaultDocumentCategory });
+  const canShareLink = ["Quotation", "Pickup", "GoodsReceipt", "HouseShipment", "DirectShipment", "MasterShipment", "CustomsClearance", "Job"].includes(String(moduleName));
 
   useEffect(() => {
     setDocumentName((current) => current === previousDefaultsRef.current.documentName ? defaultDocumentName : current);
@@ -93,6 +99,28 @@ export function DocumentUploadPanel({
     onRefresh();
   }
 
+  async function createShareLink() {
+    setIsCreatingLink(true);
+    try {
+      const link = await createPublicDocumentUploadLink({
+        moduleName,
+        entityId,
+        referenceNumber,
+        recipientType,
+        expiresInDays: 30
+      });
+      const absoluteLink = `${window.location.origin}${link.uploadPath}`;
+      setShareLink(absoluteLink);
+      await navigator.clipboard?.writeText(absoluteLink);
+      toast.success(lt("Upload link copied"), lt("Share it with the client or employee to attach video, audio, and files."));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : lt("Could not create upload link.");
+      toast.error(lt("Link creation failed"), message);
+    } finally {
+      setIsCreatingLink(false);
+    }
+  }
+
   return (
     <Card>
       <CardContent className="space-y-5 pt-6">
@@ -104,8 +132,27 @@ export function DocumentUploadPanel({
               <p className="text-xs text-muted-foreground">{lt(description)}</p>
             </div>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{documents.length} {lt("file(s)")}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {canShareLink ? <>
+            <div className="flex overflow-hidden rounded-md border bg-white">
+              <button type="button" className={`px-3 py-1.5 text-xs font-medium ${recipientType === "Client" ? "bg-blue-600 text-white" : "text-slate-600"}`} onClick={() => setRecipientType("Client")}>{lt("Client")}</button>
+              <button type="button" className={`px-3 py-1.5 text-xs font-medium ${recipientType === "Employee" ? "bg-blue-600 text-white" : "text-slate-600"}`} onClick={() => setRecipientType("Employee")}>{lt("Employee")}</button>
+            </div>
+            <PermissionButton permission={createPermission} variant="outline" size="sm" disabled={isCreatingLink} onClick={() => void createShareLink()}>
+              <Link2 className="h-4 w-4" /> {isCreatingLink ? lt("Creating...") : lt("Share Upload Link")}
+            </PermissionButton>
+            </> : null}
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{documents.length} {lt("file(s)")}</span>
+          </div>
         </div>
+
+        {canShareLink && shareLink ? <div className="flex flex-col gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1 truncate text-blue-950">{shareLink}</div>
+          <Button type="button" variant="outline" size="sm" onClick={() => {
+            void navigator.clipboard?.writeText(shareLink);
+            toast.success(lt("Link copied"));
+          }}><Copy className="h-4 w-4" /> {lt("Copy")}</Button>
+        </div> : null}
 
         <div className="rounded-lg border bg-slate-50 p-4">
           <div className="grid gap-4 md:grid-cols-[1fr_1fr_1.2fr_auto]">

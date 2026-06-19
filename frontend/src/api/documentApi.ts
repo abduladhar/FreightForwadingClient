@@ -49,6 +49,29 @@ export type SignedDocumentDownloadDto = {
   expiresAt: string;
 };
 
+export type PublicDocumentUploadLink = {
+  id: string;
+  token: string;
+  uploadPath: string;
+  moduleName: DocumentModule;
+  entityId: string;
+  referenceNumber: string;
+  recipientType: string;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  expiresAt: string;
+  revokedAt?: string | null;
+};
+
+export type PublicDocumentUploadLinkDetail = {
+  moduleName: DocumentModule;
+  entityId: string;
+  referenceNumber: string;
+  recipientType: string;
+  expiresAt: string;
+  documents: DocumentRecord[];
+};
+
 export async function getShipmentDocuments(module: DocumentModule, ownerId: string): Promise<DocumentRecord[]> {
   const response = await httpClient.get<ApiResponse<PagedResponse<DocumentRecord>>>("/api/documents", {
     params: { moduleName: module, entityId: ownerId, pageNumber: 1, pageSize: 200 }
@@ -73,6 +96,44 @@ export async function getDocumentDownloadUrl(documentId: string) {
 
 export async function deleteDocument(documentId: string) {
   await httpClient.delete<ApiResponse<unknown>>(`/api/documents/${documentId}`);
+}
+
+export async function createPublicDocumentUploadLink(request: {
+  moduleName: string;
+  entityId: string;
+  referenceNumber?: string | null;
+  recipientType: "Client" | "Employee" | string;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  expiresInDays?: number | null;
+}) {
+  const response = await httpClient.post<ApiResponse<PublicDocumentUploadLink>>("/api/documents/public-upload-links", request);
+  return response.data.data;
+}
+
+export async function getPublicDocumentUploadLink(token: string) {
+  const response = await httpClient.get<ApiResponse<PublicDocumentUploadLinkDetail>>(`/api/public/document-upload-links/${encodeURIComponent(token)}`);
+  return { ...response.data.data, documents: (response.data.data.documents ?? []).map(normalizeDocument) };
+}
+
+export async function createPublicDocumentUpload(token: string, file: File, attachmentType: "Video" | "Audio" | "File") {
+  const response = await httpClient.post<ApiResponse<SignedDocumentUploadDto>>(`/api/public/document-upload-links/${encodeURIComponent(token)}/signed-upload`, {
+    attachmentType,
+    documentName: attachmentType,
+    originalFileName: file.name,
+    contentType: file.type || "application/octet-stream",
+    fileSizeBytes: file.size,
+    remarks: ""
+  });
+  return { ...response.data.data, document: normalizeDocument(response.data.data.document) };
+}
+
+export async function completePublicDocumentUpload(token: string, documentId: string, fileSizeBytes?: number) {
+  const response = await httpClient.post<ApiResponse<PublicDocumentUploadLinkDetail>>(
+    `/api/public/document-upload-links/${encodeURIComponent(token)}/documents/${documentId}/complete`,
+    { fileSizeBytes: fileSizeBytes ?? null }
+  );
+  return { ...response.data.data, documents: (response.data.data.documents ?? []).map(normalizeDocument) };
 }
 
 export async function uploadDocumentToSignedUrl(uploadUrl: string, file: File, onProgress?: (progress: number) => void) {

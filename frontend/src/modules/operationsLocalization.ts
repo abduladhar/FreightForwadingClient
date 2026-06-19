@@ -7,6 +7,64 @@ import { settingsLocalizationCatalogs } from "@/modules/settingsLocalizationCata
 import { tenantLocalizationCatalogs } from "@/modules/tenantLocalizationCatalog";
 
 const runtimeLocalizationResources: Record<string, Record<string, string>> = {};
+const sharedUploadLinkTranslations: Record<string, Record<string, string>> = {
+  "ar-QA": {
+    "Share Upload Link": "مشاركة رابط الرفع",
+    "Upload link copied": "تم نسخ رابط الرفع",
+    "Share it with the client or employee to attach video, audio, and files.": "شاركه مع العميل أو الموظف لإرفاق الفيديو والصوت والملفات.",
+    "Copy": "نسخ",
+    "Link copied": "تم نسخ الرابط"
+  },
+  "hi-IN": {
+    "Share Upload Link": "अपलोड लिंक साझा करें",
+    "Upload link copied": "अपलोड लिंक कॉपी किया गया",
+    "Share it with the client or employee to attach video, audio, and files.": "वीडियो, ऑडियो और फाइलें जोड़ने के लिए इसे ग्राहक या कर्मचारी के साथ साझा करें.",
+    "Copy": "कॉपी करें",
+    "Link copied": "लिंक कॉपी किया गया"
+  },
+  "fr-FR": {
+    "Share Upload Link": "Partager le lien de téléversement",
+    "Upload link copied": "Lien de téléversement copié",
+    "Share it with the client or employee to attach video, audio, and files.": "Partagez-le avec le client ou l'employé pour joindre des vidéos, des audios et des fichiers.",
+    "Copy": "Copier",
+    "Link copied": "Lien copié"
+  },
+  "es-ES": {
+    "Share Upload Link": "Compartir enlace de carga",
+    "Upload link copied": "Enlace de carga copiado",
+    "Share it with the client or employee to attach video, audio, and files.": "Compártalo con el cliente o empleado para adjuntar video, audio y archivos.",
+    "Copy": "Copiar",
+    "Link copied": "Enlace copiado"
+  },
+  "zh-CN": {
+    "Share Upload Link": "分享上传链接",
+    "Upload link copied": "上传链接已复制",
+    "Share it with the client or employee to attach video, audio, and files.": "分享给客户或员工，用于附加视频、音频和文件。",
+    "Copy": "复制",
+    "Link copied": "链接已复制"
+  },
+  "tr-TR": {
+    "Share Upload Link": "Yükleme bağlantısını paylaş",
+    "Upload link copied": "Yükleme bağlantısı kopyalandı",
+    "Share it with the client or employee to attach video, audio, and files.": "Video, ses ve dosya eklemek için müşteri veya çalışanla paylaşın.",
+    "Copy": "Kopyala",
+    "Link copied": "Bağlantı kopyalandı"
+  },
+  "pt-PT": {
+    "Share Upload Link": "Partilhar ligação de carregamento",
+    "Upload link copied": "Ligação de carregamento copiada",
+    "Share it with the client or employee to attach video, audio, and files.": "Partilhe com o cliente ou funcionário para anexar vídeo, áudio e ficheiros.",
+    "Copy": "Copiar",
+    "Link copied": "Ligação copiada"
+  },
+  "ru-RU": {
+    "Share Upload Link": "Поделиться ссылкой для загрузки",
+    "Upload link copied": "Ссылка для загрузки скопирована",
+    "Share it with the client or employee to attach video, audio, and files.": "Поделитесь с клиентом или сотрудником, чтобы прикрепить видео, аудио и файлы.",
+    "Copy": "Копировать",
+    "Link copied": "Ссылка скопирована"
+  }
+};
 const localizationCorrections: Record<string, Record<string, string>> = {
   "ar-QA": {
     "Add Line": "إضافة سطر",
@@ -209,6 +267,7 @@ export function lt(value: string) {
   const cultureCode = currentCultureCode();
   if (cultureCode === "en-US") return value;
   return localizationCorrections[cultureCode]?.[value]
+    ?? sharedUploadLinkTranslations[cultureCode]?.[value]
     ?? runtimeLocalizationResources[cultureCode]?.[value]
     ?? branchBankLocalizationCatalogs[cultureCode]?.[value]
     ?? branchLocalizationCatalogs[cultureCode]?.[value]

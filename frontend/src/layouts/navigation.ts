@@ -11,6 +11,7 @@ import {
   Files,
   Globe,
   LayoutDashboard,
+  Mail,
   PackageCheck,
   Plane,
   Receipt,
@@ -82,6 +83,7 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Rate & Quotation",
     items: [
       item("rate-master", "Rate Master", "/rate-masters", ClipboardList, "RateMaster.Read", "Rate cards, slabs, and surcharge setup."),
+      item("quotation-requests", "Quotation Requests", "/quotation-requests", ClipboardList, "Quotation.Read", "Client quotation requests and uploaded attachments."),
       item("quotations", "Quotations", "/quotations", BookOpenText, "Quotation.Read", "Quotation pipeline, approvals, and conversions.")
     ]
   },
@@ -210,6 +212,7 @@ export const navigationGroups: NavigationGroup[] = [
       item("warehouse-damaged-goods", "Damaged Goods", "/warehouses/damaged-goods", Settings, "Warehouse.Update", "Record and track damaged goods."),
       item("warehouse-returned-goods", "Returned Goods", "/warehouses/returned-goods", Settings, "Warehouse.Update", "Record and track returned goods."),
       item("numbering-settings", "Numbering Settings", "/settings/numbering", Settings, "Tenant.Read", "Document numbering formats by module and branch."),
+      item("email-configuration", "Email Configuration", "/settings/email-configuration", Mail, "Tenant.Read", "SMTP sender setup for HTML and PDF customer reports."),
       item("print-templates", "Print Templates", "/settings/print-templates", Settings, "Tenant.Read", "Print template list and designer."),
       item("label-templates", "Label Templates", "/settings/label-templates", Settings, "Tenant.Read", "Destination-aware shipment label templates."),
       item("approval-workflows", "Approval Workflows", "/settings/approval-workflows", Settings, "Tenant.Read", "Single/multi-level approval workflow designer.")
