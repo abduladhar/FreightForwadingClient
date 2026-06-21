@@ -1,18 +1,23 @@
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useParams } from "react-router-dom";
 import { getMasterShipmentConsolidationReport } from "@/api/masterShipmentApi";
+import { PermissionGuard } from "@/auth/PermissionGuard";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { ExportButtons } from "@/components/common/ExportButtons";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { exportFilteredCsv } from "@/utils/csvExport";
 import { exportExcelReport } from "@/utils/excelExport";
-import { exportPdfReport } from "@/utils/pdfExport";
+import { createPdfReportBlob, exportPdfReport } from "@/utils/pdfExport";
 import { lt } from "@/modules/operationsLocalization";
 
 export function ConsolidationPage() {
   const { masterShipmentId } = useParams();
   const workspace = useWorkspace();
+  const reportRef = useRef<HTMLDivElement>(null);
   const query = useQuery({ queryKey: ["master-shipment-consolidation", masterShipmentId], queryFn: () => getMasterShipmentConsolidationReport(masterShipmentId!), enabled: Boolean(masterShipmentId) });
   if (!masterShipmentId) return <Navigate to="/master-shipments" replace />;
   const r = query.data;
@@ -30,48 +35,84 @@ export function ConsolidationPage() {
       title={lt("Consolidation Report")}
       description={lt("House shipment consolidation report for this master shipment.")}
       actions={
-        <ExportButtons
-          onExportCsv={() => exportFilteredCsv(rows, `${r?.masterShipmentNumber ?? "master-shipment"}-consolidation.csv`)}
-          onExportExcel={() => void exportExcelReport({
-            fileName: `${r?.masterShipmentNumber ?? "master-shipment"}-consolidation.xlsx`,
-            reportTitle: lt("Master Shipment Consolidation Report"),
-            tenantName: workspace.tenantCode,
-            branchName: workspace.branchName,
-            sheets: [{
-              sheetName: lt("Consolidation"),
+        <>
+          <PermissionGuard permission="MasterShipment.Export" fallback="hidden">
+            <EmailReportAction
+              subject={`Master Shipment Consolidation - ${r?.masterShipmentNumber ?? "master-shipment"}`}
+              reportName={lt("Master Shipment Consolidation Report")}
+              module="MasterShipment"
+              getHtml={() => reportRef.current?.outerHTML ?? ""}
+            />
+          </PermissionGuard>
+          <PermissionGuard permission="MasterShipment.Export" fallback="hidden">
+            <EmailPdfReportButton
+              fileName={`${r?.masterShipmentNumber ?? "master-shipment"}-consolidation.pdf`}
+              subject={`Master Shipment Consolidation - ${r?.masterShipmentNumber ?? "master-shipment"}`}
+              reportName={lt("Master Shipment Consolidation Report")}
+              module="MasterShipment"
+              createPdfBlob={() => createPdfReportBlob({
+                fileName: `${r?.masterShipmentNumber ?? "master-shipment"}-consolidation.pdf`,
+                title: lt("Master Shipment Consolidation Report"),
+                tenantName: workspace.tenantCode,
+                branchName: workspace.branchName,
+                currencyCode: workspace.baseCurrency,
+                cultureCode: workspace.cultureCode,
+                rtl: workspace.languageCode.toLowerCase().startsWith("ar"),
+                columns: [
+                  { key: "houseShipmentNumber", label: lt("House Shipment") },
+                  { key: "consolidatedPieces", label: lt("Pieces"), align: "right" },
+                  { key: "consolidatedWeight", label: lt("Weight"), align: "right" },
+                  { key: "consolidatedVolume", label: lt("Volume"), align: "right" },
+                  { key: "chargeableWeight", label: lt("Chargeable"), align: "right" },
+                  { key: "allocatedCostAmount", label: lt("Allocated Cost"), align: "right" }
+                ],
+                rows
+              })}
+            />
+          </PermissionGuard>
+          <ExportButtons
+            onExportCsv={() => exportFilteredCsv(rows, `${r?.masterShipmentNumber ?? "master-shipment"}-consolidation.csv`)}
+            onExportExcel={() => void exportExcelReport({
+              fileName: `${r?.masterShipmentNumber ?? "master-shipment"}-consolidation.xlsx`,
+              reportTitle: lt("Master Shipment Consolidation Report"),
+              tenantName: workspace.tenantCode,
+              branchName: workspace.branchName,
+              sheets: [{
+                sheetName: lt("Consolidation"),
+                columns: [
+                  { key: "houseShipmentNumber", header: lt("House Shipment") },
+                  { key: "consolidatedPieces", header: lt("Pieces"), type: "number" },
+                  { key: "consolidatedWeight", header: lt("Weight"), type: "number" },
+                  { key: "consolidatedVolume", header: lt("Volume"), type: "number" },
+                  { key: "chargeableWeight", header: lt("Chargeable Weight"), type: "number" },
+                  { key: "allocatedCostAmount", header: lt("Allocated Cost"), type: "currency", currencyCode: workspace.baseCurrency }
+                ],
+                rows
+              }]
+            })}
+            onExportPdf={() => void exportPdfReport({
+              fileName: `${r?.masterShipmentNumber ?? "master-shipment"}-consolidation.pdf`,
+              title: lt("Master Shipment Consolidation Report"),
+              tenantName: workspace.tenantCode,
+              branchName: workspace.branchName,
+              currencyCode: workspace.baseCurrency,
+              cultureCode: workspace.cultureCode,
+              rtl: workspace.languageCode.toLowerCase().startsWith("ar"),
               columns: [
-                { key: "houseShipmentNumber", header: lt("House Shipment") },
-                { key: "consolidatedPieces", header: lt("Pieces"), type: "number" },
-                { key: "consolidatedWeight", header: lt("Weight"), type: "number" },
-                { key: "consolidatedVolume", header: lt("Volume"), type: "number" },
-                { key: "chargeableWeight", header: lt("Chargeable Weight"), type: "number" },
-                { key: "allocatedCostAmount", header: lt("Allocated Cost"), type: "currency", currencyCode: workspace.baseCurrency }
+                { key: "houseShipmentNumber", label: lt("House Shipment") },
+                { key: "consolidatedPieces", label: lt("Pieces"), align: "right" },
+                { key: "consolidatedWeight", label: lt("Weight"), align: "right" },
+                { key: "consolidatedVolume", label: lt("Volume"), align: "right" },
+                { key: "chargeableWeight", label: lt("Chargeable"), align: "right" },
+                { key: "allocatedCostAmount", label: lt("Allocated Cost"), align: "right" }
               ],
               rows
-            }]
-          })}
-          onExportPdf={() => void exportPdfReport({
-            fileName: `${r?.masterShipmentNumber ?? "master-shipment"}-consolidation.pdf`,
-            title: lt("Master Shipment Consolidation Report"),
-            tenantName: workspace.tenantCode,
-            branchName: workspace.branchName,
-            currencyCode: workspace.baseCurrency,
-            cultureCode: workspace.cultureCode,
-            rtl: workspace.languageCode.toLowerCase().startsWith("ar"),
-            columns: [
-              { key: "houseShipmentNumber", label: lt("House Shipment") },
-              { key: "consolidatedPieces", label: lt("Pieces"), align: "right" },
-              { key: "consolidatedWeight", label: lt("Weight"), align: "right" },
-              { key: "consolidatedVolume", label: lt("Volume"), align: "right" },
-              { key: "chargeableWeight", label: lt("Chargeable"), align: "right" },
-              { key: "allocatedCostAmount", label: lt("Allocated Cost"), align: "right" }
-            ],
-            rows
-          })}
-        />
+            })}
+          />
+        </>
       }
     />
-    <Card><CardContent className="pt-6 space-y-2">
+    <Card><CardContent ref={reportRef} className="pt-6 space-y-2">
       <p className="text-sm">{lt("Master Shipment")}: <span className="font-medium">{r?.masterShipmentNumber ?? "-"}</span></p>
       <p className="text-sm">{lt("Status")}: <span className="font-medium">{r?.status ?? "-"}</span></p>
       <p className="text-sm">{lt("Totals")}: {lt("Pieces")} {r?.totalPieces ?? 0} | {lt("Weight")} {r?.totalWeight ?? 0} | {lt("Volume")} {r?.totalVolume ?? 0} | {lt("Chargeable")} {r?.totalChargeableWeight ?? 0}</p>

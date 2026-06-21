@@ -27,6 +27,12 @@ const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
 const billSourceTypes = ["Pickup", "GoodsReceipt", "HouseShipment", "MasterShipment", "DirectShipment", "CustomsClearance", "Job", "WarehouseService", "TransportationService", "Miscellaneous"];
 const partyTypes = ["Customer", "Vendor", "Agent", "Carrier"];
 
+function todayDateLocalValue() {
+  const date = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 export function VendorBillForm({
   initialValue,
   billStatus = "Draft",
@@ -55,8 +61,8 @@ export function VendorBillForm({
       sourceId: null,
       sourceReferenceId: null,
       sourceReferenceNo: null,
-      billDate: new Date().toISOString().slice(0, 10),
-      dueDate: new Date().toISOString().slice(0, 10),
+      billDate: todayDateLocalValue(),
+      dueDate: todayDateLocalValue(),
       vendorCurrencyId: "",
       billCurrencyId: "",
       exchangeRate: 1,
@@ -244,12 +250,12 @@ export function VendorBillForm({
         <Field label={lt("Salesman (optional)")}>
           <SalesmanSelect value={value.salesmanId} onChange={(salesmanId) => setValue({ ...value, salesmanId })} />
         </Field>
-        <Field label={lt("Pay To Type")}>
+        <Field label={lt("Pay To Type")} required>
           <select className="h-10 w-full rounded-md border px-3 text-sm" value={partyType} onChange={(e) => setValue({ ...value, payToPartyType: e.target.value, payToPartyId: null, payToPartyName: null, vendorId: "" })}>
             {partyTypes.map((type) => <option key={type} value={type}>{lt(type)}</option>)}
           </select>
         </Field>
-        <Field label={lt("Pay To")}>
+        <Field label={lt("Pay To")} required>
           <FinancePartyAutocomplete
             partyType={partyType as FinancePartyType}
             value={value.payToPartyId || value.vendorId}
@@ -257,7 +263,7 @@ export function VendorBillForm({
             placeholder={lt("Search party by name, code, or phone")}
           />
         </Field>
-        <Field label={lt("Bill Source Type")}>
+        <Field label={lt("Bill Source Type")} required>
           <select className="h-10 w-full rounded-md border px-3 text-sm" value={value.sourceType} onChange={(e) => setValue({ ...value, sourceType: e.target.value, sourceReferenceId: null, sourceReferenceNo: null })}>
             {billSourceTypes.map((type) => <option key={type} value={type}>{displaySourceType(type)}</option>)}
           </select>
@@ -265,22 +271,22 @@ export function VendorBillForm({
         <Field label={lt("Source Reference No")}>
           <Input value={value.sourceReferenceNo ?? ""} readOnly placeholder={value.sourceId ? (pickupReference.isLoading || goodsReceiptReference.isLoading || houseShipmentReference.isLoading || directShipmentReference.isLoading || masterShipmentReference.isLoading || customsReference.isLoading || jobReference.isLoading) ? lt("Loading source reference...") : lt("Assigned by server") : lt("No source selected")} className="bg-slate-50" />
         </Field>
-        <Field label={lt("Bill Date")}><Input type="date" value={value.billDate} onChange={(e) => { if (!initialValue && value.billCurrencyId !== baseCurrency?.currencyId) shouldApplyDefaultRateRef.current = true; setValue({ ...value, billDate: e.target.value }); }} /></Field>
-        <Field label={lt("Due Date")}><Input type="date" value={value.dueDate} onChange={(e) => setValue({ ...value, dueDate: e.target.value })} /></Field>
-        <Field label={`${lt("Bill Currency")} (${billCurrencyCode})`}>
+        <Field label={lt("Bill Date")} required><Input type="date" value={value.billDate} onChange={(e) => { if (!initialValue && value.billCurrencyId !== baseCurrency?.currencyId) shouldApplyDefaultRateRef.current = true; setValue({ ...value, billDate: e.target.value }); }} /></Field>
+        <Field label={lt("Due Date")} required><Input type="date" value={value.dueDate} onChange={(e) => setValue({ ...value, dueDate: e.target.value })} /></Field>
+        <Field label={`${lt("Bill Currency")} (${billCurrencyCode})`} required>
           <select className="h-10 w-full rounded-md border bg-slate-50 px-3 text-sm" value={value.billCurrencyId} onChange={(e) => changeBillCurrency(e.target.value)} disabled>
             <option value="">{lt("Select currency")}</option>
             {enabledCurrencies.map((x) => <option key={x.currencyId} value={x.currencyId}>{x.currencyCode} - {x.currencyName}</option>)}
           </select>
           <div className="text-xs text-muted-foreground">{lt("Locked to the selected Pay To party currency.")}</div>
         </Field>
-        <Field label={`${lt("Vendor Currency")} (${vendorCurrencyCode})`}>
+        <Field label={`${lt("Vendor Currency")} (${vendorCurrencyCode})`} required>
           <select className="h-10 w-full rounded-md border bg-slate-50 px-3 text-sm" value={value.vendorCurrencyId} onChange={(e) => setValue({ ...value, vendorCurrencyId: e.target.value })} disabled>
             <option value="">{lt("Select currency")}</option>
             {enabledCurrencies.map((x) => <option key={x.currencyId} value={x.currencyId}>{x.currencyCode} - {x.currencyName}</option>)}
           </select>
         </Field>
-        <Field label={`${lt("Exchange Rate")} (${baseCurrencyCode} ${lt("per")} ${billCurrencyCode})`}>
+        <Field label={`${lt("Exchange Rate")} (${baseCurrencyCode} ${lt("per")} ${billCurrencyCode})`} required>
           <Input type="number" min="0" value={value.exchangeRate} onChange={(e) => setValue({ ...value, exchangeRate: Math.max(0, Number(e.target.value)) })} />
           {value.billCurrencyId && value.billCurrencyId !== baseCurrency?.currencyId ? (
             <p className="text-xs text-muted-foreground">
@@ -293,7 +299,7 @@ export function VendorBillForm({
           ) : <p className="text-xs text-muted-foreground">{lt("Base currency bills use exchange rate 1.")}</p>}
         </Field>
         <label className="flex items-center gap-2 pt-7 text-sm"><input type="checkbox" checked={value.isExchangeRateOverride} onChange={(e) => setValue({ ...value, isExchangeRateOverride: e.target.checked })} disabled={!canOverride} /> {lt("Manual Rate Override")}</label>
-        <Field label={lt("Override Reason")}><Input value={value.exchangeRateOverrideReason ?? ""} onChange={(e) => setValue({ ...value, exchangeRateOverrideReason: e.target.value || null })} disabled={!value.isExchangeRateOverride || !canOverride} /></Field>
+        <Field label={lt("Override Reason")} required={value.isExchangeRateOverride}><Input value={value.exchangeRateOverrideReason ?? ""} onChange={(e) => setValue({ ...value, exchangeRateOverrideReason: e.target.value || null })} disabled={!value.isExchangeRateOverride || !canOverride} /></Field>
         <Field label={`${lt("Expected Cost")} (${billCurrencyCode})`}><Input type="number" value={value.expectedCostAmount} onChange={(e) => setValue({ ...value, expectedCostAmount: Number(e.target.value) })} /></Field>
         <Field label={lt("Remarks")}><Input value={value.remarks ?? ""} onChange={(e) => setValue({ ...value, remarks: e.target.value || null })} /></Field>
       </div>
@@ -307,11 +313,11 @@ export function VendorBillForm({
           <table className="w-full min-w-[980px] text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="p-2 text-left">{lt("Charge Head")}</th>
-                <th className="p-2 text-left">{lt("Code")}</th>
-                <th className="p-2 text-left">{lt("Name")}</th>
-                <th className="p-2 text-left">{lt("Qty")}</th>
-                <th className="p-2 text-left">{lt("Rate")} ({billCurrencyCode})</th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Charge Head")}</RequiredHeader></th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Code")}</RequiredHeader></th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Name")}</RequiredHeader></th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Qty")}</RequiredHeader></th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Rate")} ({billCurrencyCode})</RequiredHeader></th>
                 <th className="p-2 text-left">{lt("Discount")} ({billCurrencyCode})</th>
                 <th className="p-2 text-left">{lt("Tax %")}</th>
                 <th className="p-2 text-left">{lt("Operation")}</th>
@@ -375,7 +381,11 @@ export function VendorBillForm({
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) { return <div className="space-y-1"><Label>{label}</Label>{children}</div>; }
+function Field({ label, children, required }: { label: ReactNode; children: ReactNode; required?: boolean }) { return <div className="space-y-1"><Label>{label}{required ? <RequiredMark /> : null}</Label>{children}</div>; }
+
+function RequiredHeader({ children }: { children: ReactNode }) { return <>{children}<RequiredMark /></>; }
+
+function RequiredMark() { return <span className="ml-1 text-red-600">*</span>; }
 
 function createEmptyBillItem(): VendorBillItemRequest {
   return {

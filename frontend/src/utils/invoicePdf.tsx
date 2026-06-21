@@ -46,9 +46,13 @@ export interface InvoicePdfOptions {
 }
 
 export async function exportInvoicePdf(options: InvoicePdfOptions) {
-  ensurePdfFontsRegistered();
-  const blob = await pdf(buildInvoiceDocument(options)).toBlob();
+  const blob = await createInvoicePdfBlob(options);
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
+}
+
+export async function createInvoicePdfBlob(options: InvoicePdfOptions) {
+  ensurePdfFontsRegistered();
+  return await pdf(buildInvoiceDocument(options)).toBlob();
 }
 
 function buildInvoiceDocument(options: InvoicePdfOptions) {

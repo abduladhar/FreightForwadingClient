@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, Download, RefreshCw } from "lucide-react";
@@ -7,17 +8,20 @@ import { getTenantById } from "@/api/tenantApi";
 import { useAuth } from "@/auth/useAuth";
 import { AuditTrailButton } from "@/components/common/AuditTrailButton";
 import { CurrencyAmount } from "@/components/common/CurrencyAmount";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWorkspace } from "@/hooks/useWorkspace";
-import { exportMasterProfitLossPdf } from "@/utils/masterProfitLossPdf";
+import { createMasterProfitLossPdfBlob, exportMasterProfitLossPdf } from "@/utils/masterProfitLossPdf";
 import { lt } from "@/modules/operationsLocalization";
 
 export function MasterShipmentProfitLossReportPage() {
   const { masterShipmentId } = useParams();
   const workspace = useWorkspace();
   const { session } = useAuth();
+  const reportRef = useRef<HTMLDivElement>(null);
   const query = useQuery({
     queryKey: ["master-shipment-profit-loss", masterShipmentId],
     queryFn: () => getMasterShipmentProfitLossReport(masterShipmentId!),
@@ -54,18 +58,40 @@ export function MasterShipmentProfitLossReportPage() {
             <Button variant="outline" onClick={() => void query.refetch()} disabled={query.isFetching}>
               <RefreshCw className="h-4 w-4" />{lt("Refresh")}</Button>
             {report ? (
-              <Button
-                variant="outline"
-                onClick={() => void exportMasterProfitLossPdf({
-                  fileName: `${report.masterShipmentNumber}-profit-loss.pdf`,
-                  tenantName: workspace.tenantCode,
-                  branchName: workspace.branchName ?? lt("Branch"),
-                  branchAddress,
-                  logoUrl,
-                  report
-                })}
-              >
-                <Download className="h-4 w-4" />{lt("PDF Export")}</Button>
+              <>
+                <EmailReportAction
+                  subject={`Master Shipment Profit & Loss - ${report.masterShipmentNumber}`}
+                  reportName={lt("Master Shipment Profit & Loss")}
+                  module="MasterShipment"
+                  getHtml={() => reportRef.current?.outerHTML ?? ""}
+                />
+                <EmailPdfReportButton
+                  fileName={`${report.masterShipmentNumber}-profit-loss.pdf`}
+                  subject={`Master Shipment Profit & Loss - ${report.masterShipmentNumber}`}
+                  reportName={lt("Master Shipment Profit & Loss")}
+                  module="MasterShipment"
+                  createPdfBlob={() => createMasterProfitLossPdfBlob({
+                    fileName: `${report.masterShipmentNumber}-profit-loss.pdf`,
+                    tenantName: workspace.tenantCode,
+                    branchName: workspace.branchName ?? lt("Branch"),
+                    branchAddress,
+                    logoUrl,
+                    report
+                  })}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => void exportMasterProfitLossPdf({
+                    fileName: `${report.masterShipmentNumber}-profit-loss.pdf`,
+                    tenantName: workspace.tenantCode,
+                    branchName: workspace.branchName ?? lt("Branch"),
+                    branchAddress,
+                    logoUrl,
+                    report
+                  })}
+                >
+                  <Download className="h-4 w-4" />{lt("PDF Export")}</Button>
+              </>
             ) : null}
             <Button asChild variant="outline">
               <Link to={`/master-shipments/${masterShipmentId}`}>
@@ -79,7 +105,7 @@ export function MasterShipmentProfitLossReportPage() {
       {query.isError ? <Card><CardContent className="pt-6 text-sm text-red-600">{lt("Unable to load master shipment profit and loss report.")}</CardContent></Card> : null}
 
       {report ? (
-        <>
+        <div ref={reportRef} className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
             <SummaryCard title={lt("Total Invoice")} value={report.invoiceAmount} />
             <SummaryCard title={lt("Total Bill")} value={report.billAmount} />
@@ -98,7 +124,7 @@ export function MasterShipmentProfitLossReportPage() {
           {report.sections.map((section) => (
             <ProfitLossSection key={section.sectionName} section={section} />
           ))}
-        </>
+        </div>
       ) : null}
     </div>
   );

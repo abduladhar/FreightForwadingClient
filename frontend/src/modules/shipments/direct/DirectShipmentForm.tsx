@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SalesmanSelect } from "@/components/common/SalesmanSelect";
 import { CustomerAutocomplete } from "@/components/common/CustomerAutocomplete";
+import { CreateCustomerButton } from "@/components/common/CreateCustomerButton";
 import { QuotationAutocomplete } from "@/components/common/QuotationAutocomplete";
 import { useToast } from "@/components/ui/toast";
 import { lt } from "@/modules/operationsLocalization";
@@ -139,19 +140,24 @@ export function DirectShipmentForm({
 
   return <div className="space-y-4">
     <div className="grid gap-4 md:grid-cols-3">
-      <Field label={lt("Customer")}>
-        <CustomerAutocomplete
-          value={value.shipment.customerId}
-          onChange={(customer) => setValue((prev) => ({
-            ...prev,
-            shipment: {
-              ...prev.shipment,
-              customerId: customer?.id ?? "",
-              salesmanId: customer?.salesmanId ?? null,
-              quotationId: null
-            }
-          }))}
-        />
+      <Field label={lt("Customer")} required>
+        <div className="flex gap-2">
+          <div className="min-w-0 flex-1">
+            <CustomerAutocomplete
+              value={value.shipment.customerId}
+              onChange={(customer) => setValue((prev) => ({
+                ...prev,
+                shipment: {
+                  ...prev.shipment,
+                  customerId: customer?.id ?? "",
+                  salesmanId: customer?.salesmanId ?? null,
+                  quotationId: null
+                }
+              }))}
+            />
+          </div>
+          <CreateCustomerButton />
+        </div>
       </Field>
       <Field label={lt("Salesman (optional)")}><SalesmanSelect value={value.shipment.salesmanId} onChange={(salesmanId) => setValue({ ...value, shipment: { ...value.shipment, salesmanId } })} /></Field>
       <Field label={lt("Quotation")}>
@@ -162,7 +168,7 @@ export function DirectShipmentForm({
           onChange={(quotation) => void applyQuotation(quotation?.id ?? "")}
         />
       </Field>
-      <Field label={lt("Transport Mode")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.shipment.modeOfTransport} onChange={(e) => {
+      <Field label={lt("Transport Mode")} required><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.shipment.modeOfTransport} onChange={(e) => {
         const nextMode = e.target.value;
         setValue({
           ...value,
@@ -180,6 +186,8 @@ export function DirectShipmentForm({
           }
         });
       }}><option value="Air">{lt("Air")}</option><option value="Sea">{lt("Sea")}</option><option value="Road">{lt("Road")}</option><option value="Courier">{lt("Courier")}</option></select></Field>
+      <Field label={lt("ETD")}><Input type="datetime-local" value={toInput(value.shipment.etd)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, etd: e.target.value || null } })} /></Field>
+      <Field label={lt("ETA")}><Input type="datetime-local" value={toInput(value.shipment.eta)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, eta: e.target.value || null } })} /></Field>
       <div className="md:col-span-3 grid gap-4 md:grid-cols-2">
         <div className="rounded-lg border p-3 space-y-3">
           <h3 className="text-sm font-semibold">{lt("Shipper Information")}</h3>
@@ -206,7 +214,7 @@ export function DirectShipmentForm({
           <Field label={lt("Consignee Address")}><Textarea rows={3} value={(value.shipment.consigneeAddress ?? "")} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, consigneeAddress: e.target.value } })} /></Field>
         </div>
       </div>
-      <Field label={lt("Origin Port")}>
+      <Field label={lt("Origin Port")} required>
         <FilterableSelect
           value={value.shipment.originPortGuid ?? ""}
           onChange={(next) => {
@@ -217,7 +225,7 @@ export function DirectShipmentForm({
           options={(shippingPorts.data ?? []).map((x) => ({ value: x.id, label: `${x.portCode} - ${x.portName} - ${x.countryName}` }))}
         />
       </Field>
-      <Field label={lt("Destination Port")}>
+      <Field label={lt("Destination Port")} required>
         <FilterableSelect
           value={value.shipment.destinationPortGuid ?? ""}
           onChange={(next) => {
@@ -228,14 +236,12 @@ export function DirectShipmentForm({
           options={(shippingPorts.data ?? []).map((x) => ({ value: x.id, label: `${x.portCode} - ${x.portName} - ${x.countryName}` }))}
         />
       </Field>
-      <Field label={lt("Carrier")}><Input value={value.shipment.carrierName ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, carrierName: e.target.value || null } })} /></Field>
+      <Field label={lt("Carrier")} required><Input value={value.shipment.carrierName ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, carrierName: e.target.value || null } })} /></Field>
       <Field label={lt("Master Waybill No")}><Input value={("mawbNumber" in value.shipment ? value.shipment.mawbNumber : null) ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, mawbNumber: e.target.value || null } })} /></Field>
       {mode === "Air" ? <Field label={lt("Flight")}><Input value={value.shipment.flightNumber ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, flightNumber: e.target.value || null } })} /></Field> : null}
       {mode === "Sea" ? <Field label={lt("Vessel")}><Input value={value.shipment.vesselName ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, vesselName: e.target.value || null } })} /></Field> : null}
       {mode === "Road" ? <Field label={lt("Truck")}><Input value={value.shipment.truckNumber ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, truckNumber: e.target.value || null } })} /></Field> : null}
       {mode === "Sea" ? <Field label={lt("Container")}><Input value={value.shipment.containerNumber ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, containerNumber: e.target.value || null } })} /></Field> : null}
-      <Field label={lt("ETD")}><Input type="datetime-local" value={toInput(value.shipment.etd)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, etd: e.target.value || null } })} /></Field>
-      <Field label={lt("ETA")}><Input type="datetime-local" value={toInput(value.shipment.eta)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, eta: e.target.value || null } })} /></Field>
       <Field label={lt("Invoice Reference")}><Input value={("customerInvoiceId" in value.shipment ? value.shipment.customerInvoiceId : null) ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, customerInvoiceId: e.target.value || null } })} /></Field>
       <Field label={lt("Vendor Bill Reference")}><Input value={("vendorBillId" in value.shipment ? value.shipment.vendorBillId : null) ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, vendorBillId: e.target.value || null } })} /></Field>
       <Field label={lt("Revenue")}><Input type="number" min="0" value={value.shipment.revenueAmount} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, revenueAmount: Math.max(0, Number(e.target.value)) } })} /></Field>
@@ -296,12 +302,12 @@ export function DirectShipmentForm({
                   placeholder={lt("Select package type")}
                   options={(packageTypes.data ?? []).map((x) => ({ value: x.id, label: `${x.packageCode} - ${x.packageName}` }))}
                 /></ItemField>
-                <ItemField label={lt("Description")}><Input value={item.description} onChange={(e) => setItem(value, index, "description", e.target.value, setValue)} /></ItemField>
+                <ItemField label={lt("Description")} required><Input value={item.description} onChange={(e) => setItem(value, index, "description", e.target.value, setValue)} /></ItemField>
                 <ItemField label={lt("Country of Origin")}><FilterableSelect value={item.countryOfOrigin ?? ""} onChange={(next) => setItem(value, index, "countryOfOrigin", next, setValue)} placeholder={lt("Select country")} options={(countries.data ?? []).map((x) => ({ value: x.name, label: `${x.countryCode} - ${x.name}` }))} /></ItemField>
                 <ItemField label={lt("HS Code")}><Input value={item.hsCode ?? ""} onChange={(e) => setItem(value, index, "hsCode", e.target.value, setValue)} /></ItemField>
               </div>
               <div className="grid gap-3 border-t bg-slate-50/70 p-3 md:grid-cols-3 xl:grid-cols-[120px_120px_110px_110px_110px_140px_140px_260px] xl:items-end">
-                <ItemField label={lt("No. of Packages")}><Input type="number" min="0" value={item.pieces} onChange={(e) => updateDimensionItem(value, index, { pieces: Math.max(0, Number(e.target.value)) }, setValue)} /></ItemField>
+                <ItemField label={lt("No. of Packages")} required><Input type="number" min="0" value={item.pieces} onChange={(e) => updateDimensionItem(value, index, { pieces: Math.max(0, Number(e.target.value)) }, setValue)} /></ItemField>
                 <ItemField label={lt("Gross Weight")}><Input type="number" min="0" value={item.weight} onChange={(e) => updateDimensionItem(value, index, { weight: Math.max(0, Number(e.target.value)) }, setValue)} /></ItemField>
                 <ItemField label={lt("Length (Per Item)")}><Input type="number" min="0" value={item.length ?? 0} onChange={(e) => updateDimensionItem(value, index, { length: Math.max(0, Number(e.target.value)) }, setValue)} /></ItemField>
                 <ItemField label={lt("Width (Per Item)")}><Input type="number" min="0" value={item.width ?? 0} onChange={(e) => updateDimensionItem(value, index, { width: Math.max(0, Number(e.target.value)) }, setValue)} /></ItemField>
@@ -334,12 +340,16 @@ export function DirectShipmentForm({
   </div>;
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label>{label}</Label>{children}</div>;
+function Field({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label>{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
 }
 
-function ItemField({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</Label>{children}</div>;
+function ItemField({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
+}
+
+function RequiredMark() {
+  return <span className="ml-1 text-red-600">*</span>;
 }
 
 function PartyLookup({
@@ -447,7 +457,11 @@ function FilterableSelect({
   );
 }
 function toInput(value: string | null | undefined) { return value ? value.slice(0, 16) : ""; }
-function todayDateTimeLocalValue() { return toInput(new Date().toISOString()); }
+function todayDateTimeLocalValue() {
+  const date = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 function setItem(value: DirectShipmentFormValue, index: number, key: keyof DirectShipmentItemRequest, nextValue: string | number | null, setValue: (next: DirectShipmentFormValue) => void) {
   const items = [...value.items];
   const current = { ...items[index], [key]: nextValue } as DirectShipmentItemRequest;

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useParams } from "react-router-dom";
 import { Download } from "lucide-react";
@@ -8,18 +9,22 @@ import { getCustomer } from "@/api/customerApi";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { useAuth } from "@/auth/useAuth";
 import { PermissionButton } from "@/auth/PermissionButton";
+import { PermissionGuard } from "@/auth/PermissionGuard";
 import { AuditTrailButton } from "@/components/common/AuditTrailButton";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { PrintPreview } from "@/components/common/PrintPreview";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
-import { exportHouseShipmentPdf } from "@/utils/houseShipmentPdf";
+import { createHouseShipmentPdfBlob, exportHouseShipmentPdf } from "@/utils/houseShipmentPdf";
 import { lt } from "@/modules/operationsLocalization";
 
 export function HouseShipmentNotePrintPage() {
   const { shipmentId } = useParams();
   const workspace = useWorkspace();
+  const reportRef = useRef<HTMLDivElement>(null);
   const { session } = useAuth();
   const shipmentQuery = useQuery({ queryKey: ["house-shipment-note", shipmentId], queryFn: () => getHouseShipment(shipmentId!), enabled: Boolean(shipmentId) });
   const tenant = useQuery({
@@ -53,6 +58,34 @@ export function HouseShipmentNotePrintPage() {
       actions={
         <>
           <AuditTrailButton />
+          <PermissionGuard permission="HouseShipment.Export" fallback="hidden">
+            <EmailReportAction
+              subject={`House Shipment Job Card - ${shipment.houseShipmentNumber}`}
+              reportName={`Job Card ${shipment.houseShipmentNumber}`}
+              module="HouseShipment"
+              defaultEmail={customer.data?.email}
+              getHtml={() => reportRef.current?.outerHTML ?? ""}
+            />
+          </PermissionGuard>
+          <PermissionGuard permission="HouseShipment.Export" fallback="hidden">
+            <EmailPdfReportButton
+              fileName={`${shipment.houseShipmentNumber}.pdf`}
+              subject={`House Shipment Job Card - ${shipment.houseShipmentNumber}`}
+              reportName={`Job Card ${shipment.houseShipmentNumber}`}
+              module="HouseShipment"
+              defaultEmail={customer.data?.email}
+              createPdfBlob={() => createHouseShipmentPdfBlob({
+                fileName: `${shipment.houseShipmentNumber}.pdf`,
+                tenantName: workspace.tenantCode,
+                branchName: workspace.branchName ?? "Branch",
+                branchAddress,
+                logoUrl,
+                customerName: customer.data?.customerName,
+                houseShipment: shipment,
+                reportTitle: lt("HOUSE SHIPMENT JOB CARD")
+              })}
+            />
+          </PermissionGuard>
           <PermissionButton
             permission="HouseShipment.Export"
             variant="outline"
@@ -75,7 +108,7 @@ export function HouseShipmentNotePrintPage() {
     />
     <Card><CardContent className="pt-6">
       <PrintPreview title={`Job Card ${shipment.houseShipmentNumber}`}>
-        <div className="mx-auto w-full max-w-[190mm] space-y-4 text-sm">
+        <div ref={reportRef} className="mx-auto w-full max-w-[190mm] space-y-4 text-sm">
           <div className="border-b pb-3">
             <div className="grid grid-cols-[150px_1fr_190px] items-center gap-3">
               <div className="flex justify-start">{logoUrl ? <img src={logoUrl} alt="Logo" className="h-24 w-24 object-contain" /> : <div className="h-24 w-24" />}</div>

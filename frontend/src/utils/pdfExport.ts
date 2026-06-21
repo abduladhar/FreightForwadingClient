@@ -32,10 +32,14 @@ export interface PdfExportOptions<T extends Record<string, unknown>> {
 }
 
 export async function exportPdfReport<T extends Record<string, unknown>>(options: PdfExportOptions<T>) {
+  const blob = await createPdfReportBlob(options);
+  saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
+}
+
+export async function createPdfReportBlob<T extends Record<string, unknown>>(options: PdfExportOptions<T>) {
   ensurePdfFontsRegistered();
   const doc = buildPdfDocument(options);
-  const blob = await pdf(doc).toBlob();
-  saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
+  return await pdf(doc).toBlob();
 }
 
 function buildPdfDocument<T extends Record<string, unknown>>(options: PdfExportOptions<T>) {

@@ -39,6 +39,13 @@ export interface BranchSettings {
   workingDays?: string | null;
   openingTime?: string | null;
   closingTime?: string | null;
+  openAiApiKey?: string | null;
+  openAiSelectedModel?: string | null;
+  openAiModelsJson?: string | null;
+  openAiIsEnabled: boolean;
+  openAiExtractionTimeoutSeconds?: number | null;
+  openAiMaxDocumentSizeBytes?: number | null;
+  openAiS3Prefix?: string | null;
   configurationJson?: string | null;
 }
 

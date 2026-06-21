@@ -15,9 +15,13 @@ export interface CustomerReceiptPdfOptions {
 }
 
 export async function exportCustomerReceiptPdf(options: CustomerReceiptPdfOptions) {
-  ensurePdfFontsRegistered();
-  const blob = await pdf(buildCustomerReceiptDocument(options)).toBlob();
+  const blob = await createCustomerReceiptPdfBlob(options);
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
+}
+
+export async function createCustomerReceiptPdfBlob(options: CustomerReceiptPdfOptions) {
+  ensurePdfFontsRegistered();
+  return await pdf(buildCustomerReceiptDocument(options)).toBlob();
 }
 
 function buildCustomerReceiptDocument({ tenantName, branchName, receipt, voucherContent, receiptCurrencyCode = "Currency", baseCurrencyCode = "Base" }: CustomerReceiptPdfOptions) {

@@ -6,6 +6,7 @@ import { PermissionButton } from "@/auth/PermissionButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CustomerAutocomplete } from "@/components/common/CustomerAutocomplete";
+import { CreateCustomerButton } from "@/components/common/CreateCustomerButton";
 import { lt } from "@/modules/operationsLocalization";
 
 const emptyGuid = "00000000-0000-0000-0000-000000000000";
@@ -57,19 +58,24 @@ export function CustomsJobForm({ value, onChange, onSubmit, isSubmitting, submit
     <section className="rounded-lg border bg-white p-4">
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-600">{lt("Job Information")}</h3>
       <div className="grid gap-4 md:grid-cols-4">
-        <Field label={lt("Clearance Type")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.clearanceType} onChange={(e) => set({ clearanceType: e.target.value, declaration: { ...declaration, declarationType: e.target.value } })}><option value="Import">{lt("Import")}</option><option value="Export">{lt("Export")}</option><option value="Transit">{lt("Transit")}</option><option value="ReExport">{lt("ReExport")}</option></select></Field>
+        <Field label={lt("Clearance Type")} required><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.clearanceType} onChange={(e) => set({ clearanceType: e.target.value, declaration: { ...declaration, declarationType: e.target.value } })}><option value="Import">{lt("Import")}</option><option value="Export">{lt("Export")}</option><option value="Transit">{lt("Transit")}</option><option value="ReExport">{lt("ReExport")}</option></select></Field>
         <Field label={lt("Reference No")}><Input value={value.shipmentReferenceNo ?? ""} onChange={(e) => set({ shipmentReferenceNo: e.target.value })} /></Field>
         <Field label={lt("Customer")}>
-          <CustomerAutocomplete
-            value={value.customerId ?? ""}
-            onChange={(customer) => set({
-              customerId: customer?.id ?? null,
-              customerName: customer?.customerName ?? ""
-            })}
-          />
+          <div className="flex gap-2">
+            <div className="min-w-0 flex-1">
+              <CustomerAutocomplete
+                value={value.customerId ?? ""}
+                onChange={(customer) => set({
+                  customerId: customer?.id ?? null,
+                  customerName: customer?.customerName ?? ""
+                })}
+              />
+            </div>
+            <CreateCustomerButton />
+          </div>
         </Field>
         <Field label={lt("Customs Broker")}><Input value={value.customsBrokerName ?? ""} onChange={(e) => set({ customsBrokerName: e.target.value })} /></Field>
-        <Field label={lt("Mode of Transport")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.modeOfTransport} onChange={(e) => set({ modeOfTransport: e.target.value })}><option value="Air">{lt("Air")}</option><option value="Sea">{lt("Sea")}</option><option value="Road">{lt("Road")}</option><option value="Courier">{lt("Courier")}</option></select></Field>
+        <Field label={lt("Mode of Transport")} required><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.modeOfTransport} onChange={(e) => set({ modeOfTransport: e.target.value })}><option value="Air">{lt("Air")}</option><option value="Sea">{lt("Sea")}</option><option value="Road">{lt("Road")}</option><option value="Courier">{lt("Courier")}</option></select></Field>
         <Field label={lt("Incoterms")}>
           <FilterableSelect value={value.incoterms ?? ""} onChange={(next) => set({ incoterms: next })} placeholder={lt("Select incoterm")} options={incotermOptions} />
         </Field>
@@ -99,8 +105,12 @@ export function CustomsJobForm({ value, onChange, onSubmit, isSubmitting, submit
   </div>;
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label className="text-xs uppercase text-slate-600">{label}</Label>{children}</div>;
+function Field({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label className="text-xs uppercase text-slate-600">{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
+}
+
+function RequiredMark() {
+  return <span className="ml-1 text-red-600">*</span>;
 }
 
 function FilterableSelect({ value, onChange, placeholder, options }: { value: string; onChange: (value: string) => void; placeholder: string; options: Array<{ value: string; label: string }> }) {

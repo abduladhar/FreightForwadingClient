@@ -19,12 +19,18 @@ import { useWorkspace } from "@/hooks/useWorkspace";
 import { FinancePartyAutocomplete, type FinancePartyLookup, type FinancePartyType } from "@/components/common/FinancePartyAutocomplete";
 import { lt } from "@/modules/operationsLocalization";
 
+function todayDateLocalValue() {
+  const date = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 const emptyReceipt = (): CustomerReceiptRequest => ({
   customerId: "",
   receivedFromPartyType: "Customer",
   receivedFromPartyId: null,
   receivedFromPartyName: null,
-  receiptDate: new Date().toISOString().slice(0, 10),
+  receiptDate: todayDateLocalValue(),
   receiptCurrencyId: "",
   baseCurrencyId: "",
   exchangeRate: 1,
@@ -107,6 +113,8 @@ export function CustomerReceiptForm({ initialValue, onSubmit, isSubmitting }: { 
     value.receiptCurrencyId &&
     value.baseCurrencyId &&
     value.exchangeRate > 0 &&
+    value.receiptAmount > 0 &&
+    Boolean(value.bankAccountId) !== Boolean(value.cashAccountId) &&
     (value.isAdvanceReceipt ? value.allocations.length === 0 : value.allocations.length > 0 && allocatedTotal === value.receiptAmount && allocationErrors.length === 0)
   );
 
@@ -176,8 +184,8 @@ export function CustomerReceiptForm({ initialValue, onSubmit, isSubmitting }: { 
 
   return <div className="space-y-5">
     <div className="grid gap-4 md:grid-cols-3">
-      <Field label={lt("Received From Type")}><FilterableSelect value={partyType} onChange={setPartyType} options={localizedPartyTypeOptions} placeholder={lt("Select party type")} /></Field>
-      <Field label={lt("Received From")}>
+      <Field label={lt("Received From Type")} required><FilterableSelect value={partyType} onChange={setPartyType} options={localizedPartyTypeOptions} placeholder={lt("Select party type")} /></Field>
+      <Field label={lt("Received From")} required>
         <FinancePartyAutocomplete
           partyType={partyType as FinancePartyType}
           value={selectedPartyId}
@@ -185,14 +193,14 @@ export function CustomerReceiptForm({ initialValue, onSubmit, isSubmitting }: { 
           placeholder={`${lt("Search")} ${lt(partyType).toLowerCase()} ${lt("by name, code, or phone")}`}
         />
       </Field>
-      <Field label={lt("Receipt Date")}><Input type="date" value={value.receiptDate} onChange={(e) => {
+      <Field label={lt("Receipt Date")} required><Input type="date" value={value.receiptDate} onChange={(e) => {
         if (!initialValue && value.receiptCurrencyId !== baseCurrency?.currencyId) shouldApplyDefaultRateRef.current = true;
         updateValue({ ...value, receiptDate: e.target.value });
       }} /></Field>
-      <Field label={`${lt("Receipt Amount")} (${receiptCurrencyLabel})`}><Input type="number" min="0" value={value.receiptAmount} onChange={(e) => updateValue({ ...value, receiptAmount: Math.max(0, Number(e.target.value)) })} /></Field>
-      <Field label={`${lt("Receipt Currency")} (${receiptCurrencyLabel})`}><FilterableSelect value={value.receiptCurrencyId} onChange={changeReceiptCurrency} options={currencyOptions} placeholder={lt("Select receipt currency")} disabled /><div className="text-xs text-muted-foreground">{lt("Locked to the selected Received From party currency.")}</div></Field>
-      <Field label={`${lt("Base Currency")} (${baseCurrencyLabel})`}><FilterableSelect value={value.baseCurrencyId} onChange={() => undefined} options={currencyOptions} placeholder={lt("Tenant base currency")} disabled /></Field>
-      <Field label={`${lt("Exchange Rate")} (${baseCurrencyCode} ${lt("per")} ${receiptCurrencyCode})`}>
+      <Field label={`${lt("Receipt Amount")} (${receiptCurrencyLabel})`} required><Input type="number" min="0" value={value.receiptAmount} onChange={(e) => updateValue({ ...value, receiptAmount: Math.max(0, Number(e.target.value)) })} /></Field>
+      <Field label={`${lt("Receipt Currency")} (${receiptCurrencyLabel})`} required><FilterableSelect value={value.receiptCurrencyId} onChange={changeReceiptCurrency} options={currencyOptions} placeholder={lt("Select receipt currency")} disabled /><div className="text-xs text-muted-foreground">{lt("Locked to the selected Received From party currency.")}</div></Field>
+      <Field label={`${lt("Base Currency")} (${baseCurrencyLabel})`} required><FilterableSelect value={value.baseCurrencyId} onChange={() => undefined} options={currencyOptions} placeholder={lt("Tenant base currency")} disabled /></Field>
+      <Field label={`${lt("Exchange Rate")} (${baseCurrencyCode} ${lt("per")} ${receiptCurrencyCode})`} required>
         <Input type="number" min="0" value={value.exchangeRate} onChange={(e) => {
           shouldApplyDefaultRateRef.current = false;
           updateValue({ ...value, exchangeRate: Math.max(0, Number(e.target.value)) });
@@ -209,8 +217,8 @@ export function CustomerReceiptForm({ initialValue, onSubmit, isSubmitting }: { 
       </Field>
       <Field label={`${lt("Base Amount")} (${baseCurrencyLabel})`}><Input value={baseAmount.toFixed(2)} readOnly className="bg-slate-50 font-medium" /></Field>
       <Field label={`${lt("Bank Charges")} (${receiptCurrencyLabel})`}><Input type="number" min="0" value={value.bankCharges} onChange={(e) => updateValue({ ...value, bankCharges: Math.max(0, Number(e.target.value)) })} /></Field>
-      <Field label={lt("Bank Account")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.bankAccountId ?? ""} onChange={(e) => updateValue({ ...value, bankAccountId: e.target.value || null, cashAccountId: e.target.value ? null : value.cashAccountId })}><option value="">{lt("Select bank account")}</option>{(bankAccounts.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.bankName} - {x.accountNumber}</option>)}</select></Field>
-      <Field label={lt("Cash Account")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.cashAccountId ?? ""} onChange={(e) => updateValue({ ...value, cashAccountId: e.target.value || null, bankAccountId: e.target.value ? null : value.bankAccountId })}><option value="">{lt("Select cash account")}</option>{(cashAccounts.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.cashAccountName}</option>)}</select></Field>
+      <Field label={lt("Bank Account")} required={!value.cashAccountId}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.bankAccountId ?? ""} onChange={(e) => updateValue({ ...value, bankAccountId: e.target.value || null, cashAccountId: e.target.value ? null : value.cashAccountId })}><option value="">{lt("Select bank account")}</option>{(bankAccounts.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.bankName} - {x.accountNumber}</option>)}</select></Field>
+      <Field label={lt("Cash Account")} required={!value.bankAccountId}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.cashAccountId ?? ""} onChange={(e) => updateValue({ ...value, cashAccountId: e.target.value || null, bankAccountId: e.target.value ? null : value.bankAccountId })}><option value="">{lt("Select cash account")}</option>{(cashAccounts.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.cashAccountName}</option>)}</select></Field>
       <label className="flex items-center gap-2 pt-7 text-sm"><input type="checkbox" checked={value.isAdvanceReceipt} onChange={(e) => updateValue({ ...value, isAdvanceReceipt: e.target.checked, allocations: e.target.checked ? [] : value.allocations })} /> {lt("Advance Receipt")}</label>
       <Field label={lt("Remarks")}><Input value={value.remarks ?? ""} onChange={(e) => updateValue({ ...value, remarks: e.target.value || null })} /></Field>
     </div>
@@ -251,7 +259,7 @@ export function CustomerReceiptForm({ initialValue, onSubmit, isSubmitting }: { 
         </div>
         <div className="overflow-auto rounded-lg border">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50"><tr><th className="p-2 text-left">{lt("Invoice")}</th><th className="p-2 text-right">{lt("Outstanding")}</th><th className="p-2 text-left">{lt("Allocated Amount")}</th><th className="p-2 text-right">{lt("Action")}</th></tr></thead>
+            <thead className="bg-slate-50"><tr><th className="p-2 text-left"><RequiredHeader>{lt("Invoice")}</RequiredHeader></th><th className="p-2 text-right">{lt("Outstanding")}</th><th className="p-2 text-left"><RequiredHeader>{lt("Allocated Amount")}</RequiredHeader></th><th className="p-2 text-right">{lt("Action")}</th></tr></thead>
             <tbody>
               {value.allocations.map((row, i) => {
                 const invoice = invoiceById.get(row.invoiceId);
@@ -288,7 +296,11 @@ export function CustomerReceiptForm({ initialValue, onSubmit, isSubmitting }: { 
   </div>;
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) { return <div className="space-y-1"><Label>{label}</Label>{children}</div>; }
+function Field({ label, children, required }: { label: ReactNode; children: ReactNode; required?: boolean }) { return <div className="space-y-1"><Label>{label}{required ? <RequiredMark /> : null}</Label>{children}</div>; }
+
+function RequiredHeader({ children }: { children: ReactNode }) { return <>{children}<RequiredMark /></>; }
+
+function RequiredMark() { return <span className="ml-1 text-red-600">*</span>; }
 
 function FilterableSelect({
   value,

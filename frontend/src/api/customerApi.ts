@@ -11,12 +11,12 @@ export interface CustomerDto {
   customerName: string;
   customerType: string;
   contactPerson?: string | null;
-  email: string;
+  email?: string | null;
   phone?: string | null;
   billingAddress?: string | null;
   shippingAddress?: string | null;
   country: string;
-  city: string;
+  city?: string | null;
   taxNumber?: string | null;
   defaultCurrencyId?: string | null;
   creditLimit: number;
@@ -30,7 +30,7 @@ export interface CustomerSearchDto {
   customerName: string;
   customerCode: string;
   phone?: string | null;
-  email: string;
+  email?: string | null;
   salesmanId?: string | null;
   defaultCurrencyId?: string | null;
 }

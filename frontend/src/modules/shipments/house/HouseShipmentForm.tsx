@@ -8,12 +8,14 @@ import { getActiveCountriesForDropdown } from "@/api/countryApi";
 import { getCustomer } from "@/api/customerApi";
 import { searchHouseShipmentParties, type HouseShipmentPartyLookupDto, type HouseShipmentRequest, type HouseShipmentUpdateRequest, type HouseShipmentItemRequest } from "@/api/houseShipmentApi";
 import { GoodsSelectionTable } from "@/modules/shipments/house/GoodsSelectionTable";
+import { HouseShipmentAiExtractionPanel } from "@/modules/shipments/house/HouseShipmentAiExtractionPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { SalesmanSelect } from "@/components/common/SalesmanSelect";
 import { CustomerAutocomplete } from "@/components/common/CustomerAutocomplete";
+import { CreateCustomerButton } from "@/components/common/CreateCustomerButton";
 import { QuotationAutocomplete } from "@/components/common/QuotationAutocomplete";
 import { lt } from "@/modules/operationsLocalization";
 
@@ -22,6 +24,7 @@ type FormValue = {
   transportMode: string;
   labelTemplateCode: string;
   documents: string[];
+  aiDocumentIds?: string[];
   selectedGoods: HouseShipmentItemRequest[];
 };
 
@@ -31,7 +34,8 @@ export function HouseShipmentForm({
   onApplyGrnItems,
   onSaveItem,
   isSubmitting,
-  enableGoodsSelection = false
+  enableGoodsSelection = false,
+  shipmentId
 }: {
   initialValue?: FormValue | null;
   onSubmit: (value: FormValue) => Promise<void>;
@@ -39,6 +43,7 @@ export function HouseShipmentForm({
   onSaveItem?: (item: HouseShipmentItemRequest) => Promise<HouseShipmentItemRequest[]>;
   isSubmitting?: boolean;
   enableGoodsSelection?: boolean;
+  shipmentId?: string | null;
 }) {
   const toast = useToast();
   const packageTypes = useQuery({ queryKey: ["house-shipment-package-types"], queryFn: () => getActivePackageTypesForDropdown() });
@@ -69,6 +74,7 @@ export function HouseShipmentForm({
     transportMode: "Air",
     labelTemplateCode: "DEFAULT",
     documents: [],
+    aiDocumentIds: [],
     selectedGoods: []
   });
   const shippingPorts = useQuery({
@@ -228,21 +234,33 @@ export function HouseShipmentForm({
 
   return (
     <div className="space-y-4">
+      <HouseShipmentAiExtractionPanel
+        shipmentId={shipmentId}
+        currentFields={{ ...value.shipment, selectedGoods: value.selectedGoods }}
+        onDocumentUploaded={(documentId) => setValue((prev) => ({ ...prev, aiDocumentIds: Array.from(new Set([...(prev.aiDocumentIds ?? []), documentId])) }))}
+        onApply={(fields) => setValue((prev) => applyAiFields(prev, fields))}
+      />
+
       <div className="grid gap-4 md:grid-cols-3">
         {"customerId" in value.shipment ? (
-          <Field label={lt("Customer")}>
-            <CustomerAutocomplete
-              value={value.shipment.customerId}
-              onChange={(customer) => setValue((prev) => ({
-                ...prev,
-                shipment: {
-                  ...prev.shipment,
-                  customerId: customer?.id ?? "",
-                  salesmanId: customer?.salesmanId ?? null,
-                  quotationId: null
-                }
-              }))}
-            />
+          <Field label={lt("Customer")} required>
+            <div className="flex gap-2">
+              <div className="min-w-0 flex-1">
+                <CustomerAutocomplete
+                  value={value.shipment.customerId}
+                  onChange={(customer) => setValue((prev) => ({
+                    ...prev,
+                    shipment: {
+                      ...prev.shipment,
+                      customerId: customer?.id ?? "",
+                      salesmanId: customer?.salesmanId ?? null,
+                      quotationId: null
+                    }
+                  }))}
+                />
+              </div>
+              <CreateCustomerButton />
+            </div>
           </Field>
         ) : null}
         <Field label={lt("Salesman (optional)")}><SalesmanSelect value={value.shipment.salesmanId} onChange={(salesmanId) => setValue({ ...value, shipment: { ...value.shipment, salesmanId } })} /></Field>
@@ -260,7 +278,7 @@ export function HouseShipmentForm({
             }}
           />
         </Field>
-        <Field label={lt("Transport Mode")}>
+        <Field label={lt("Transport Mode")} required>
           <select className="h-10 w-full rounded-md border px-3 text-sm" value={value.transportMode} onChange={(e) => setValue({
             ...value,
             transportMode: e.target.value,
@@ -275,8 +293,10 @@ export function HouseShipmentForm({
             <option value="Air">{lt("Air")}</option><option value="Sea">{lt("Sea")}</option><option value="Road">{lt("Road")}</option><option value="Courier">{lt("Courier")}</option>
           </select>
         </Field>
+        <Field label={lt("ETD")}><Input type="datetime-local" value={toInputDateTime(value.shipment.etd)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, etd: e.target.value || null } })} /></Field>
+        <Field label={lt("ETA")}><Input type="datetime-local" value={toInputDateTime(value.shipment.eta)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, eta: e.target.value || null } })} /></Field>
         <div className="md:col-span-3 grid gap-4 md:grid-cols-3">
-          <Field label={lt("Origin Port")}>
+          <Field label={lt("Origin Port")} required>
             <FilterableSelect
               value={value.shipment.originPortGuid ?? ""}
               onChange={(next) => {
@@ -294,7 +314,7 @@ export function HouseShipmentForm({
               options={(shippingPorts.data ?? []).map((x) => ({ value: x.id, label: `${x.portCode} - ${x.portName} - ${x.countryName}` }))}
             />
           </Field>
-          <Field label={lt("Destination Port")}>
+          <Field label={lt("Destination Port")} required>
             <FilterableSelect
               value={value.shipment.destinationPortGuid ?? ""}
               onChange={(next) => {
@@ -374,8 +394,6 @@ export function HouseShipmentForm({
           </div>
         </div>
         <Field label={lt("Label Template")}><Input value={value.labelTemplateCode} onChange={(e) => setValue({ ...value, labelTemplateCode: e.target.value })} /></Field>
-        <Field label={lt("ETD")}><Input type="datetime-local" value={toInputDateTime(value.shipment.etd)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, etd: e.target.value || null } })} /></Field>
-        <Field label={lt("ETA")}><Input type="datetime-local" value={toInputDateTime(value.shipment.eta)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, eta: e.target.value || null } })} /></Field>
         <Field label={lt("Status")}><Input value={"status" in value.shipment ? String(value.shipment.status ?? "Draft") : "Draft"} disabled /></Field>
         <Field label={lt("Revenue Amount")}><Input type="number" min="0" value={value.shipment.revenueAmount} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, revenueAmount: Number(e.target.value) } })} /></Field>
         <Field label={lt("Cost Amount")}><Input type="number" min="0" value={value.shipment.costAmount} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, costAmount: Number(e.target.value) } })} /></Field>
@@ -464,6 +482,59 @@ export function HouseShipmentForm({
       <Button onClick={() => void onSubmit(value)} disabled={isSubmitting}>{isSubmitting ? lt("Saving...") : lt("Save House Shipment")}</Button>
     </div>
   );
+
+}
+
+function applyAiFields(current: FormValue, fields: Record<string, unknown>): FormValue {
+  const shipmentPatch: Record<string, unknown> = {};
+  for (const [key, rawValue] of Object.entries(fields)) {
+    if (key === "selectedGoods") continue;
+    if (rawValue === null || rawValue === undefined) continue;
+    shipmentPatch[key] = rawValue;
+  }
+
+  const selectedGoods = Array.isArray(fields.selectedGoods)
+    ? (fields.selectedGoods as Array<Record<string, unknown>>).map((item) => normalizeAiItem(item))
+    : current.selectedGoods;
+
+  return {
+    ...current,
+    shipment: {
+      ...current.shipment,
+      ...shipmentPatch
+    },
+    selectedGoods
+  };
+}
+
+function normalizeAiItem(item: Record<string, unknown>): HouseShipmentItemRequest {
+  return {
+    goodsReceiptItemId: null,
+    packageTypeGuid: null,
+    packageTypeName: asString(item.packageTypeName),
+    hsCode: asString(item.hsCode),
+    countryOfOrigin: asString(item.countryOfOrigin),
+    description: asString(item.description),
+    receivedPieces: asNumber(item.receivedPieces),
+    receivedWeight: asNumber(item.receivedWeight),
+    length: asNumber(item.length),
+    width: asNumber(item.width),
+    height: asNumber(item.height),
+    volumeCbm: asNumber(item.volumeCbm),
+    loadedPieces: asNumber(item.loadedPieces),
+    loadedWeight: asNumber(item.loadedWeight),
+    loadedVolume: asNumber(item.loadedVolume),
+    operationMode: "New"
+  };
+}
+
+function asString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function asNumber(value: unknown) {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? number : 0;
 }
 
 function ManualHouseShipmentItems({
@@ -510,11 +581,11 @@ function ManualHouseShipmentItems({
             <table className="min-w-[1050px] w-full text-sm">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="p-2 text-left">{lt("Package Type")}</th>
+                  <th className="p-2 text-left"><RequiredHeader>{lt("Package Type")}</RequiredHeader></th>
                   <th className="p-2 text-left">{lt("HS Code")}</th>
                   <th className="p-2 text-left">{lt("Country of Origin")}</th>
-                  <th className="p-2 text-left">{lt("Description")}</th>
-                  <th className="p-2 text-left">{lt("Loaded Pieces")}</th>
+                  <th className="p-2 text-left"><RequiredHeader>{lt("Description")}</RequiredHeader></th>
+                  <th className="p-2 text-left"><RequiredHeader>{lt("Loaded Pieces")}</RequiredHeader></th>
                   <th className="p-2 text-left">{lt("Loaded Weight")}</th>
                   <th className="p-2 text-left">{lt("Loaded Volume")}</th>
                   <th className="p-2 text-left">{lt("Operation")}</th>
@@ -561,7 +632,7 @@ function ManualHouseShipmentItems({
               return (
               <div key={`${item.goodsReceiptItemId ?? "manual"}-${index}`} className={item.operationMode === "Delete" ? "bg-red-50/60" : "bg-white"}>
                 <div className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-[260px_minmax(260px,1.25fr)_minmax(240px,1fr)_240px_140px] xl:items-end">
-                  <ItemField label={lt("Package Type")}><FilterableSelect
+                  <ItemField label={lt("Package Type")} required><FilterableSelect
                     value={item.packageTypeGuid ?? ""}
                     onChange={(next) => updateManualRows(value, index, {
                       packageTypeGuid: next || null,
@@ -570,12 +641,12 @@ function ManualHouseShipmentItems({
                     placeholder={lt("Select package type")}
                     options={packageTypeOptions}
                   /></ItemField>
-                  <ItemField label={lt("Description")}><Input value={item.description ?? ""} onChange={(e) => updateManualRows(value, index, { description: e.target.value }, onChange)} /></ItemField>
+                  <ItemField label={lt("Description")} required><Input value={item.description ?? ""} onChange={(e) => updateManualRows(value, index, { description: e.target.value }, onChange)} /></ItemField>
                   <ItemField label={lt("Country of Origin")}><FilterableSelect value={item.countryOfOrigin ?? ""} onChange={(next) => updateManualRows(value, index, { countryOfOrigin: next }, onChange)} placeholder={lt("Select country")} options={countryOptions} /></ItemField>
                   <ItemField label={lt("HS Code")}><Input value={item.hsCode ?? ""} onChange={(e) => updateManualRows(value, index, { hsCode: e.target.value }, onChange)} /></ItemField>
                 </div>
                 <div className="grid gap-3 border-t bg-slate-50/70 p-3 md:grid-cols-3 xl:grid-cols-[120px_120px_110px_110px_110px_140px_140px_260px] xl:items-end">
-                  <ItemField label={lt("No. of Packages")}><Input type="number" min="0" value={item.receivedPieces} onChange={(e) => updateManualRows(value, index, { receivedPieces: Math.max(0, Number(e.target.value)) }, onChange)} /></ItemField>
+                  <ItemField label={lt("No. of Packages")} required><Input type="number" min="0" value={item.receivedPieces} onChange={(e) => updateManualRows(value, index, { receivedPieces: Math.max(0, Number(e.target.value)) }, onChange)} /></ItemField>
                   <ItemField label={lt("Gross Weight")}><Input type="number" min="0" value={item.receivedWeight} onChange={(e) => updateManualRows(value, index, { receivedWeight: Math.max(0, Number(e.target.value)) }, onChange)} /></ItemField>
                   <ItemField label={lt("Length (Per Item)")}><Input type="number" min="0" value={item.length} onChange={(e) => updateManualRows(value, index, { length: Math.max(0, Number(e.target.value)) }, onChange)} /></ItemField>
                   <ItemField label={lt("Width (Per Item)")}><Input type="number" min="0" value={item.width} onChange={(e) => updateManualRows(value, index, { width: Math.max(0, Number(e.target.value)) }, onChange)} /></ItemField>
@@ -628,12 +699,20 @@ function updateManualRows(rows: HouseShipmentItemRequest[], index: number, patch
 
 const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label>{label}</Label>{children}</div>;
+function Field({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label>{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
 }
 
-function ItemField({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</Label>{children}</div>;
+function ItemField({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
+}
+
+function RequiredHeader({ children }: { children: ReactNode }) {
+  return <>{children}<RequiredMark /></>;
+}
+
+function RequiredMark() {
+  return <span className="ml-1 text-red-600">*</span>;
 }
 
 function PartyLookup({
@@ -802,5 +881,7 @@ function toInputDateTime(value: string | null | undefined) {
 }
 
 function todayDateTimeLocalValue() {
-  return toInputDateTime(new Date().toISOString());
+  const date = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

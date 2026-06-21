@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { SalesmanSelect } from "@/components/common/SalesmanSelect";
 import { CustomerAutocomplete } from "@/components/common/CustomerAutocomplete";
+import { CreateCustomerButton } from "@/components/common/CreateCustomerButton";
 import { searchPickups } from "@/api/pickupApi";
 import { searchWarehouseLocations, searchWarehouses } from "@/api/warehouseApi";
 import { getActivePackageTypesForDropdown } from "@/api/packageTypeApi";
@@ -18,7 +19,7 @@ export function GoodsReceiptForm({ initialValue, onSubmit, onSaveItem, isSubmitt
   const warehouses = useQuery({ queryKey: ["gr-warehouses"], queryFn: () => searchWarehouses({ pageNumber: 1, pageSize: 200, isActive: true }) });
   const packageTypes = useQuery({ queryKey: ["gr-package-types"], queryFn: () => getActivePackageTypesForDropdown() });
   const countries = useQuery({ queryKey: ["gr-countries"], queryFn: () => getActiveCountriesForDropdown() });
-  const [value, setValue] = useState<GoodsReceiptRequest>(initialValue ? { ...initialValue, receivedDateTime: toDateTimeLocalValue(initialValue.receivedDateTime) } : { customerId: "", salesmanId: null, pickupId: null, receivedFrom: "", receivedDateTime: "", warehouseId: null, warehouseLocation: "", remarks: "", items: [createEmptyItem()] });
+  const [value, setValue] = useState<GoodsReceiptRequest>(initialValue ? { ...initialValue, receivedDateTime: toDateTimeLocalValue(initialValue.receivedDateTime) } : { customerId: "", salesmanId: null, pickupId: null, receivedFrom: "", receivedDateTime: toDateTimeLocalValue(new Date().toISOString()), warehouseId: null, warehouseLocation: "", remarks: "", items: [createEmptyItem()] });
   const locations = useQuery({
     queryKey: ["gr-warehouse-locations", value.warehouseId],
     queryFn: () => searchWarehouseLocations({ pageNumber: 1, pageSize: 500, isActive: true, warehouseId: value.warehouseId || undefined }),
@@ -40,21 +41,26 @@ export function GoodsReceiptForm({ initialValue, onSubmit, onSaveItem, isSubmitt
   }
   return <div className="space-y-4">
     <div className="grid gap-4 md:grid-cols-3">
-      <Field label={lt("Customer")}>
-        <CustomerAutocomplete
-          value={value.customerId}
-          placeholder={lt("Search by name, code, or phone")}
-          onChange={(customer) => setValue((prev) => ({
-            ...prev,
-            customerId: customer?.id ?? "",
-            salesmanId: customer?.salesmanId ?? null
-          }))}
-        />
+      <Field label={lt("Customer")} required>
+        <div className="flex gap-2">
+          <div className="min-w-0 flex-1">
+            <CustomerAutocomplete
+              value={value.customerId}
+              placeholder={lt("Search by name, code, or phone")}
+              onChange={(customer) => setValue((prev) => ({
+                ...prev,
+                customerId: customer?.id ?? "",
+                salesmanId: customer?.salesmanId ?? null
+              }))}
+            />
+          </div>
+          <CreateCustomerButton />
+        </div>
       </Field>
       <Field label={lt("Salesman (optional)")}><SalesmanSelect value={value.salesmanId} onChange={(salesmanId) => setValue({ ...value, salesmanId })} /></Field>
       <Field label={lt("Link")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.pickupId ?? ""} onChange={(e) => setValue({ ...value, pickupId: e.target.value || null })}><option value="">{lt("Direct receipt")}</option>{(pickups.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.pickupNumber}</option>)}</select></Field>
-      <Field label={lt("Received From")}><Input value={value.receivedFrom} onChange={(e) => setValue({ ...value, receivedFrom: e.target.value })} /></Field>
-      <Field label={lt("Received DateTime")}><Input type="datetime-local" value={value.receivedDateTime} onChange={(e) => setValue({ ...value, receivedDateTime: e.target.value })} /></Field>
+      <Field label={lt("Received From")} required><Input value={value.receivedFrom} onChange={(e) => setValue({ ...value, receivedFrom: e.target.value })} /></Field>
+      <Field label={lt("Received DateTime")} required><Input type="datetime-local" value={value.receivedDateTime} onChange={(e) => setValue({ ...value, receivedDateTime: e.target.value })} /></Field>
       <Field label={lt("Warehouse")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.warehouseId ?? ""} onChange={(e) => setValue({ ...value, warehouseId: e.target.value || null, warehouseLocation: "" })}><option value="">{lt("Optional")}</option>{(warehouses.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.warehouseCode} - {x.warehouseName}</option>)}</select></Field>
       <Field label={lt("Bin / Location")}>
         {value.warehouseId ? (
@@ -80,13 +86,13 @@ export function GoodsReceiptForm({ initialValue, onSubmit, onSaveItem, isSubmitt
             const chargeableWeight = Math.max(item.receivedWeight || 0, volume * 167);
             return <div key={item.id ?? `new-${index}`} className={disabled ? "bg-red-50/60 line-through" : "bg-white"}>
               <div className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-[260px_minmax(260px,1.25fr)_minmax(240px,1fr)_240px_140px] xl:items-end">
-                <ItemField label={lt("Package Type")}><FilterableSelect className="w-full" value={item.packageTypeGuid ?? ""} disabled={disabled} onChange={(next) => { const selected = (packageTypes.data ?? []).find((x) => x.id === next); const nextItems = [...value.items]; nextItems[index] = withOperation({ ...nextItems[index], packageTypeGuid: next || null, packageTypeName: selected?.packageName ?? null }); setValue({ ...value, items: nextItems }); }} placeholder={lt("Select package type")} options={(packageTypes.data ?? []).map((x) => ({ value: x.id, label: `${x.packageCode} - ${x.packageName}` }))} /></ItemField>
-                <ItemField label={lt("Description")}><Input disabled={disabled} value={item.description} onChange={(e) => updateItem(value.items, index, "description", e.target.value, (items) => setValue({ ...value, items }))} /></ItemField>
+                <ItemField label={lt("Package Type")} required><FilterableSelect className="w-full" value={item.packageTypeGuid ?? ""} disabled={disabled} onChange={(next) => { const selected = (packageTypes.data ?? []).find((x) => x.id === next); const nextItems = [...value.items]; nextItems[index] = withOperation({ ...nextItems[index], packageTypeGuid: next || null, packageTypeName: selected?.packageName ?? null }); setValue({ ...value, items: nextItems }); }} placeholder={lt("Select package type")} options={(packageTypes.data ?? []).map((x) => ({ value: x.id, label: `${x.packageCode} - ${x.packageName}` }))} /></ItemField>
+                <ItemField label={lt("Description")} required><Input disabled={disabled} value={item.description} onChange={(e) => updateItem(value.items, index, "description", e.target.value, (items) => setValue({ ...value, items }))} /></ItemField>
                 <ItemField label={lt("Country of Origin")}><FilterableSelect className="w-full" value={item.countryOfOrigin ?? ""} disabled={disabled} onChange={(next) => updateItem(value.items, index, "countryOfOrigin", next, (items) => setValue({ ...value, items }))} placeholder={lt("Select country")} options={(countries.data ?? []).map((x) => ({ value: x.name, label: `${x.countryCode} - ${x.name}` }))} /></ItemField>
                 <ItemField label={lt("HS Code")}><Input disabled={disabled} value={item.hsCode ?? ""} onChange={(e) => updateItem(value.items, index, "hsCode", e.target.value, (items) => setValue({ ...value, items }))} /></ItemField>
               </div>
               <div className="grid gap-3 border-t bg-slate-50/70 p-3 md:grid-cols-3 xl:grid-cols-[120px_120px_110px_110px_110px_120px_150px_260px] xl:items-end">
-                <ItemField label={lt("No. of Packages")}><Input disabled={disabled} type="number" min="0" value={item.receivedPieces} onChange={(e) => updateItem(value.items, index, "receivedPieces", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
+                <ItemField label={lt("No. of Packages")} required><Input disabled={disabled} type="number" min="0" value={item.receivedPieces} onChange={(e) => updateItem(value.items, index, "receivedPieces", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
                 <ItemField label={lt("Gross Weight")}><Input disabled={disabled} type="number" min="0" value={item.receivedWeight} onChange={(e) => updateItem(value.items, index, "receivedWeight", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
                 <ItemField label={lt("Length")}><Input disabled={disabled} type="number" min="0" value={item.length} onChange={(e) => updateItem(value.items, index, "length", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
                 <ItemField label={lt("Width")}><Input disabled={disabled} type="number" min="0" value={item.width} onChange={(e) => updateItem(value.items, index, "width", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
@@ -105,12 +111,16 @@ export function GoodsReceiptForm({ initialValue, onSubmit, onSaveItem, isSubmitt
   </div>;
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label>{label}</Label>{children}</div>;
+function Field({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label>{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
 }
 
-function ItemField({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</Label>{children}</div>;
+function ItemField({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
+}
+
+function RequiredMark() {
+  return <span className="ml-1 text-red-600">*</span>;
 }
 
 function FilterableSelect({

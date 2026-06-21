@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useParams } from "react-router-dom";
 import { Download } from "lucide-react";
@@ -6,16 +7,20 @@ import { getTenantById } from "@/api/tenantApi";
 import { getBranchById } from "@/api/branchApi";
 import { useAuth } from "@/auth/useAuth";
 import { PermissionButton } from "@/auth/PermissionButton";
+import { PermissionGuard } from "@/auth/PermissionGuard";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { PrintPreview } from "@/components/common/PrintPreview";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { PageHeader } from "@/components/PageHeader";
-import { exportMasterManifestPdf } from "@/utils/masterManifestPdf";
+import { createMasterManifestPdfBlob, exportMasterManifestPdf } from "@/utils/masterManifestPdf";
 import { lt } from "@/modules/operationsLocalization";
 
 export function MasterShipmentManifestPrintPage() {
   const { masterShipmentId } = useParams();
   const workspace = useWorkspace();
   const { session } = useAuth();
+  const reportRef = useRef<HTMLDivElement>(null);
   const query = useQuery({ queryKey: ["master-shipment-manifest", masterShipmentId], queryFn: () => getMasterShipment(masterShipmentId!), enabled: Boolean(masterShipmentId) });
   const tenant = useQuery({
     queryKey: ["master-shipment-manifest-tenant", session?.tenantId],
@@ -38,23 +43,49 @@ export function MasterShipmentManifestPrintPage() {
       title={`${lt("Manifest")}: ${shipment.masterShipmentNumber}`}
       description={lt("Master shipment manifest with consolidated item details.")}
       actions={
-        <PermissionButton
-          permission="MasterShipment.Print"
-          variant="outline"
-          onClick={() => void exportMasterManifestPdf({
-            fileName: `${shipment.masterShipmentNumber}.pdf`,
-            tenantName: workspace.tenantCode,
-            branchName: workspace.branchName ?? lt("Branch"),
-            branchAddress,
-            logoUrl,
-            masterShipment: shipment
-          })}
-        >
-          <Download className="h-4 w-4" />{lt("PDF Export")}</PermissionButton>
+        <>
+          <PermissionGuard permission="MasterShipment.Export" fallback="hidden">
+            <EmailReportAction
+              subject={`Master Shipment Manifest - ${shipment.masterShipmentNumber}`}
+              reportName={`Manifest ${shipment.masterShipmentNumber}`}
+              module="MasterShipment"
+              getHtml={() => reportRef.current?.outerHTML ?? ""}
+            />
+          </PermissionGuard>
+          <PermissionGuard permission="MasterShipment.Export" fallback="hidden">
+            <EmailPdfReportButton
+              fileName={`${shipment.masterShipmentNumber}.pdf`}
+              subject={`Master Shipment Manifest - ${shipment.masterShipmentNumber}`}
+              reportName={`Manifest ${shipment.masterShipmentNumber}`}
+              module="MasterShipment"
+              createPdfBlob={() => createMasterManifestPdfBlob({
+                fileName: `${shipment.masterShipmentNumber}.pdf`,
+                tenantName: workspace.tenantCode,
+                branchName: workspace.branchName ?? lt("Branch"),
+                branchAddress,
+                logoUrl,
+                masterShipment: shipment
+              })}
+            />
+          </PermissionGuard>
+          <PermissionButton
+            permission="MasterShipment.Print"
+            variant="outline"
+            onClick={() => void exportMasterManifestPdf({
+              fileName: `${shipment.masterShipmentNumber}.pdf`,
+              tenantName: workspace.tenantCode,
+              branchName: workspace.branchName ?? lt("Branch"),
+              branchAddress,
+              logoUrl,
+              masterShipment: shipment
+            })}
+          >
+            <Download className="h-4 w-4" />{lt("PDF Export")}</PermissionButton>
+        </>
       }
     />
     <PrintPreview title={`${lt("Manifest")} ${shipment.masterShipmentNumber}`}>
-      <div className="space-y-4 text-xs sm:text-sm">
+      <div ref={reportRef} className="space-y-4 text-xs sm:text-sm">
         <div className="border-b pb-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_1fr_160px] lg:grid-cols-[260px_1fr_260px] items-center">
             <div className="flex justify-center sm:justify-start">{logoUrl ? <img src={logoUrl} alt="Logo" className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 object-contain" /> : <div className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28" />}</div>

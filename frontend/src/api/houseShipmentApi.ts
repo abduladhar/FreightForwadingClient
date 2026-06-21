@@ -205,6 +205,32 @@ export interface ShipmentProfitDto {
   profitMarginPercent: number;
 }
 
+export interface HouseShipmentDocumentDto {
+  id: string;
+  houseShipmentId?: string | null;
+  aiModuleJsonFormatId?: string | null;
+  documentType?: string | null;
+  originalFileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  extractionStatus: "Uploaded" | "Processing" | "Extracted" | "Failed" | "Applied" | string;
+  extractionJson?: string | null;
+  extractionError?: string | null;
+  openAIModel?: string | null;
+  extractedDate?: string | null;
+}
+
+export interface HouseShipmentExtractionResultDto {
+  document: HouseShipmentDocumentDto;
+  extractionJson?: string | null;
+}
+
+export interface HouseShipmentApplyPreviewDto {
+  documentId: string;
+  fields: Record<string, unknown>;
+  warnings: string[];
+}
+
 const basePath = "/api/house-shipments";
 
 export async function searchHouseShipments(params: HouseShipmentSearchParams) {
@@ -271,6 +297,11 @@ export async function getHouseShipmentHawb(shipmentId: string) {
   return response.data.data;
 }
 
+export async function sendHouseShipmentJobCardEmail(shipmentId: string, emailTo: string) {
+  const response = await httpClient.post<ApiResponse<HouseShipmentDto>>(`${basePath}/${shipmentId}/job-card/send-email`, { emailTo });
+  return normalizeHouseShipment(response.data.data);
+}
+
 export async function attachHouseShipmentDocument(shipmentId: string, request: ShipmentDocumentRequest) {
   const response = await httpClient.post<ApiResponse<HouseShipmentDto>>(`${basePath}/${shipmentId}/documents`, request);
   return normalizeHouseShipment(response.data.data);
@@ -278,6 +309,37 @@ export async function attachHouseShipmentDocument(shipmentId: string, request: S
 
 export async function getHouseShipmentProfitPreview(shipmentId: string) {
   const response = await httpClient.get<ApiResponse<ShipmentProfitDto>>(`${basePath}/${shipmentId}/profit-preview`);
+  return response.data.data;
+}
+
+export async function uploadHouseShipmentPdf(shipmentId: string | null, file: File, documentType?: string | null) {
+  const form = new FormData();
+  form.append("file", file);
+  if (documentType?.trim()) form.append("documentType", documentType.trim());
+  const path = shipmentId ? `${basePath}/${shipmentId}/documents/upload` : `${basePath}/documents/upload-temp`;
+  const response = await httpClient.post<ApiResponse<HouseShipmentDocumentDto>>(path, form, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+  return response.data.data;
+}
+
+export async function extractHouseShipmentPdf(documentId: string) {
+  const response = await httpClient.post<ApiResponse<HouseShipmentExtractionResultDto>>(`${basePath}/documents/${documentId}/extract`);
+  return response.data.data;
+}
+
+export async function getHouseShipmentPdfExtraction(documentId: string) {
+  const response = await httpClient.get<ApiResponse<HouseShipmentExtractionResultDto>>(`${basePath}/documents/${documentId}/extraction`);
+  return response.data.data;
+}
+
+export async function getHouseShipmentPdfApplyPreview(documentId: string) {
+  const response = await httpClient.post<ApiResponse<HouseShipmentApplyPreviewDto>>(`${basePath}/documents/${documentId}/apply-preview`);
+  return response.data.data;
+}
+
+export async function linkHouseShipmentPdf(shipmentId: string, documentId: string) {
+  const response = await httpClient.post<ApiResponse<HouseShipmentDocumentDto>>(`${basePath}/${shipmentId}/documents/${documentId}/link`);
   return response.data.data;
 }
 

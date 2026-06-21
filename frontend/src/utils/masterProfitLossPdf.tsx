@@ -15,9 +15,13 @@ export interface MasterProfitLossPdfOptions {
 }
 
 export async function exportMasterProfitLossPdf(options: MasterProfitLossPdfOptions) {
-  ensurePdfFontsRegistered();
-  const blob = await pdf(buildDocument(options)).toBlob();
+  const blob = await createMasterProfitLossPdfBlob(options);
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
+}
+
+export async function createMasterProfitLossPdfBlob(options: MasterProfitLossPdfOptions) {
+  ensurePdfFontsRegistered();
+  return await pdf(buildDocument(options)).toBlob();
 }
 
 function buildDocument({ fileName: _fileName, tenantName, branchName, branchAddress, logoUrl, report }: MasterProfitLossPdfOptions) {

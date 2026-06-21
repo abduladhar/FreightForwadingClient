@@ -1,5 +1,5 @@
 import { Bell, ChevronDown, ChevronLeft, ChevronRight, Menu, Search, X } from "lucide-react";
-import { useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useI18n } from "@/app/i18n";
 import { useAuth } from "@/auth/useAuth";
@@ -33,6 +33,7 @@ export function MainLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     dashboard: true,
     masters: true,
@@ -54,6 +55,27 @@ export function MainLayout() {
   const currencyOptions = currency.options.length ? currency.options.map((item) => item.code) : [workspace.baseCurrency];
   const currentItem = primaryNavigation.find((item) => item.path === location.pathname);
   const currentGroup = navigationGroups.find((group) => group.items.some((item) => item.path === location.pathname));
+
+  function clearMenuSearchDomValue() {
+    if (!searchInputRef.current) return;
+    searchInputRef.current.value = "";
+  }
+
+  useEffect(() => {
+    setSearch("");
+    clearMenuSearchDomValue();
+    const timers = [50, 250, 750].map((delay) => window.setTimeout(clearMenuSearchDomValue, delay));
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (search === "") clearMenuSearchDomValue();
+  }, [search]);
+
+  useEffect(() => {
+    if (!currentGroup) return;
+    setExpandedGroups((prev) => (prev[currentGroup.id] ? prev : { ...prev, [currentGroup.id]: true }));
+  }, [currentGroup]);
 
   const visibleGroups = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -83,6 +105,7 @@ export function MainLayout() {
 
   function handleMenuClick(event: MouseEvent<HTMLAnchorElement>, path: string) {
     setIsMobileMenuOpen(false);
+    setSearch("");
     const refreshEvents: Record<string, string> = {
       "/invoices": "invoices:refresh",
       "/vendor-bills": "vendor-bills:refresh",
@@ -141,8 +164,27 @@ export function MainLayout() {
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400 rtl:left-auto rtl:right-3" />
             <Input
+              ref={searchInputRef}
+              type="search"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              id="ff-nav-query"
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                if (search === "" && nextValue === "admin" && !event.nativeEvent.isTrusted) {
+                  clearMenuSearchDomValue();
+                  return;
+                }
+                setSearch(nextValue);
+              }}
+              onFocus={() => {
+                if (search === "") window.setTimeout(clearMenuSearchDomValue, 0);
+              }}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              name="ff-nav-query"
+              inputMode="search"
               className="border-white/15 bg-slate-900 pl-9 text-sm text-slate-100 placeholder:text-slate-400 rtl:pl-3 rtl:pr-9"
               placeholder={`${t("Layout.MenuSearchPlaceholder", "Search menu")}...`}
             />

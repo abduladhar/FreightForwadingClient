@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { Navigate, useParams, useSearchParams } from "react-router-dom";
@@ -13,14 +13,17 @@ import { getPickup } from "@/api/pickupApi";
 import { getTenantById } from "@/api/tenantApi";
 import { useAuth } from "@/auth/useAuth";
 import { PermissionButton } from "@/auth/PermissionButton";
+import { PermissionGuard } from "@/auth/PermissionGuard";
 import { AuditTrailButton } from "@/components/common/AuditTrailButton";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { PrintPreview } from "@/components/common/PrintPreview";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWorkspace } from "@/hooks/useWorkspace";
-import { exportInvoicePdf, type InvoicePdfStyle, type InvoicePrintMode } from "@/utils/invoicePdf";
+import { createInvoicePdfBlob, exportInvoicePdf, type InvoicePdfStyle, type InvoicePrintMode } from "@/utils/invoicePdf";
 import { lt } from "@/modules/operationsLocalization";
 
 type SourceItemTotals = {
@@ -41,6 +44,7 @@ export function InvoicePrintPreviewPage() {
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
   const workspace = useWorkspace();
+  const reportRef = useRef<HTMLDivElement>(null);
   const requestedMode: InvoicePrintMode = searchParams.get("mode") === "original" ? "original" : "proforma";
   const [mode, setMode] = useState<InvoicePrintMode>(requestedMode);
   const [pdfStyle, setPdfStyle] = useState<InvoicePdfStyle>("classic");
@@ -136,6 +140,25 @@ export function InvoicePrintPreviewPage() {
         actions={
           <>
             <AuditTrailButton />
+            <PermissionGuard permission="Invoice.Export" fallback="hidden">
+              <EmailReportAction
+                subject={`${mode === "proforma" ? "Proforma Invoice" : "Invoice"} - ${data.invoiceNumber}`}
+                reportName={`${title} ${data.invoiceNumber}`}
+                module="Invoice"
+                defaultEmail={customer.data?.email}
+                getHtml={() => reportRef.current?.outerHTML ?? ""}
+              />
+            </PermissionGuard>
+            <PermissionGuard permission="Invoice.Export" fallback="hidden">
+              <EmailPdfReportButton
+                fileName={`${data.invoiceNumber}-${mode === "proforma" ? lt("Proforma") : lt("Original")}-${pdfStyle === "compass" ? "Style-2" : "Classic"}.pdf`}
+                subject={`${mode === "proforma" ? "Proforma Invoice" : "Invoice"} - ${data.invoiceNumber}`}
+                reportName={`${title} ${data.invoiceNumber}`}
+                module="Invoice"
+                defaultEmail={customer.data?.email}
+                createPdfBlob={() => createInvoicePdfBlob({ ...exportOptions, fileName: `${data.invoiceNumber}.pdf` })}
+              />
+            </PermissionGuard>
             <PermissionButton
               permission="Invoice.Export"
               variant="outline"
@@ -183,6 +206,7 @@ export function InvoicePrintPreviewPage() {
       </Card>
 
       <PrintPreview title={`${title} ${data.invoiceNumber}`}>
+        <div ref={reportRef}>
         {pdfStyle === "classic" ? <InvoicePreview
           title={title}
           watermark={watermark}
@@ -214,6 +238,7 @@ export function InvoicePrintPreviewPage() {
           masterShipment={masterShipment.data ?? null}
           pickup={pickup.data ?? null}
         />}
+        </div>
       </PrintPreview>
     </div>
   );

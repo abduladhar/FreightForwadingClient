@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { addHouseShipmentItem, attachHouseShipmentDocument, createHouseShipment } from "@/api/houseShipmentApi";
+import { addHouseShipmentItem, attachHouseShipmentDocument, createHouseShipment, linkHouseShipmentPdf } from "@/api/houseShipmentApi";
 import { HouseShipmentForm } from "@/modules/shipments/house/HouseShipmentForm";
 import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/components/ui/toast";
@@ -24,6 +24,9 @@ export function HouseShipmentCreatePage() {
       }
       if (value.documents[0]) {
         await attachHouseShipmentDocument(created.id, { documentReference: value.documents[0] });
+      }
+      for (const documentId of value.aiDocumentIds ?? []) {
+        await linkHouseShipmentPdf(created.id, documentId);
       }
       toast.success(lt("Created"), lt("House shipment created successfully."));
       navigate(`/house-shipments/${created.id}`);

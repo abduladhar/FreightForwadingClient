@@ -1,21 +1,26 @@
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { Navigate, useParams } from "react-router-dom";
 import { getCurrencies } from "@/api/currencyApi";
 import { getReceipt, getReceiptVoucher } from "@/api/receiptApi";
 import { CurrencyAmount } from "@/components/common/CurrencyAmount";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { PrintPreview } from "@/components/common/PrintPreview";
 import { PageHeader } from "@/components/PageHeader";
 import { PermissionButton } from "@/auth/PermissionButton";
-import { exportCustomerReceiptPdf } from "@/utils/customerReceiptPdf";
+import { PermissionGuard } from "@/auth/PermissionGuard";
+import { createCustomerReceiptPdfBlob, exportCustomerReceiptPdf } from "@/utils/customerReceiptPdf";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { lt } from "@/modules/operationsLocalization";
 
 export function CustomerReceiptPrintPage() {
   const { receiptId } = useParams();
   const workspace = useWorkspace();
+  const reportRef = useRef<HTMLDivElement>(null);
   const receipt = useQuery({ queryKey: ["receipt-print", receiptId], queryFn: () => getReceipt(receiptId!), enabled: Boolean(receiptId) });
   const voucher = useQuery({ queryKey: ["receipt-print-voucher", receiptId], queryFn: () => getReceiptVoucher(receiptId!), enabled: Boolean(receiptId) });
   const currencies = useQuery({ queryKey: ["receipt-currencies"], queryFn: getCurrencies });
@@ -36,24 +41,51 @@ export function CustomerReceiptPrintPage() {
         title={`${lt("Print Receipt")} ${data.receiptNumber}`}
         description={lt("Receipt voucher print preview.")}
         actions={
-          <PermissionButton
-            permission="Receipt.Print"
-            variant="outline"
-            onClick={() => void exportCustomerReceiptPdf({
-              fileName: `${data.receiptNumber}.pdf`,
-              tenantName: workspace.tenantCode,
-              branchName: workspace.branchName ?? lt("Branch"),
-              receipt: data,
-              voucherContent: voucher.data.content,
-              receiptCurrencyCode,
-              baseCurrencyCode
-            })}
-          >
-            <Download className="h-4 w-4" />{lt("PDF Export")}</PermissionButton>
+          <>
+            <PermissionGuard permission="Receipt.Export" fallback="hidden">
+              <EmailReportAction
+                subject={`Receipt Voucher - ${data.receiptNumber}`}
+                reportName={`Receipt Voucher ${data.receiptNumber}`}
+                module="Receipt"
+                getHtml={() => reportRef.current?.outerHTML ?? ""}
+              />
+            </PermissionGuard>
+            <PermissionGuard permission="Receipt.Export" fallback="hidden">
+              <EmailPdfReportButton
+                fileName={`${data.receiptNumber}.pdf`}
+                subject={`Receipt Voucher - ${data.receiptNumber}`}
+                reportName={`Receipt Voucher ${data.receiptNumber}`}
+                module="Receipt"
+                createPdfBlob={() => createCustomerReceiptPdfBlob({
+                  fileName: `${data.receiptNumber}.pdf`,
+                  tenantName: workspace.tenantCode,
+                  branchName: workspace.branchName ?? lt("Branch"),
+                  receipt: data,
+                  voucherContent: voucher.data.content,
+                  receiptCurrencyCode,
+                  baseCurrencyCode
+                })}
+              />
+            </PermissionGuard>
+            <PermissionButton
+              permission="Receipt.Print"
+              variant="outline"
+              onClick={() => void exportCustomerReceiptPdf({
+                fileName: `${data.receiptNumber}.pdf`,
+                tenantName: workspace.tenantCode,
+                branchName: workspace.branchName ?? lt("Branch"),
+                receipt: data,
+                voucherContent: voucher.data.content,
+                receiptCurrencyCode,
+                baseCurrencyCode
+              })}
+            >
+              <Download className="h-4 w-4" />{lt("PDF Export")}</PermissionButton>
+          </>
         }
       />
       <PrintPreview title={`${lt("Receipt Voucher")} ${data.receiptNumber}`}>
-        <div className="space-y-4 text-sm">
+        <div ref={reportRef} className="space-y-4 text-sm">
           <div className="border-b pb-3 text-center">
             <h3 className="text-xl font-bold tracking-wide">{lt("RECEIPT VOUCHER")}</h3>
             <p className="text-muted-foreground">{workspace.branchName ?? lt("Branch")}</p>

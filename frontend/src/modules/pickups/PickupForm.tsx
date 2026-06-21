@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { SalesmanSelect } from "@/components/common/SalesmanSelect";
 import { CustomerAutocomplete } from "@/components/common/CustomerAutocomplete";
+import { CreateCustomerButton } from "@/components/common/CreateCustomerButton";
 import { searchQuotations } from "@/api/quotationApi";
 import { getCurrencies } from "@/api/currencyApi";
 import { getActivePackageTypesForDropdown } from "@/api/packageTypeApi";
@@ -26,28 +27,33 @@ export function PickupForm({ initialValue, onSubmit, isSubmitting, onSaveItem }:
     : "grid gap-3 border-t bg-slate-50/70 p-3 md:grid-cols-3 xl:grid-cols-[120px_120px_110px_110px_110px_120px_150px_150px] xl:items-end";
   return <div className="space-y-4">
     <div className="grid gap-4 md:grid-cols-3">
-      <Field label={p("Customer")}>
-        <CustomerAutocomplete
-          value={value.customerId}
-          onChange={(customer) => setValue((prev) => ({
-            ...prev,
-            customerId: customer?.id ?? "",
-            salesmanId: customer?.salesmanId ?? null
-          }))}
-          placeholder={p("Search by name, code, or phone")}
-          minimumCharactersText={p("Enter at least 3 characters.")}
-          searchingText={p("Searching customers...")}
-          emptyText={p("No customers found.")}
-          noPhoneText={p("No phone")}
-        />
+      <Field label={p("Customer")} required>
+        <div className="flex gap-2">
+          <div className="min-w-0 flex-1">
+            <CustomerAutocomplete
+              value={value.customerId}
+              onChange={(customer) => setValue((prev) => ({
+                ...prev,
+                customerId: customer?.id ?? "",
+                salesmanId: customer?.salesmanId ?? null
+              }))}
+              placeholder={p("Search by name, code, or phone")}
+              minimumCharactersText={p("Enter at least 3 characters.")}
+              searchingText={p("Searching customers...")}
+              emptyText={p("No customers found.")}
+              noPhoneText={p("No phone")}
+            />
+          </div>
+          <CreateCustomerButton />
+        </div>
       </Field>
       <Field label={p("Salesman (optional)")}><SalesmanSelect value={value.salesmanId} onChange={(salesmanId) => setValue({ ...value, salesmanId })} emptyLabel={p("No salesman")} /></Field>
       <Field label={p("Quotation")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.quotationId ?? ""} onChange={(e) => setValue({ ...value, quotationId: e.target.value || null })}><option value="">{p("Optional")}</option>{(quotations.data?.items ?? []).map((x) => <option key={x.id} value={x.id}>{x.quotationNumber}</option>)}</select></Field>
       <Field label={p("Assignment")}><Input value={p("Driver/Vehicle/Vendor assignment is done in Assign screen")} disabled /></Field>
-      <Field label={p("Pickup DateTime")}><Input type="datetime-local" value={value.pickupDateTime} onChange={(e) => setValue({ ...value, pickupDateTime: e.target.value })} /></Field>
-      <Field label={p("Customer Location")}><Input value={value.customerLocation} onChange={(e) => setValue({ ...value, customerLocation: e.target.value })} /></Field>
-      <Field label={p("Contact Person")}><Input value={value.contactPerson} onChange={(e) => setValue({ ...value, contactPerson: e.target.value })} /></Field>
-      <Field label={p("Contact Phone")}><Input value={value.contactPhone} onChange={(e) => setValue({ ...value, contactPhone: e.target.value })} /></Field>
+      <Field label={p("Pickup DateTime")} required><Input type="datetime-local" value={value.pickupDateTime} onChange={(e) => setValue({ ...value, pickupDateTime: e.target.value })} /></Field>
+      <Field label={p("Customer Location")} required><Input value={value.customerLocation} onChange={(e) => setValue({ ...value, customerLocation: e.target.value })} /></Field>
+      <Field label={p("Contact Person")} required><Input value={value.contactPerson} onChange={(e) => setValue({ ...value, contactPerson: e.target.value })} /></Field>
+      <Field label={p("Contact Phone")} required><Input value={value.contactPhone} onChange={(e) => setValue({ ...value, contactPhone: e.target.value })} /></Field>
       <Field label={p("Drop Location")}><Input value={value.dropLocation ?? ""} onChange={(e) => setValue({ ...value, dropLocation: e.target.value })} /></Field>
       <Field label={p("Consignee Name")}><Input value={value.consigneeName ?? ""} onChange={(e) => setValue({ ...value, consigneeName: e.target.value })} /></Field>
       <Field label={p("Consignee Contact No")}><Input value={value.consigneeContactNo ?? ""} onChange={(e) => setValue({ ...value, consigneeContactNo: e.target.value })} /></Field>
@@ -70,7 +76,7 @@ export function PickupForm({ initialValue, onSubmit, isSubmitting, onSaveItem }:
               return (
                 <div key={rowKey} className={item.operationMode === "Delete" ? "bg-red-50/60" : "bg-white"}>
                   <div className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-[260px_minmax(260px,1.25fr)_minmax(240px,1fr)_240px_140px] xl:items-end">
-                    <ItemField label={p("Package Type")}>
+                    <ItemField label={p("Package Type")} required>
                       <FilterableSelect
                         className="w-full"
                         value={item.packageTypeGuid ?? ""}
@@ -90,7 +96,7 @@ export function PickupForm({ initialValue, onSubmit, isSubmitting, onSaveItem }:
                     <ItemField label={p("HS Code")}><Input value={item.hsCode ?? ""} onChange={(e) => updateItem(value.items, index, "hsCode", e.target.value, (items) => setValue({ ...value, items }))} /></ItemField>
                   </div>
                   <div className={itemMetricsGridClass}>
-                    <ItemField label={p("No. of Packages")}><Input type="number" min="0" value={item.pieces} onChange={(e) => updateItem(value.items, index, "pieces", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
+                    <ItemField label={p("No. of Packages")} required><Input type="number" min="0" value={item.pieces} onChange={(e) => updateItem(value.items, index, "pieces", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
                     <ItemField label={p("Gross Weight")}><Input type="number" min="0" value={item.weight} onChange={(e) => updateItem(value.items, index, "weight", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
                     <ItemField label={p("Length")}><Input type="number" min="0" value={item.length} onChange={(e) => updateItem(value.items, index, "length", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
                     <ItemField label={p("Width")}><Input type="number" min="0" value={item.width} onChange={(e) => updateItem(value.items, index, "width", Number(e.target.value), (items) => setValue({ ...value, items }))} /></ItemField>
@@ -129,12 +135,16 @@ export function PickupForm({ initialValue, onSubmit, isSubmitting, onSaveItem }:
   </div>;
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label>{label}</Label>{children}</div>;
+function Field({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label>{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
 }
 
-function ItemField({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</Label>{children}</div>;
+function ItemField({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
+}
+
+function RequiredMark() {
+  return <span className="ml-1 text-red-600">*</span>;
 }
 
 const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";

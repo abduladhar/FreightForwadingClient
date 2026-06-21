@@ -48,3 +48,7 @@ export async function deleteRole(id: string) {
 export async function assignPermissionToRole(roleId: string, permissionId: string) {
   await httpClient.post("/api/roles/assign-permission", { roleId, permissionId });
 }
+
+export async function assignPermissionsToRole(roleId: string, permissionIds: string[]) {
+  await httpClient.post("/api/roles/assign-permissions", { roleId, permissionIds });
+}

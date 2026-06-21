@@ -74,7 +74,7 @@ export function MasterShipmentForm({
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <Field label={lt("Salesman (optional)")}><SalesmanSelect value={value.shipment.salesmanId} onChange={(salesmanId) => setValue({ ...value, shipment: { ...value.shipment, salesmanId } })} /></Field>
-        <Field label={lt("Mode of Transport")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.shipment.modeOfTransport} onChange={(e) => {
+        <Field label={lt("Mode of Transport")} required><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.shipment.modeOfTransport} onChange={(e) => {
           const nextMode = e.target.value;
           setValue({
             ...value,
@@ -90,7 +90,7 @@ export function MasterShipmentForm({
             }
           });
         }}><option value="Air">{lt("Air")}</option><option value="Sea">{lt("Sea")}</option><option value="Road">{lt("Road")}</option><option value="Courier">{lt("Courier")}</option></select></Field>
-        <Field label={lt("Carrier")}>
+        <Field label={lt("Carrier")} required>
           <FilterableSelect
             value={value.shipment.carrierId ?? legacyCarrierValue}
             onChange={(carrierId) => {
@@ -118,7 +118,7 @@ export function MasterShipmentForm({
         {mode === "Sea" ? <Field label={lt("Vessel Name")}><Input value={value.shipment.vesselName ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, vesselName: e.target.value || null } })} /></Field> : null}
         {mode === "Sea" ? <Field label={lt("Voyage Number")}><Input value={value.shipment.voyageNumber ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, voyageNumber: e.target.value || null } })} /></Field> : null}
         {mode === "Road" ? <Field label={lt("Truck Number")}><Input value={value.shipment.truckNumber ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, truckNumber: e.target.value || null } })} /></Field> : null}
-        <Field label={lt("Origin Port")}>
+        <Field label={lt("Origin Port")} required>
           <FilterableSelect
             value={value.shipment.originPortGuid ?? ""}
             onChange={(next) => {
@@ -128,7 +128,7 @@ export function MasterShipmentForm({
             options={(shippingPorts.data ?? []).map((x) => ({ value: x.id, label: `${x.portCode} - ${x.portName} - ${x.countryName}` }))}
           />
         </Field>
-        <Field label={lt("Destination Port")}>
+        <Field label={lt("Destination Port")} required>
           <FilterableSelect
             value={value.shipment.destinationPortGuid ?? ""}
             onChange={(next) => {
@@ -141,7 +141,7 @@ export function MasterShipmentForm({
         <Field label={lt("ETD - Expected Time of Departure")}><Input type="datetime-local" value={toInput(value.shipment.etd)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, etd: e.target.value || null } })} /></Field>
         <Field label={lt("ETA - Expected Time of Arrival")}><Input type="datetime-local" value={toInput(value.shipment.eta)} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, eta: e.target.value || null } })} /></Field>
         <Field label={lt("Total Cost")}><Input type="number" min={0} value={value.shipment.totalCostAmount} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, totalCostAmount: Math.max(0, Number(e.target.value)) } })} /></Field>
-        <Field label={lt("Allocation Method")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.shipment.costAllocationMethod} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, costAllocationMethod: e.target.value } })}><option>{lt("Weight")}</option><option>{lt("Volume")}</option><option>{lt("Pieces")}</option><option>{lt("ChargeableWeight")}</option><option>{lt("Manual")}</option></select></Field>
+        <Field label={lt("Allocation Method")} required><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.shipment.costAllocationMethod} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, costAllocationMethod: e.target.value } })}><option>{lt("Weight")}</option><option>{lt("Volume")}</option><option>{lt("Pieces")}</option><option>{lt("ChargeableWeight")}</option><option>{lt("Manual")}</option></select></Field>
         <div className="md:col-span-3"><Field label={lt("Remarks")}><Input value={value.shipment.remarks ?? ""} onChange={(e) => setValue({ ...value, shipment: { ...value.shipment, remarks: e.target.value || null } })} /></Field></div>
       </div>
       {enableConsolidation ? (
@@ -250,8 +250,12 @@ export function MasterShipmentForm({
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1"><Label>{label}</Label>{children}</div>;
+function Field({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
+  return <div className="space-y-1"><Label>{label}{required ? <RequiredMark /> : null}</Label>{children}</div>;
+}
+
+function RequiredMark() {
+  return <span className="ml-1 text-red-600">*</span>;
 }
 
 function FilterableSelect({
@@ -297,4 +301,8 @@ function FilterableSelect({
   );
 }
 function toInput(value: string | null | undefined) { return value ? value.slice(0, 16) : ""; }
-function todayDateTimeLocalValue() { return toInput(new Date().toISOString()); }
+function todayDateTimeLocalValue() {
+  const date = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

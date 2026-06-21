@@ -48,6 +48,12 @@ const billToPartyTypeOptions: ComboboxOption[] = [
   { value: "Carrier", label: lt("Carrier") }
 ];
 
+function todayDateLocalValue() {
+  const date = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 export function InvoiceForm({
   initialValue,
   onSubmit,
@@ -85,8 +91,8 @@ export function InvoiceForm({
       sourceId: null,
       sourceReferenceId: null,
       sourceReferenceNo: "",
-      invoiceDate: new Date().toISOString().slice(0, 10),
-      dueDate: new Date().toISOString().slice(0, 10),
+      invoiceDate: todayDateLocalValue(),
+      dueDate: todayDateLocalValue(),
       customerCurrencyId: "",
       invoiceCurrencyId: "",
       exchangeRate: 1,
@@ -301,7 +307,7 @@ export function InvoiceForm({
           {isSalesmanLocked ? <div className="text-xs text-muted-foreground">{lt("Locked because this salesman is inherited from the operation.")}</div> : null}
           {initialValue?.salesmanName ? <div className="text-xs text-muted-foreground">{lt("Current")}: {initialValue.salesmanName}</div> : null}
         </Field>
-        <Field label={lt("Bill To Type")}>
+        <Field label={lt("Bill To Type")} required>
           <FilterableSelect
             value={billToPartyType}
             onChange={(next) => setValue({ ...value, billToPartyType: next as InvoiceRequest["billToPartyType"], billToPartyId: null, billToPartyName: null, customerId: "" })}
@@ -309,7 +315,7 @@ export function InvoiceForm({
             placeholder={lt("Select party type")}
           />
         </Field>
-        <Field label={lt("Bill To")}>
+        <Field label={lt("Bill To")} required>
           <FinancePartyAutocomplete
             partyType={billToPartyType as FinancePartyType}
             value={value.billToPartyId || value.customerId}
@@ -317,7 +323,7 @@ export function InvoiceForm({
             placeholder={lt("Search party by name, code, or phone")}
           />
         </Field>
-        <Field label={lt("Invoice Source Type")}>
+        <Field label={lt("Invoice Source Type")} required>
           <FilterableSelect
             value={value.sourceType}
             onChange={(next) => setValue({ ...value, sourceType: next, sourceId: null, sourceReferenceId: null, sourceReferenceNo: "" })}
@@ -339,7 +345,7 @@ export function InvoiceForm({
             }}
           />
         </Field>
-        <Field label={lt("Invoice Date")}>
+        <Field label={lt("Invoice Date")} required>
           <Input
             type="date"
             value={value.invoiceDate}
@@ -349,10 +355,10 @@ export function InvoiceForm({
             }}
           />
         </Field>
-        <Field label={lt("Due Date")}>
+        <Field label={lt("Due Date")} required>
           <Input type="date" value={value.dueDate} onChange={(e) => setValue({ ...value, dueDate: e.target.value })} />
         </Field>
-        <Field label={`${lt("Invoice Currency")} (${invoiceCurrencyCode})`}>
+        <Field label={`${lt("Invoice Currency")} (${invoiceCurrencyCode})`} required>
           <FilterableSelect
             value={value.invoiceCurrencyId}
             onChange={changeInvoiceCurrency}
@@ -362,7 +368,7 @@ export function InvoiceForm({
           />
           <div className="text-xs text-muted-foreground">{lt("Locked to the selected Bill To party currency.")}</div>
         </Field>
-        <Field label={`${lt("Party Currency")} (${partyCurrencyCode})`}>
+        <Field label={`${lt("Party Currency")} (${partyCurrencyCode})`} required>
           <FilterableSelect
             value={value.customerCurrencyId}
             onChange={(next) => setValue({ ...value, customerCurrencyId: next })}
@@ -371,7 +377,7 @@ export function InvoiceForm({
             disabled
           />
         </Field>
-        <Field label={`${lt("Exchange Rate")} (${baseCurrencyCode} ${lt("per")} ${invoiceCurrencyCode})`}>
+        <Field label={`${lt("Exchange Rate")} (${baseCurrencyCode} ${lt("per")} ${invoiceCurrencyCode})`} required>
           <Input
             type="number"
             min="0"
@@ -399,7 +405,7 @@ export function InvoiceForm({
           />
           {lt("Manual Rate Override")}
         </label>
-        <Field label={lt("Override Reason")}>
+        <Field label={lt("Override Reason")} required={value.isExchangeRateOverride}>
           <Input
             value={value.exchangeRateOverrideReason ?? ""}
             onChange={(e) => setValue({ ...value, exchangeRateOverrideReason: e.target.value || null })}
@@ -450,7 +456,7 @@ export function InvoiceForm({
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label={lt("Charge Head")}>
+                  <Field label={lt("Charge Head")} required>
                     <FilterableSelect
                       value={selectedHead?.id ?? ""}
                       onChange={(next) => {
@@ -466,10 +472,10 @@ export function InvoiceForm({
                       placeholder={lt("Select charge head")}
                     />
                   </Field>
-                  <Field label={lt("Code")}><Input value={item.chargeCode} onChange={(e) => updateInvoiceRow(value.items, index, { chargeCode: e.target.value }, setItems)} disabled={disabled} /></Field>
-                  <Field label={lt("Name")}><Input value={item.chargeName} onChange={(e) => updateInvoiceRow(value.items, index, { chargeName: e.target.value }, setItems)} disabled={disabled} /></Field>
-                  <Field label={lt("Quantity")}><Input type="number" min="0" value={item.quantity} onChange={(e) => updateInvoiceRow(value.items, index, { quantity: Math.max(0, Number(e.target.value)) }, setItems)} disabled={disabled} /></Field>
-                  <Field label={`Rate (${invoiceCurrencyCode})`}><Input type="number" min="0" value={item.unitRate} onChange={(e) => updateInvoiceRow(value.items, index, { unitRate: Math.max(0, Number(e.target.value)) }, setItems)} disabled={disabled} /></Field>
+                  <Field label={lt("Code")} required><Input value={item.chargeCode} onChange={(e) => updateInvoiceRow(value.items, index, { chargeCode: e.target.value }, setItems)} disabled={disabled} /></Field>
+                  <Field label={lt("Name")} required><Input value={item.chargeName} onChange={(e) => updateInvoiceRow(value.items, index, { chargeName: e.target.value }, setItems)} disabled={disabled} /></Field>
+                  <Field label={lt("Quantity")} required><Input type="number" min="0" value={item.quantity} onChange={(e) => updateInvoiceRow(value.items, index, { quantity: Math.max(0, Number(e.target.value)) }, setItems)} disabled={disabled} /></Field>
+                  <Field label={`Rate (${invoiceCurrencyCode})`} required><Input type="number" min="0" value={item.unitRate} onChange={(e) => updateInvoiceRow(value.items, index, { unitRate: Math.max(0, Number(e.target.value)) }, setItems)} disabled={disabled} /></Field>
                   <Field label={`Discount (${invoiceCurrencyCode})`}><Input type="number" min="0" value={item.discountAmount} onChange={(e) => updateInvoiceRow(value.items, index, { discountAmount: Math.max(0, Number(e.target.value)) }, setItems)} disabled={disabled} /></Field>
                   <Field label={lt("Tax")}>
                     <div className="flex h-10 items-center gap-2">
@@ -512,11 +518,11 @@ export function InvoiceForm({
           <table className="w-full min-w-[1100px] text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="p-2 text-left">{lt("Charge Head")}</th>
-                <th className="p-2 text-left">{lt("Code")}</th>
-                <th className="p-2 text-left">{lt("Name")}</th>
-                <th className="p-2 text-left">{lt("Qty")}</th>
-                <th className="p-2 text-left">{lt("Rate")} ({invoiceCurrencyCode})</th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Charge Head")}</RequiredHeader></th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Code")}</RequiredHeader></th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Name")}</RequiredHeader></th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Qty")}</RequiredHeader></th>
+                <th className="p-2 text-left"><RequiredHeader>{lt("Rate")} ({invoiceCurrencyCode})</RequiredHeader></th>
                 <th className="p-2 text-left">{lt("Discount")} ({invoiceCurrencyCode})</th>
                 <th className="p-2 text-left">{lt("Tax %")}</th>
                 <th className="p-2 text-left">{lt("Operation")}</th>
@@ -676,13 +682,21 @@ export function InvoiceForm({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, required }: { label: React.ReactNode; children: React.ReactNode; required?: boolean }) {
   return (
     <div className="space-y-1">
-      <Label>{label}</Label>
+      <Label>{label}{required ? <RequiredMark /> : null}</Label>
       {children}
     </div>
   );
+}
+
+function RequiredHeader({ children }: { children: React.ReactNode }) {
+  return <>{children}<RequiredMark /></>;
+}
+
+function RequiredMark() {
+  return <span className="ml-1 text-red-600">*</span>;
 }
 
 function FilterableSelect({

@@ -21,6 +21,7 @@ import { BranchCreatePage } from "@/modules/branches/BranchCreatePage";
 import { BranchEditPage } from "@/modules/branches/BranchEditPage";
 import { BranchViewPage } from "@/modules/branches/BranchViewPage";
 import { BranchSettingsPage } from "@/modules/branches/BranchSettingsPage";
+import { AiModuleJsonFormatsPage } from "@/modules/settings/AiModuleJsonFormatsPage";
 import { UserListPage } from "@/modules/users/UserListPage";
 import { UserCreatePage } from "@/modules/users/UserCreatePage";
 import { UserEditPage } from "@/modules/users/UserEditPage";
@@ -324,6 +325,8 @@ import { ReportAccessLogPage } from "@/modules/audit/ReportAccessLogPage";
 import { ExportLogPage } from "@/modules/audit/ExportLogPage";
 import { PrintLogPage } from "@/modules/audit/PrintLogPage";
 import { EmailLogPage } from "@/modules/audit/EmailLogPage";
+import { EmailPdfReportPage } from "@/modules/reports/EmailPdfReportPage";
+import { EmailHtmlReportPage } from "@/modules/reports/EmailHtmlReportPage";
 import { FileAccessLogPage } from "@/modules/audit/FileAccessLogPage";
 import { ApiRequestLogPage } from "@/modules/audit/ApiRequestLogPage";
 import { AuditLogDetailPage } from "@/modules/audit/AuditLogDetailPage";
@@ -572,6 +575,8 @@ export const router = createBrowserRouter([
       { path: "invoices/:invoiceId/approval", element: <RequirePermission permission="Invoice.Approve"><InvoiceApprovalPage /></RequirePermission> },
       { path: "invoices/:invoiceId/print", element: <RequirePermission permission="Invoice.Print"><InvoicePrintPreviewPage /></RequirePermission> },
       { path: "invoices/:invoiceId/email", element: <RequirePermission permission="Invoice.Export"><InvoiceEmailPage /></RequirePermission> },
+      { path: "reports/email-pdf", element: <RequirePermission permission={["Reports.Export", "Invoice.Export", "Receipt.Export", "HouseShipment.Export", "MasterShipment.Export"]}><EmailPdfReportPage /></RequirePermission> },
+      { path: "reports/email-html", element: <RequirePermission permission={["Reports.Export", "Invoice.Export", "Receipt.Export", "HouseShipment.Export", "MasterShipment.Export"]}><EmailHtmlReportPage /></RequirePermission> },
       { path: "credit-debit-notes", element: <RequirePermission permission="CreditDebitNote.Read"><CreditDebitNoteListPage /></RequirePermission> },
       { path: "credit-debit-notes/new", element: <RequirePermission permission="CreditDebitNote.Create"><CreditDebitNoteCreatePage /></RequirePermission> },
       { path: "credit-debit-notes/:noteId", element: <RequirePermission permission="CreditDebitNote.Read"><CreditDebitNoteViewPage /></RequirePermission> },
@@ -685,6 +690,7 @@ export const router = createBrowserRouter([
       { path: "notifications/me", element: <RequirePermission permission="Notification.Read"><UserNotificationPage /></RequirePermission> },
       { path: "settings/numbering", element: <RequirePermission permission="Tenant.Read"><NumberingSettingsPage /></RequirePermission> },
       { path: "settings/email-configuration", element: <RequirePermission permission="Tenant.Read"><EmailConfigurationPage /></RequirePermission> },
+      { path: "settings/ai-module-json-formats", element: <RequirePermission permission="Tenant.Read"><AiModuleJsonFormatsPage /></RequirePermission> },
       { path: "settings/print-templates", element: <RequirePermission permission="Tenant.Read"><PrintTemplateListPage /></RequirePermission> },
       { path: "settings/print-templates/designer", element: <RequirePermission permission="Tenant.Update"><PrintTemplateDesignerPage /></RequirePermission> },
       { path: "settings/label-templates", element: <RequirePermission permission="Tenant.Read"><LabelTemplateListPage /></RequirePermission> },

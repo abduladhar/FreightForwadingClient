@@ -15,9 +15,13 @@ export interface MasterManifestPdfOptions {
 }
 
 export async function exportMasterManifestPdf(options: MasterManifestPdfOptions) {
-  ensurePdfFontsRegistered();
-  const blob = await pdf(buildMasterManifestDocument(options)).toBlob();
+  const blob = await createMasterManifestPdfBlob(options);
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
+}
+
+export async function createMasterManifestPdfBlob(options: MasterManifestPdfOptions) {
+  ensurePdfFontsRegistered();
+  return await pdf(buildMasterManifestDocument(options)).toBlob();
 }
 
 function buildMasterManifestDocument({ tenantName, branchName, branchAddress, logoUrl, masterShipment }: MasterManifestPdfOptions) {

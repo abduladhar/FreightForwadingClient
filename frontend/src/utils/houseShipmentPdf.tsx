@@ -17,9 +17,13 @@ export interface HouseShipmentPdfOptions {
 }
 
 export async function exportHouseShipmentPdf(options: HouseShipmentPdfOptions) {
-  ensurePdfFontsRegistered();
-  const blob = await pdf(buildHouseShipmentDocument(options)).toBlob();
+  const blob = await createHouseShipmentPdfBlob(options);
   saveAs(blob, options.fileName.endsWith(".pdf") ? options.fileName : `${options.fileName}.pdf`);
+}
+
+export async function createHouseShipmentPdfBlob(options: HouseShipmentPdfOptions) {
+  ensurePdfFontsRegistered();
+  return await pdf(buildHouseShipmentDocument(options)).toBlob();
 }
 
 function buildHouseShipmentDocument({ tenantName, branchName, branchAddress, logoUrl, customerName, houseShipment, reportTitle }: HouseShipmentPdfOptions) {

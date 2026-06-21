@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { getFinancialYears, getLedgerAccounts } from "@/api/accountingApi";
 import { getBranchOptions } from "@/api/branchApi";
@@ -9,6 +10,8 @@ import { searchCustomers } from "@/api/customerApi";
 import { getAccountingReport, exportAccountingReport, printPreviewAccountingReport, type AccountingReportRequest, type AccountingReportType } from "@/api/reportApi";
 import { searchVendors } from "@/api/vendorApi";
 import { DataTable } from "@/components/common/DataTable";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { ExportButtons } from "@/components/common/ExportButtons";
 import { PrintPreview } from "@/components/common/PrintPreview";
 import { ReportFilterPanel } from "@/components/common/ReportFilterPanel";
@@ -20,7 +23,7 @@ import { useWorkspace } from "@/hooks/useWorkspace";
 import { useAuth } from "@/auth/useAuth";
 import { exportFullCsv } from "@/utils/csvExport";
 import { exportExcelReport } from "@/utils/excelExport";
-import { exportPdfReport } from "@/utils/pdfExport";
+import { createPdfReportBlob, exportPdfReport } from "@/utils/pdfExport";
 import { lt } from "@/modules/operationsLocalization";
 
 type CurrencyMode = "original" | "base" | "selected";
@@ -58,22 +61,25 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
   needsVendor?: boolean;
 }) {
   const workspace = useWorkspace();
+  const reportRef = useRef<HTMLDivElement>(null);
   const { hasPermission } = useAuth();
+  const [searchParams] = useSearchParams();
   const [collapsed, setCollapsed] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  const [filters, setFilters] = useState({
+  const initialFilters = () => ({
     fromDate: "",
     toDate: "",
     financialYearId: "",
     branchId: workspace.branchId ?? "",
     accountId: "",
-    customerId: "",
-    vendorId: "",
-    currencyId: "",
-    reportCurrencyId: "",
+    customerId: searchParams.get("customerId") ?? "",
+    vendorId: searchParams.get("vendorId") ?? "",
+    currencyId: searchParams.get("currencyId") ?? "",
+    reportCurrencyId: searchParams.get("reportCurrencyId") ?? "",
     currencyMode: "original" as CurrencyMode
   });
+  const [filters, setFilters] = useState(initialFilters);
   const [applied, setApplied] = useState(filters);
   const [printContent, setPrintContent] = useState("");
 
@@ -128,7 +134,11 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
   async function handleExportPdf() {
     const payload = await exportPayload("pdf");
     if (!payload) return;
-    await exportPdfReport({
+    await exportPdfReport(pdfOptions(payload));
+  }
+
+  function pdfOptions(payload: ClientExportPayload) {
+    return {
       fileName: `${reportType}.pdf`,
       title,
       tenantName: workspace.tenantCode,
@@ -138,7 +148,7 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
       cultureCode: workspace.cultureCode,
       columns: payload.columns,
       rows: payload.rows
-    });
+    };
   }
   async function handleExportExcel() {
     const payload = await exportPayload("excel");
@@ -215,6 +225,17 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle>{lt("Report Output")}</CardTitle>
         <div className="flex items-center gap-2">
+          {canExport ? <EmailReportAction subject={title} reportName={title} module="Reports" getHtml={() => reportRef.current?.outerHTML ?? ""} /> : null}
+          {canExport ? <EmailPdfReportButton
+            fileName={`${reportType}.pdf`}
+            subject={title}
+            reportName={title}
+            module="Reports"
+            createPdfBlob={async () => {
+              const payload = await exportPayload("pdf");
+              return createPdfReportBlob(pdfOptions(payload ?? { columns: [], rows: [] }));
+            }}
+          /> : null}
           {canExport ? <ExportButtons
             onExportPdf={!rangeWarning ? () => void handleExportPdf() : undefined}
             onExportExcel={!rangeWarning ? () => void handleExportExcel() : undefined}
@@ -226,7 +247,7 @@ export function AccountingReportPage<T extends Record<string, unknown>>({
           {canPrint ? <Button variant="outline" size="sm" onClick={() => void handlePrintPreview()}>{lt("Print Preview")}</Button> : null}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent ref={reportRef} className="space-y-3">
         {rangeWarning ? <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{rangeWarning}</div> : null}
         {summary.length ? <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">{summary.map((x) => <div key={x.label} className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{x.label}</p><p className="text-lg font-semibold">{x.value}</p></div>)}</div> : null}
         <DataTable

@@ -77,8 +77,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       hasPermission(permission) {
         if (!permission) return true;
         if (!session) return false;
-        const normalizedRole = session.roleName.replace(/\s+/g, "").toLowerCase();
-        if (normalizedRole === "superadmin" || normalizedRole === "tenantadmin") {
+        const normalizedRole = (session.roleName ?? "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+        if (normalizedRole === "superadmin" || normalizedRole === "superadministrator" || normalizedRole === "tenantadmin") {
           return true;
         }
         const required = Array.isArray(permission) ? permission : [permission];

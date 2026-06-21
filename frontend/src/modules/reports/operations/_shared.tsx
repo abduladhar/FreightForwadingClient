@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -21,6 +21,8 @@ import { getTenantOptions } from "@/api/tenantApi";
 import { searchVendors } from "@/api/vendorApi";
 import { useAuth } from "@/auth/useAuth";
 import { DataTable } from "@/components/common/DataTable";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { ExportButtons } from "@/components/common/ExportButtons";
 import { PrintPreview } from "@/components/common/PrintPreview";
 import { ReportFilterPanel } from "@/components/common/ReportFilterPanel";
@@ -32,7 +34,7 @@ import { useWorkspace } from "@/hooks/useWorkspace";
 import { formatByCulture } from "@/utils/dateFormat";
 import { exportFullCsv } from "@/utils/csvExport";
 import { exportExcelReport } from "@/utils/excelExport";
-import { exportPdfReport } from "@/utils/pdfExport";
+import { createPdfReportBlob, exportPdfReport } from "@/utils/pdfExport";
 import { lt } from "@/modules/operationsLocalization";
 
 export const operationReportColumns: ColumnDef<OperationalReportRow>[] = [
@@ -93,6 +95,7 @@ export function OperationalReportPage({
 }) {
   const { hasPermission } = useAuth();
   const workspace = useWorkspace();
+  const reportRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(50);
@@ -191,6 +194,13 @@ export function OperationalReportPage({
   async function onClientPdf() {
     const exportRows = rows.map((row) => ({ ...Object.fromEntries(Object.entries(row)), currencyCode: currencyById.get(String(row.currencyId ?? "")) ?? workspace.baseCurrency }) as Record<string, unknown>);
     await exportPdfReport({
+      ...clientPdfOptions(exportRows),
+      fileName: `${reportType}.pdf`
+    });
+  }
+
+  function clientPdfOptions(exportRows: Record<string, unknown>[]) {
+    return {
       fileName: `${reportType}.pdf`,
       title,
       tenantName: workspace.tenantCode,
@@ -200,7 +210,7 @@ export function OperationalReportPage({
       cultureCode: workspace.cultureCode,
       columns: displayColumns.map((x) => ({ key: String(x.id ?? ("accessorKey" in x ? x.accessorKey : "value") ?? "value"), label: String(x.header ?? x.id ?? lt("Value")) })),
       rows: exportRows
-    });
+    };
   }
   async function onClientExcel() {
     const mapped = rows.map((x) => ({ ...x, eventDate: x.eventDate ?? "", currencyCode: currencyById.get(String(x.currencyId ?? "")) ?? workspace.baseCurrency }));
@@ -287,6 +297,17 @@ export function OperationalReportPage({
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle>{lt("Report Output")}</CardTitle>
         <div className="flex items-center gap-2">
+          {canExport ? <EmailReportAction subject={title} reportName={title} module="Reports" getHtml={() => reportRef.current?.outerHTML ?? ""} /> : null}
+          {canExport ? <EmailPdfReportButton
+            fileName={`${reportType}.pdf`}
+            subject={title}
+            reportName={title}
+            module="Reports"
+            createPdfBlob={() => {
+              const exportRows = rows.map((row) => ({ ...Object.fromEntries(Object.entries(row)), currencyCode: currencyById.get(String(row.currencyId ?? "")) ?? workspace.baseCurrency }) as Record<string, unknown>);
+              return createPdfReportBlob(clientPdfOptions(exportRows));
+            }}
+          /> : null}
           {canExport ? <ExportButtons
             onExportPdf={!rangeWarning ? () => void onClientPdf() : undefined}
             onExportExcel={!rangeWarning ? () => void onClientExcel() : undefined}
@@ -298,7 +319,7 @@ export function OperationalReportPage({
           {hasPermission("Reports.Print") ? <Button variant="outline" size="sm" onClick={() => void onPrintPreview()}>{lt("Print Preview")}</Button> : null}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent ref={reportRef} className="space-y-3">
         {rangeWarning ? <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{rangeWarning}</div> : null}
         {summary.length ? <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">{summary.map((x) => <div key={x.label} className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{x.label}</p><p className="text-lg font-semibold">{x.value}</p></div>)}</div> : null}
         <DataTable

@@ -7,6 +7,136 @@ import { settingsLocalizationCatalogs } from "@/modules/settingsLocalizationCata
 import { tenantLocalizationCatalogs } from "@/modules/tenantLocalizationCatalog";
 
 const runtimeLocalizationResources: Record<string, Record<string, string>> = {};
+const openAiSettingsTranslations: Record<string, Record<string, string>> = {
+  "ar-QA": {
+    "OpenAI Settings": "إعدادات OpenAI",
+    "Branch-specific API key and model selection.": "مفتاح API واختيار النموذج الخاصان بالفرع.",
+    "OpenAI API Key": "مفتاح OpenAI API",
+    "OpenAI Model": "نموذج OpenAI",
+    "Show API Key": "إظهار مفتاح API",
+    "Hide API Key": "إخفاء مفتاح API",
+    "Add Model": "إضافة نموذج",
+    "Create OpenAI Model": "إنشاء نموذج OpenAI",
+    "Add a model identifier for this branch.": "أضف معرف نموذج لهذا الفرع.",
+    "Model ID": "معرف النموذج",
+    "Display Name": "اسم العرض",
+    "Create Model": "إنشاء نموذج",
+    "Optional": "اختياري",
+    "Close": "إغلاق"
+  },
+  "hi-IN": {
+    "OpenAI Settings": "OpenAI सेटिंग्स",
+    "Branch-specific API key and model selection.": "शाखा-विशिष्ट API कुंजी और मॉडल चयन.",
+    "OpenAI API Key": "OpenAI API कुंजी",
+    "OpenAI Model": "OpenAI मॉडल",
+    "Show API Key": "API कुंजी दिखाएं",
+    "Hide API Key": "API कुंजी छिपाएं",
+    "Add Model": "मॉडल जोड़ें",
+    "Create OpenAI Model": "OpenAI मॉडल बनाएं",
+    "Add a model identifier for this branch.": "इस शाखा के लिए मॉडल पहचानकर्ता जोड़ें.",
+    "Model ID": "मॉडल ID",
+    "Display Name": "प्रदर्शन नाम",
+    "Create Model": "मॉडल बनाएं",
+    "Optional": "वैकल्पिक",
+    "Close": "बंद करें"
+  },
+  "fr-FR": {
+    "OpenAI Settings": "Paramètres OpenAI",
+    "Branch-specific API key and model selection.": "Clé API et sélection de modèle propres à l'agence.",
+    "OpenAI API Key": "Clé API OpenAI",
+    "OpenAI Model": "Modèle OpenAI",
+    "Show API Key": "Afficher la clé API",
+    "Hide API Key": "Masquer la clé API",
+    "Add Model": "Ajouter un modèle",
+    "Create OpenAI Model": "Créer un modèle OpenAI",
+    "Add a model identifier for this branch.": "Ajoutez un identifiant de modèle pour cette agence.",
+    "Model ID": "ID du modèle",
+    "Display Name": "Nom d'affichage",
+    "Create Model": "Créer le modèle",
+    "Optional": "Facultatif",
+    "Close": "Fermer"
+  },
+  "es-ES": {
+    "OpenAI Settings": "Configuración de OpenAI",
+    "Branch-specific API key and model selection.": "Clave API y selección de modelo específicas de la sucursal.",
+    "OpenAI API Key": "Clave API de OpenAI",
+    "OpenAI Model": "Modelo de OpenAI",
+    "Show API Key": "Mostrar clave API",
+    "Hide API Key": "Ocultar clave API",
+    "Add Model": "Agregar modelo",
+    "Create OpenAI Model": "Crear modelo de OpenAI",
+    "Add a model identifier for this branch.": "Agregue un identificador de modelo para esta sucursal.",
+    "Model ID": "ID del modelo",
+    "Display Name": "Nombre para mostrar",
+    "Create Model": "Crear modelo",
+    "Optional": "Opcional",
+    "Close": "Cerrar"
+  },
+  "zh-CN": {
+    "OpenAI Settings": "OpenAI 设置",
+    "Branch-specific API key and model selection.": "分支专用 API 密钥和模型选择。",
+    "OpenAI API Key": "OpenAI API 密钥",
+    "OpenAI Model": "OpenAI 模型",
+    "Show API Key": "显示 API 密钥",
+    "Hide API Key": "隐藏 API 密钥",
+    "Add Model": "添加模型",
+    "Create OpenAI Model": "创建 OpenAI 模型",
+    "Add a model identifier for this branch.": "为此分支添加模型标识符。",
+    "Model ID": "模型 ID",
+    "Display Name": "显示名称",
+    "Create Model": "创建模型",
+    "Optional": "可选",
+    "Close": "关闭"
+  },
+  "tr-TR": {
+    "OpenAI Settings": "OpenAI Ayarları",
+    "Branch-specific API key and model selection.": "Şubeye özel API anahtarı ve model seçimi.",
+    "OpenAI API Key": "OpenAI API Anahtarı",
+    "OpenAI Model": "OpenAI Modeli",
+    "Show API Key": "API anahtarını göster",
+    "Hide API Key": "API anahtarını gizle",
+    "Add Model": "Model ekle",
+    "Create OpenAI Model": "OpenAI modeli oluştur",
+    "Add a model identifier for this branch.": "Bu şube için bir model tanımlayıcısı ekleyin.",
+    "Model ID": "Model ID",
+    "Display Name": "Görünen ad",
+    "Create Model": "Model oluştur",
+    "Optional": "İsteğe bağlı",
+    "Close": "Kapat"
+  },
+  "pt-PT": {
+    "OpenAI Settings": "Definições OpenAI",
+    "Branch-specific API key and model selection.": "Chave API e seleção de modelo específicas da filial.",
+    "OpenAI API Key": "Chave API OpenAI",
+    "OpenAI Model": "Modelo OpenAI",
+    "Show API Key": "Mostrar chave API",
+    "Hide API Key": "Ocultar chave API",
+    "Add Model": "Adicionar modelo",
+    "Create OpenAI Model": "Criar modelo OpenAI",
+    "Add a model identifier for this branch.": "Adicione um identificador de modelo para esta filial.",
+    "Model ID": "ID do modelo",
+    "Display Name": "Nome de apresentação",
+    "Create Model": "Criar modelo",
+    "Optional": "Opcional",
+    "Close": "Fechar"
+  },
+  "ru-RU": {
+    "OpenAI Settings": "Настройки OpenAI",
+    "Branch-specific API key and model selection.": "Ключ API и выбор модели для филиала.",
+    "OpenAI API Key": "Ключ API OpenAI",
+    "OpenAI Model": "Модель OpenAI",
+    "Show API Key": "Показать ключ API",
+    "Hide API Key": "Скрыть ключ API",
+    "Add Model": "Добавить модель",
+    "Create OpenAI Model": "Создать модель OpenAI",
+    "Add a model identifier for this branch.": "Добавьте идентификатор модели для этого филиала.",
+    "Model ID": "ID модели",
+    "Display Name": "Отображаемое имя",
+    "Create Model": "Создать модель",
+    "Optional": "Необязательно",
+    "Close": "Закрыть"
+  }
+};
 const sharedUploadLinkTranslations: Record<string, Record<string, string>> = {
   "ar-QA": {
     "Share Upload Link": "مشاركة رابط الرفع",
@@ -267,6 +397,7 @@ export function lt(value: string) {
   const cultureCode = currentCultureCode();
   if (cultureCode === "en-US") return value;
   return localizationCorrections[cultureCode]?.[value]
+    ?? openAiSettingsTranslations[cultureCode]?.[value]
     ?? sharedUploadLinkTranslations[cultureCode]?.[value]
     ?? runtimeLocalizationResources[cultureCode]?.[value]
     ?? branchBankLocalizationCatalogs[cultureCode]?.[value]

@@ -71,6 +71,7 @@ export function HouseShipmentEditPage() {
     <PageHeader title={`Edit ${query.data.houseShipmentNumber}`} description={lt("Update route, timeline, references, and shipment details.")} />
     <HouseShipmentForm
       key={shipmentId}
+      shipmentId={shipmentId}
       initialValue={value}
       enableGoodsSelection
       onSaveItem={async (item) => {

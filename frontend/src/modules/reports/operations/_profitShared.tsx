@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -21,6 +21,8 @@ import {
 } from "@/api/reportApi";
 import { useAuth } from "@/auth/useAuth";
 import { DataTable } from "@/components/common/DataTable";
+import { EmailReportAction } from "@/components/common/EmailReportAction";
+import { EmailPdfReportButton } from "@/components/common/EmailPdfReportButton";
 import { ExportButtons } from "@/components/common/ExportButtons";
 import { PrintPreview } from "@/components/common/PrintPreview";
 import { PageHeader } from "@/components/PageHeader";
@@ -30,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { exportFullCsv } from "@/utils/csvExport";
 import { exportExcelReport } from "@/utils/excelExport";
-import { exportPdfReport } from "@/utils/pdfExport";
+import { createPdfReportBlob, exportPdfReport } from "@/utils/pdfExport";
 import { lt } from "@/modules/operationsLocalization";
 
 const shipmentTypeOptions = ["GoodsReceipt", "HouseShipment", "MasterShipment", "DirectShipment", "Pickup"];
@@ -77,6 +79,7 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
 }) {
   const { hasPermission } = useAuth();
   const workspace = useWorkspace();
+  const reportRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(50);
@@ -158,6 +161,13 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
   async function exportPdf() {
     const exportRows = rows.map((row) => withCurrencyCodes(row as unknown as Record<string, unknown>, currencyById, baseCurrencyCode, reportCurrencyCode));
     await exportPdfReport({
+      ...pdfOptions(exportRows),
+      fileName: `${mode}.pdf`
+    });
+  }
+
+  function pdfOptions(exportRows: Record<string, unknown>[]) {
+    return {
       fileName: `${mode}.pdf`,
       title,
       tenantName: workspace.tenantCode,
@@ -167,7 +177,7 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
       cultureCode: workspace.cultureCode,
       columns: displayColumns.map((x) => ({ key: String(x.id ?? ("accessorKey" in x ? x.accessorKey : "value") ?? "value"), label: String(x.header ?? x.id ?? lt("Value")) })),
       rows: exportRows
-    });
+    };
   }
   async function exportExcel() {
     const mapped = rows.map((row) => withCurrencyCodes(row as unknown as Record<string, unknown>, currencyById, baseCurrencyCode, reportCurrencyCode));
@@ -239,11 +249,22 @@ export function ProfitReportPage<T extends ShipmentProfitDto | ProfitGroupRow>({
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle>{lt("Report Output")}</CardTitle>
         <div className="flex items-center gap-2">
+          {canExport ? <EmailReportAction subject={title} reportName={title} module="Profit" getHtml={() => reportRef.current?.outerHTML ?? ""} /> : null}
+          {canExport ? <EmailPdfReportButton
+            fileName={`${mode}.pdf`}
+            subject={title}
+            reportName={title}
+            module="Profit"
+            createPdfBlob={() => {
+              const exportRows = rows.map((row) => withCurrencyCodes(row as unknown as Record<string, unknown>, currencyById, baseCurrencyCode, reportCurrencyCode));
+              return createPdfReportBlob(pdfOptions(exportRows));
+            }}
+          /> : null}
           {canExport ? <ExportButtons onExportPdf={!rangeWarning ? () => void exportPdf() : undefined} onExportExcel={!rangeWarning ? () => void exportExcel() : undefined} onExportCsv={!rangeWarning ? () => exportCsv() : undefined} /> : null}
           {hasPermission("Reports.Print") ? <Button variant="outline" size="sm" onClick={printPreview}>{lt("Print Preview")}</Button> : null}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent ref={reportRef} className="space-y-3">
         {rangeWarning ? <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{rangeWarning}</div> : null}
         {summary.length ? <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">{summary.map((x) => <div key={x.label} className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{x.label}</p><p className="text-lg font-semibold">{x.value}</p></div>)}</div> : null}
         <DataTable
