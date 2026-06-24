@@ -56,6 +56,10 @@ function displaySourceType(sourceType: string) {
       return lt("Quotation");
     case "CustomsClearance":
       return lt("Customs Clearance");
+    case "BillOfEntry":
+      return lt("Bill of Entry");
+    case "BillOfExit":
+      return lt("Bill of Exit");
     default:
       return sourceType;
   }
@@ -77,6 +81,10 @@ function sourcePath(sourceType: string, sourceId: string) {
       return `/quotations/${sourceId}`;
     case "CustomsClearance":
       return `/customs/${sourceId}`;
+    case "BillOfEntry":
+      return `/bill-of-entry/${sourceId}`;
+    case "BillOfExit":
+      return `/bill-of-exits/${sourceId}`;
     default:
       return "";
   }

@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Plus, RefreshCcw, Trash2 } from "lucide-react";
 import { getExchangeRates, getTenantCurrencies } from "@/api/currencyApi";
 import { getActiveChargeHeadsForDropdown } from "@/api/chargeHeadApi";
+import { getBillOfEntry } from "@/api/billOfEntryApi";
+import { getBillOfExit } from "@/api/billOfExitApi";
 import { getCustomsJob } from "@/api/customsApi";
 import { getDirectShipment } from "@/api/directShipmentApi";
 import { getGoodsReceipt } from "@/api/goodsReceiptApi";
@@ -38,6 +40,8 @@ const invoiceSourceTypeOptions: ComboboxOption[] = [
   { value: "Pickup", label: lt("Pickup") },
   { value: "Quotation", label: lt("Quotation") },
   { value: "CustomsClearance", label: lt("Customs Clearance") },
+  { value: "BillOfEntry", label: lt("Bill of Entry") },
+  { value: "BillOfExit", label: lt("Bill of Exit") },
   { value: "Job", label: lt("Job") },
   { value: "Miscellaneous", label: lt("Miscellaneous") }
 ];
@@ -890,6 +894,16 @@ function useSourceReference(sourceType: string, sourceId?: string | null) {
     queryFn: () => getCustomsJob(sourceId!),
     enabled: enabled && sourceType === "CustomsClearance"
   });
+  const billOfEntry = useQuery({
+    queryKey: ["invoice-source-reference-boe", sourceId],
+    queryFn: () => getBillOfEntry(sourceId!),
+    enabled: enabled && sourceType === "BillOfEntry"
+  });
+  const billOfExit = useQuery({
+    queryKey: ["invoice-source-reference-box", sourceId],
+    queryFn: () => getBillOfExit(sourceId!),
+    enabled: enabled && sourceType === "BillOfExit"
+  });
   const job = useQuery({
     queryKey: ["invoice-source-reference-job", sourceId],
     queryFn: () => getJobByGuid(sourceId!),
@@ -904,6 +918,8 @@ function useSourceReference(sourceType: string, sourceId?: string | null) {
   if (sourceType === "Pickup" && pickup.data) return { referenceId: pickup.data.id, referenceNo: pickup.data.pickupReceiptNumber || pickup.data.pickupNumber, salesmanId: pickup.data.salesmanId ?? null, quotationId: null };
   if (sourceType === "Quotation" && quotation.data) return { referenceId: quotation.data.id, referenceNo: quotation.data.quotationNumber, salesmanId: null, quotationId: quotation.data.id };
   if (sourceType === "CustomsClearance" && customs.data) return { referenceId: customs.data.id, referenceNo: customs.data.jobNumber, salesmanId: null, quotationId: null };
+  if (sourceType === "BillOfEntry" && billOfEntry.data) return { referenceId: billOfEntry.data.id, referenceNo: billOfEntry.data.boeNumber, salesmanId: null, quotationId: null };
+  if (sourceType === "BillOfExit" && billOfExit.data) return { referenceId: billOfExit.data.id, referenceNo: billOfExit.data.billOfExitNumber, salesmanId: null, quotationId: null };
   if (sourceType === "Job" && job.data) return { referenceId: job.data.id, referenceNo: job.data.jobNumber, salesmanId: null, quotationId: null };
   return { referenceId: sourceId, referenceNo: "", salesmanId: null, quotationId: null };
 }

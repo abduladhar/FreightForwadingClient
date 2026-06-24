@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import { Eye, FileText, Pencil, Plus, Printer } from "lucide-react";
 import { getTenantCurrencies } from "@/api/currencyApi";
 import { getCustomsJob, type CustomsClearanceJobDto } from "@/api/customsApi";
@@ -21,6 +21,7 @@ import { lt } from "@/modules/operationsLocalization";
 
 export function CustomsInvoicesPage() {
   const { customsId } = useParams();
+  const location = useLocation();
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
@@ -54,7 +55,8 @@ export function CustomsInvoicesPage() {
     [currencyCodes]
   );
 
-  if (!customsId) return <Navigate to="/customs" replace />;
+  const basePath = location.pathname.startsWith("/bill-of-entry") ? "/bill-of-entry" : "/customs";
+  if (!customsId) return <Navigate to={basePath} replace />;
   if (customsQuery.isLoading) return <LoadingScreen />;
   if (customsQuery.isError || !customsQuery.data) return <ErrorState onRetry={() => void customsQuery.refetch()} />;
 
@@ -75,7 +77,7 @@ export function CustomsInvoicesPage() {
           <>
             <AuditTrailButton />
             <PermissionButton asChild permission="CustomsClearance.Read" variant="outline">
-              <Link to={`/customs/${customsId}`}>
+              <Link to={`${basePath}/${customsId}`}>
                 <Eye className="h-4 w-4" />{lt("Customs Job")}</Link>
             </PermissionButton>
             <PermissionButton asChild permission="Invoice.Create">

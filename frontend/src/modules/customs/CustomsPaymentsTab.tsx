@@ -119,21 +119,21 @@ export function CustomsPaymentsTab({ jobId, rows, locked, currencyOptions, onRef
 
   async function save() {
     await saveMutation.mutateAsync();
-    toast.success(editingId ? lt("Customs payment updated") : lt("Customs payment added"), "The payment record was saved.");
+    toast.success(editingId ? lt("Customs payment updated") : lt("Customs payment added"), lt("The payment record was saved."));
     reset();
     onRefresh();
   }
 
   async function remove(row: CustomsPaymentDto) {
     await deleteMutation.mutateAsync(row.id);
-    toast.success("Customs payment deleted", row.postingStatus === "Posted" ? lt("The accounting entry was reversed.") : lt("The payment record was removed."));
+    toast.success(lt("Customs payment deleted"), row.postingStatus === "Posted" ? lt("The accounting entry was reversed.") : lt("The payment record was removed."));
     if (editingId === row.id) reset();
     onRefresh();
   }
 
   async function post(row: CustomsPaymentDto) {
     await postMutation.mutateAsync(row.id);
-    toast.success("Customs payment posted", "The ledger and bank/cash book entries were created.");
+    toast.success(lt("Customs payment posted"), lt("The ledger and bank/cash book entries were created."));
     onRefresh();
   }
 
@@ -193,7 +193,7 @@ export function CustomsPaymentsTab({ jobId, rows, locked, currencyOptions, onRef
         <div className="flex items-end md:col-span-4">
           <PermissionButton permission="CustomsClearance.Update" disabled={!isValid || saveMutation.isPending} onClick={() => void save()}>
             {editingId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {saveMutation.isPending ? "Saving..." : editingId ? lt("Update Payment") : lt("Add Payment")}
+            {saveMutation.isPending ? lt("Saving...") : editingId ? lt("Update Payment") : lt("Add Payment")}
           </PermissionButton>
         </div>
       </div>
@@ -201,7 +201,7 @@ export function CustomsPaymentsTab({ jobId, rows, locked, currencyOptions, onRef
 
     <Card><CardContent className="overflow-auto pt-6">
       <table className="min-w-[1100px] text-sm">
-        <thead><tr>{["Reference", "Date", "Amount", "Paid By", "Mode", "Our Account", "Customs Account", "Posting"].map((label) => <th key={label} className="whitespace-nowrap border-b bg-slate-50 px-3 py-2 text-left font-semibold">{label}</th>)}<th className="border-b bg-slate-50 px-3 py-2 text-center font-semibold">{lt("Action")}</th></tr></thead>
+        <thead><tr>{["Reference", "Date", "Amount", "Paid By", "Mode", "Our Account", "Customs Account", "Posting"].map((label) => <th key={label} className="whitespace-nowrap border-b bg-slate-50 px-3 py-2 text-left font-semibold">{lt(label)}</th>)}<th className="border-b bg-slate-50 px-3 py-2 text-center font-semibold">{lt("Action")}</th></tr></thead>
         <tbody>{rows.length ? rows.map((row) => {
           const ownAccount = row.paymentAccountType === "Bank"
             ? accounts.data?.bankAccounts.find((x) => x.id === row.bankAccountId)
@@ -211,8 +211,8 @@ export function CustomsPaymentsTab({ jobId, rows, locked, currencyOptions, onRef
             <td className="border-b px-3 py-2">{row.paymentReference}</td>
             <td className="whitespace-nowrap border-b px-3 py-2">{new Date(row.paymentDate).toLocaleString()}</td>
             <td className="border-b px-3 py-2 text-right font-medium">{row.amount.toFixed(2)}</td>
-            <td className="border-b px-3 py-2">{row.paymentResponsibility}</td>
-            <td className="border-b px-3 py-2">{row.paymentMode}</td>
+            <td className="border-b px-3 py-2">{lt(row.paymentResponsibility)}</td>
+            <td className="border-b px-3 py-2">{lt(row.paymentMode)}</td>
             <td className="border-b px-3 py-2">{ownAccount ? `${ownAccount.code} - ${ownAccount.name}` : "-"}</td>
             <td className="border-b px-3 py-2">{customsAccount ? `${customsAccount.code} - ${customsAccount.name}` : "-"}</td>
             <td className="border-b px-3 py-2"><StatusBadge status={row.postingStatus} /></td>
@@ -236,7 +236,7 @@ function Editor({ label, required, children }: { label: string; required?: boole
 
 function Select({ value, options, onChange, placeholder, disabled }: { value: string; options: Option[]; onChange: (value: string) => void; placeholder?: string; disabled?: boolean }) {
   return <select className="h-10 w-full rounded-md border bg-white px-3 text-sm disabled:bg-slate-100" value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled}>
-    <option value="">{placeholder ?? "Select"}</option>
+    <option value="">{placeholder ?? lt("Select")}</option>
     {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
   </select>;
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import { FilePlus2, FileText, Pencil, Plus, RefreshCw, Send, Sigma } from "lucide-react";
 import { getShipmentDocuments } from "@/api/documentApi";
 import { getCustomsJob, searchCustomsConfigurations, submitCustomsDeclaration, type CustomsClearanceJobDto, type CustomsConfigurationDto } from "@/api/customsApi";
@@ -23,6 +23,7 @@ const tabs = ["Overview", "Parties", "Invoices", "Items", "Packages", "Container
 
 export function CustomsClearanceViewPage() {
   const { customsId } = useParams();
+  const location = useLocation();
   const toast = useToast();
   const [tab, setTab] = useState("Overview");
   const query = useQuery({ queryKey: ["customs-job", customsId], queryFn: () => getCustomsJob(customsId!), enabled: Boolean(customsId) });
@@ -41,22 +42,24 @@ export function CustomsClearanceViewPage() {
       paid: x?.payments.reduce((s, p) => s + p.amount, 0) ?? 0
     };
   }, [query.data]);
-  if (!customsId) return <Navigate to="/customs" replace />;
+  const isBillOfEntryRoute = location.pathname.startsWith("/bill-of-entry");
+  const basePath = isBillOfEntryRoute ? "/bill-of-entry" : "/customs";
+  if (!customsId) return <Navigate to={basePath} replace />;
   const x = query.data;
   return <div className="space-y-4">
     <PageHeader
-      title={x?.jobNumber ?? lt("Customs Clearance")}
+      title={isBillOfEntryRoute ? (x?.declaration?.declarationNumber || x?.jobNumber || lt("Bill of Entry")) : (x?.jobNumber ?? lt("Customs Clearance"))}
       description={`${x?.shipmentReferenceNo ?? ""} ${x ? `| ${x.clearanceType} | ${x.modeOfTransport}` : ""}`}
       actions={
         <>
           <Button variant="outline" onClick={() => void query.refetch()}><RefreshCw className="h-4 w-4" />{lt("Refresh")}</Button>
           <AuditTrailButton />
-          <PermissionButton asChild permission="CustomsClearance.Update"><Link to={`/customs/${customsId}/edit`}><Pencil className="h-4 w-4" />{lt("Edit")}</Link></PermissionButton>
-          <PermissionButton asChild permission="CustomsClearance.Update"><Link to={`/customs/${customsId}/status`}><Sigma className="h-4 w-4" />{lt("Status")}</Link></PermissionButton>
-          <PermissionButton asChild permission="CustomsClearance.Update"><Link to={`/customs/${customsId}/documents`}><FileText className="h-4 w-4" />{lt("Documents")}</Link></PermissionButton>
-          <PermissionButton asChild permission="Invoice.Read"><Link to={`/customs/${customsId}/invoices`}><FileText className="h-4 w-4" />{lt("Invoices")}</Link></PermissionButton>
+          <PermissionButton asChild permission="CustomsClearance.Update"><Link to={`${basePath}/${customsId}/edit`}><Pencil className="h-4 w-4" />{lt("Edit")}</Link></PermissionButton>
+          <PermissionButton asChild permission="CustomsClearance.Update"><Link to={`${basePath}/${customsId}/status`}><Sigma className="h-4 w-4" />{lt("Status")}</Link></PermissionButton>
+          <PermissionButton asChild permission="CustomsClearance.Update"><Link to={`${basePath}/${customsId}/documents`}><FileText className="h-4 w-4" />{lt("Documents")}</Link></PermissionButton>
+          <PermissionButton asChild permission="Invoice.Read"><Link to={`${basePath}/${customsId}/invoices`}><FileText className="h-4 w-4" />{lt("Invoices")}</Link></PermissionButton>
           <PermissionButton asChild permission="Invoice.Create"><Link to={`/invoices/new?${new URLSearchParams({ sourceType: "CustomsClearance", sourceId: customsId, sourceReferenceNo: x?.jobNumber ?? "", customerId: x?.customerId ?? "" }).toString()}`}><Plus className="h-4 w-4" />{lt("New Invoice")}</Link></PermissionButton>
-          <PermissionButton asChild permission="VendorBill.Read"><Link to={`/customs/${customsId}/bills`}><FilePlus2 className="h-4 w-4" />{lt("Bills")}</Link></PermissionButton>
+          <PermissionButton asChild permission="VendorBill.Read"><Link to={`${basePath}/${customsId}/bills`}><FilePlus2 className="h-4 w-4" />{lt("Bills")}</Link></PermissionButton>
           <PermissionButton asChild permission="VendorBill.Create"><Link to={`/vendor-bills/new?${new URLSearchParams({ sourceType: "CustomsClearance", sourceId: customsId, sourceReferenceNo: x?.jobNumber ?? "", expectedCostAmount: String(totals.payable) }).toString()}`}><FilePlus2 className="h-4 w-4" />{lt("New Bill")}</Link></PermissionButton>
           <PermissionButton permission="CustomsClearance.Approve" onClick={() => void submitMutation.mutateAsync().then((r) => { toast.success(lt("Submitted"), `${lt("Reference")} ${r.submissionReference}`); void query.refetch(); })}><Send className="h-4 w-4" />{lt("Submit")}</PermissionButton>
         </>

@@ -3,6 +3,7 @@ import { getLanguagePreference } from "@/app/languagePreference";
 import { branchLocalizationCatalogs } from "@/modules/branchLocalizationCatalog";
 import { branchBankLocalizationCatalogs } from "@/modules/branchBankLocalizationCatalog";
 import { operationLocalizationCatalogs } from "@/modules/operationsLocalizationCatalog";
+import { reportLocalizationCatalogs } from "@/modules/reportLocalizationCatalog";
 import { settingsLocalizationCatalogs } from "@/modules/settingsLocalizationCatalog";
 import { tenantLocalizationCatalogs } from "@/modules/tenantLocalizationCatalog";
 
@@ -374,6 +375,153 @@ const localizationCorrections: Record<string, Record<string, string>> = {
   }
 };
 
+const boeAiExtractionTranslations: Record<string, Record<string, string>> = {
+  "ar-QA": {
+    "Upload BOE PDF / Extract Data": "تحميل ملف بيان الدخول PDF / استخراج البيانات",
+    "Select document type, then extract and populate the BOE form.": "حدد نوع المستند، ثم استخرج البيانات واملأ نموذج بيان الدخول.",
+    "PDF Document": "مستند PDF",
+    "Document Type": "نوع المستند",
+    "Upload & Extract": "تحميل واستخراج",
+    "Extracting...": "جار الاستخراج...",
+    "Select a PDF": "حدد ملف PDF",
+    "Choose a PDF document before extraction.": "اختر مستند PDF قبل الاستخراج.",
+    "AI extraction completed": "اكتمل استخراج الذكاء الاصطناعي",
+    "Extraction failed": "فشل الاستخراج",
+    "Unable to extract data from this document. Please enter details manually.": "تعذر استخراج البيانات من هذا المستند. يرجى إدخال التفاصيل يدويًا.",
+    "Language": "اللغة",
+    "Extracted BOE": "بيان الدخول المستخرج",
+    "Suggested Language": "اللغة المقترحة",
+    "Apply Extracted Values": "تطبيق القيم المستخرجة",
+    "Master data checked and the BOE form was populated.": "تم فحص البيانات الرئيسية وتعبئة نموذج بيان الدخول."
+  },
+  "hi-IN": {
+    "Upload BOE PDF / Extract Data": "BOE PDF अपलोड करें / डेटा निकालें",
+    "Select document type, then extract and populate the BOE form.": "दस्तावेज़ प्रकार चुनें, फिर डेटा निकालकर BOE फॉर्म भरें.",
+    "PDF Document": "PDF दस्तावेज़",
+    "Document Type": "दस्तावेज़ प्रकार",
+    "Upload & Extract": "अपलोड करें और निकालें",
+    "Extracting...": "निकाला जा रहा है...",
+    "Select a PDF": "PDF चुनें",
+    "Choose a PDF document before extraction.": "निकालने से पहले PDF दस्तावेज़ चुनें.",
+    "AI extraction completed": "AI डेटा निकासी पूरी हुई",
+    "Extraction failed": "डेटा निकासी विफल",
+    "Unable to extract data from this document. Please enter details manually.": "इस दस्तावेज़ से डेटा नहीं निकाला जा सका. कृपया विवरण मैन्युअल रूप से भरें.",
+    "Language": "भाषा",
+    "Extracted BOE": "निकाला गया BOE",
+    "Suggested Language": "सुझाई गई भाषा",
+    "Apply Extracted Values": "निकाले गए मान लागू करें",
+    "Master data checked and the BOE form was populated.": "मास्टर डेटा जांचा गया और BOE फॉर्म भर दिया गया."
+  },
+  "fr-FR": {
+    "Upload BOE PDF / Extract Data": "Téléverser le PDF BOE / extraire les données",
+    "Select document type, then extract and populate the BOE form.": "Sélectionnez le type de document, puis extrayez et remplissez le formulaire BOE.",
+    "PDF Document": "Document PDF",
+    "Document Type": "Type de document",
+    "Upload & Extract": "Téléverser et extraire",
+    "Extracting...": "Extraction...",
+    "Select a PDF": "Sélectionner un PDF",
+    "Choose a PDF document before extraction.": "Choisissez un document PDF avant l'extraction.",
+    "AI extraction completed": "Extraction IA terminée",
+    "Extraction failed": "Échec de l'extraction",
+    "Unable to extract data from this document. Please enter details manually.": "Impossible d'extraire les données de ce document. Veuillez saisir les détails manuellement.",
+    "Language": "Langue",
+    "Extracted BOE": "BOE extrait",
+    "Suggested Language": "Langue suggérée",
+    "Apply Extracted Values": "Appliquer les valeurs extraites",
+    "Master data checked and the BOE form was populated.": "Les données de référence ont été vérifiées et le formulaire BOE a été rempli."
+  },
+  "es-ES": {
+    "Upload BOE PDF / Extract Data": "Subir PDF BOE / extraer datos",
+    "Select document type, then extract and populate the BOE form.": "Seleccione el tipo de documento, luego extraiga y complete el formulario BOE.",
+    "PDF Document": "Documento PDF",
+    "Document Type": "Tipo de documento",
+    "Upload & Extract": "Subir y extraer",
+    "Extracting...": "Extrayendo...",
+    "Select a PDF": "Seleccionar un PDF",
+    "Choose a PDF document before extraction.": "Elija un documento PDF antes de la extracción.",
+    "AI extraction completed": "Extracción con IA completada",
+    "Extraction failed": "Error en la extracción",
+    "Unable to extract data from this document. Please enter details manually.": "No se pudieron extraer datos de este documento. Introduzca los detalles manualmente.",
+    "Language": "Idioma",
+    "Extracted BOE": "BOE extraído",
+    "Suggested Language": "Idioma sugerido",
+    "Apply Extracted Values": "Aplicar valores extraídos",
+    "Master data checked and the BOE form was populated.": "Se verificaron los datos maestros y se completó el formulario BOE."
+  },
+  "zh-CN": {
+    "Upload BOE PDF / Extract Data": "上传 BOE PDF / 提取数据",
+    "Select document type, then extract and populate the BOE form.": "选择文档类型，然后提取并填充 BOE 表单。",
+    "PDF Document": "PDF 文档",
+    "Document Type": "文档类型",
+    "Upload & Extract": "上传并提取",
+    "Extracting...": "正在提取...",
+    "Select a PDF": "选择 PDF",
+    "Choose a PDF document before extraction.": "提取前请选择 PDF 文档。",
+    "AI extraction completed": "AI 提取已完成",
+    "Extraction failed": "提取失败",
+    "Unable to extract data from this document. Please enter details manually.": "无法从此文档提取数据。请手动输入详细信息。",
+    "Language": "语言",
+    "Extracted BOE": "已提取 BOE",
+    "Suggested Language": "建议语言",
+    "Apply Extracted Values": "应用提取值",
+    "Master data checked and the BOE form was populated.": "主数据已检查，BOE 表单已填充。"
+  },
+  "tr-TR": {
+    "Upload BOE PDF / Extract Data": "BOE PDF yükle / verileri çıkar",
+    "Select document type, then extract and populate the BOE form.": "Belge türünü seçin, ardından BOE formunu çıkarıp doldurun.",
+    "PDF Document": "PDF belgesi",
+    "Document Type": "Belge türü",
+    "Upload & Extract": "Yükle ve çıkar",
+    "Extracting...": "Çıkarılıyor...",
+    "Select a PDF": "PDF seçin",
+    "Choose a PDF document before extraction.": "Çıkarmadan önce bir PDF belgesi seçin.",
+    "AI extraction completed": "AI çıkarımı tamamlandı",
+    "Extraction failed": "Çıkarım başarısız",
+    "Unable to extract data from this document. Please enter details manually.": "Bu belgeden veri çıkarılamadı. Lütfen bilgileri manuel girin.",
+    "Language": "Dil",
+    "Extracted BOE": "Çıkarılan BOE",
+    "Suggested Language": "Önerilen dil",
+    "Apply Extracted Values": "Çıkarılan değerleri uygula",
+    "Master data checked and the BOE form was populated.": "Ana veriler kontrol edildi ve BOE formu dolduruldu."
+  },
+  "pt-PT": {
+    "Upload BOE PDF / Extract Data": "Carregar PDF BOE / extrair dados",
+    "Select document type, then extract and populate the BOE form.": "Selecione o tipo de documento, depois extraia e preencha o formulário BOE.",
+    "PDF Document": "Documento PDF",
+    "Document Type": "Tipo de documento",
+    "Upload & Extract": "Carregar e extrair",
+    "Extracting...": "A extrair...",
+    "Select a PDF": "Selecionar um PDF",
+    "Choose a PDF document before extraction.": "Escolha um documento PDF antes da extração.",
+    "AI extraction completed": "Extração por IA concluída",
+    "Extraction failed": "Falha na extração",
+    "Unable to extract data from this document. Please enter details manually.": "Não foi possível extrair dados deste documento. Introduza os detalhes manualmente.",
+    "Language": "Idioma",
+    "Extracted BOE": "BOE extraído",
+    "Suggested Language": "Idioma sugerido",
+    "Apply Extracted Values": "Aplicar valores extraídos",
+    "Master data checked and the BOE form was populated.": "Os dados mestre foram verificados e o formulário BOE foi preenchido."
+  },
+  "ru-RU": {
+    "Upload BOE PDF / Extract Data": "Загрузить PDF BOE / извлечь данные",
+    "Select document type, then extract and populate the BOE form.": "Выберите тип документа, затем извлеките данные и заполните форму BOE.",
+    "PDF Document": "PDF-документ",
+    "Document Type": "Тип документа",
+    "Upload & Extract": "Загрузить и извлечь",
+    "Extracting...": "Извлечение...",
+    "Select a PDF": "Выберите PDF",
+    "Choose a PDF document before extraction.": "Выберите PDF-документ перед извлечением.",
+    "AI extraction completed": "Извлечение ИИ завершено",
+    "Extraction failed": "Не удалось извлечь данные",
+    "Unable to extract data from this document. Please enter details manually.": "Не удалось извлечь данные из этого документа. Введите данные вручную.",
+    "Language": "Язык",
+    "Extracted BOE": "Извлеченный BOE",
+    "Suggested Language": "Предлагаемый язык",
+    "Apply Extracted Values": "Применить извлеченные значения",
+    "Master data checked and the BOE form was populated.": "Основные данные проверены, форма BOE заполнена."
+  }
+};
+
 export function setRuntimeLocalizationResources(cultureCode: string, resources: Record<string, string>) {
   if (!cultureCode) return;
   runtimeLocalizationResources[cultureCode] = resources;
@@ -399,11 +547,13 @@ export function lt(value: string) {
   return localizationCorrections[cultureCode]?.[value]
     ?? openAiSettingsTranslations[cultureCode]?.[value]
     ?? sharedUploadLinkTranslations[cultureCode]?.[value]
-    ?? runtimeLocalizationResources[cultureCode]?.[value]
+    ?? boeAiExtractionTranslations[cultureCode]?.[value]
+    ?? reportLocalizationCatalogs[cultureCode]?.[value]
     ?? branchBankLocalizationCatalogs[cultureCode]?.[value]
     ?? branchLocalizationCatalogs[cultureCode]?.[value]
     ?? tenantLocalizationCatalogs[cultureCode]?.[value]
     ?? settingsLocalizationCatalogs[cultureCode]?.[value]
     ?? operationLocalizationCatalogs[cultureCode]?.[value]
+    ?? runtimeLocalizationResources[cultureCode]?.[value]
     ?? value;
 }

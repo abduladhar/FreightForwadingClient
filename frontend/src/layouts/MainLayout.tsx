@@ -19,6 +19,8 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useTenant } from "@/hooks/useTenant";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { navigationGroups, primaryNavigation } from "@/layouts/navigation";
+import { lt } from "@/modules/operationsLocalization";
+import type { NavigationGroup, NavigationItem } from "@/types/navigation";
 import { cn } from "@/utils/cn";
 
 export function MainLayout() {
@@ -53,8 +55,8 @@ export function MainLayout() {
     : [{ code: workspace.languageCode, cultureCode: workspace.cultureCode, name: workspace.languageCode, direction: "LTR" }]
   ).map((item) => ({ code: item.code, culture: item.cultureCode, label: item.name }));
   const currencyOptions = currency.options.length ? currency.options.map((item) => item.code) : [workspace.baseCurrency];
-  const currentItem = primaryNavigation.find((item) => item.path === location.pathname);
-  const currentGroup = navigationGroups.find((group) => group.items.some((item) => item.path === location.pathname));
+  const currentItem = findBestNavigationItem(primaryNavigation, location.pathname);
+  const currentGroup = navigationGroups.find((group) => getGroupItems(group).some((item) => item.id === currentItem?.id));
 
   function clearMenuSearchDomValue() {
     if (!searchInputRef.current) return;
@@ -80,17 +82,29 @@ export function MainLayout() {
   const visibleGroups = useMemo(() => {
     const query = search.trim().toLowerCase();
     return navigationGroups
-      .map((group) => ({
-        ...group,
-        items: group.items.filter((item) => {
+      .map((group) => {
+        const items = (group.items ?? []).filter((item) => {
           if (!hasPermission(item.permission)) return false;
           if (!query) return true;
-          const label = t(`Navigation.${group.id}.Item.${item.id}.Label`, item.label);
-          const description = t(`Navigation.${group.id}.Item.${item.id}.Description`, item.description);
+          const label = lt(t(`Navigation.${group.id}.Item.${item.id}.Label`, item.label));
+          const description = lt(t(`Navigation.${group.id}.Item.${item.id}.Description`, item.description));
           return label.toLowerCase().includes(query) || description.toLowerCase().includes(query);
-        })
-      }))
-      .filter((group) => group.items.length > 0);
+        });
+        const sections = (group.sections ?? [])
+          .map((section) => ({
+            ...section,
+            items: section.items.filter((item) => {
+              if (!hasPermission(item.permission)) return false;
+              if (!query) return true;
+              const label = lt(t(`Navigation.${group.id}.Item.${item.id}.Label`, item.label));
+              const description = lt(t(`Navigation.${group.id}.Item.${item.id}.Description`, item.description));
+              return label.toLowerCase().includes(query) || description.toLowerCase().includes(query);
+            })
+          }))
+          .filter((section) => section.items.length > 0);
+        return { ...group, items, sections };
+      })
+      .filter((group) => (group.items?.length ?? 0) > 0 || (group.sections?.length ?? 0) > 0);
   }, [hasPermission, search, t]);
 
   const searching = search.trim().length > 0;
@@ -199,30 +213,22 @@ export function MainLayout() {
                   onClick={() => setExpandedGroups((prev) => ({ ...prev, [group.id]: !prev[group.id] }))}
                   className="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-start text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
                 >
-                  <span>{t(`Navigation.${group.id}.Label`, group.label)}</span>
+                  <span>{lt(t(`Navigation.${group.id}.Label`, group.label))}</span>
                   <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", (searching || expandedGroups[group.id]) && "rotate-90")} />
                 </button>
               ) : null}
               {(isCollapsed || searching || expandedGroups[group.id]) ? (
                 <div className="mt-1 space-y-1">
-                  {group.items.map((item) => (
-                    <NavLink
-                      key={item.id}
-                      to={item.path}
-                      end={item.path === "/"}
-                      onClick={(event) => handleMenuClick(event, item.path)}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white",
-                          isActive && "bg-blue-500 text-white",
-                          isCollapsed && "justify-center px-0"
-                        )
-                      }
-                      title={t(`Navigation.${group.id}.Item.${item.id}.Label`, item.label)}
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!isCollapsed ? <span className="truncate">{t(`Navigation.${group.id}.Item.${item.id}.Label`, item.label)}</span> : null}
-                    </NavLink>
+                  {(group.items ?? []).map((item) => renderNavigationItem(item, group.id, isCollapsed, location.pathname, handleMenuClick, t))}
+                  {(group.sections ?? []).map((section) => (
+                    <div key={section.id} className={cn("space-y-1", !isCollapsed && "pt-2")}>
+                      {!isCollapsed ? (
+                        <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                          {lt(t(`Navigation.${group.id}.Section.${section.id}.Label`, section.label))}
+                        </p>
+                      ) : null}
+                      {section.items.map((item) => renderNavigationItem(item, group.id, isCollapsed, location.pathname, handleMenuClick, t))}
+                    </div>
                   ))}
                 </div>
               ) : null}
@@ -291,7 +297,7 @@ export function MainLayout() {
           </div>
           {currentItem ? (
             <p className="text-sm text-slate-600">
-              {t(`Navigation.${currentGroup?.id ?? "unknown"}.Item.${currentItem.id}.Label`, currentItem.label)}
+              {lt(t(`Navigation.${currentGroup?.id ?? "unknown"}.Item.${currentItem.id}.Label`, currentItem.label))}
             </p>
           ) : null}
           <div className="app-route-content">
@@ -310,4 +316,52 @@ function initials(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+function getGroupItems(group: NavigationGroup) {
+  return [
+    ...(group.items ?? []),
+    ...(group.sections ?? []).flatMap((section) => section.items)
+  ];
+}
+
+function findBestNavigationItem(items: NavigationItem[], pathname: string) {
+  return items
+    .filter((item) => isNavigationItemActive(item.path, pathname))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+}
+
+function isNavigationItemActive(itemPath: string, pathname: string) {
+  if (itemPath === "/") return pathname === "/";
+  return pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+}
+
+function renderNavigationItem(
+  item: NavigationItem,
+  groupId: string,
+  isCollapsed: boolean,
+  pathname: string,
+  handleMenuClick: (event: MouseEvent<HTMLAnchorElement>, path: string) => void,
+  t: (key: string, fallback?: string) => string
+) {
+  const isCurrent = findBestNavigationItem(primaryNavigation, pathname)?.id === item.id;
+  return (
+    <NavLink
+      key={item.id}
+      to={item.path}
+      end
+      onClick={(event) => handleMenuClick(event, item.path)}
+      className={() =>
+        cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white",
+          isCurrent && "bg-blue-500 text-white",
+          isCollapsed && "justify-center px-0"
+        )
+      }
+      title={lt(t(`Navigation.${groupId}.Item.${item.id}.Label`, item.label))}
+    >
+      <item.icon className="h-4 w-4 shrink-0" />
+      {!isCollapsed ? <span className="truncate">{lt(t(`Navigation.${groupId}.Item.${item.id}.Label`, item.label))}</span> : null}
+    </NavLink>
+  );
 }

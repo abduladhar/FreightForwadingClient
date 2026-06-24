@@ -103,6 +103,10 @@ function displaySourceType(sourceType?: string | null) {
       return lt("Quotation");
     case "CustomsClearance":
       return lt("Customs Clearance");
+    case "BillOfEntry":
+      return lt("Bill of Entry");
+    case "BillOfExit":
+      return lt("Bill of Exit");
     case "Job":
       return lt("Job");
     case "Custom":

@@ -12,6 +12,7 @@ import { FinanceWorkbenchPage } from "@/modules/finance/FinanceWorkbenchPage";
 import { ModuleWorkbenchPage } from "@/modules/workbench/ModuleWorkbenchPage";
 import { MasterDataPage } from "@/modules/masters/MasterDataPage";
 import { TenantListPage } from "@/modules/tenants/TenantListPage";
+import { AdministrationWorkspacePage } from "@/modules/administration/AdministrationWorkspacePage";
 import { TenantCreatePage } from "@/modules/tenants/TenantCreatePage";
 import { TenantEditPage } from "@/modules/tenants/TenantEditPage";
 import { TenantViewPage } from "@/modules/tenants/TenantViewPage";
@@ -177,6 +178,21 @@ import { CustomsClearanceListPage } from "@/modules/customs/CustomsClearanceList
 import { CustomsClearanceCreatePage } from "@/modules/customs/CustomsClearanceCreatePage";
 import { CustomsClearanceEditPage } from "@/modules/customs/CustomsClearanceEditPage";
 import { CustomsClearanceViewPage } from "@/modules/customs/CustomsClearanceViewPage";
+import { BillOfEntryListPage } from "@/modules/customs/BillOfEntryListPage";
+import { BillOfEntryCreatePage } from "@/modules/customs/BillOfEntryCreatePage";
+import { BillOfEntryEditPage } from "@/modules/customs/BillOfEntryEditPage";
+import { BillOfEntryViewPage } from "@/modules/customs/BillOfEntryViewPage";
+import { BillOfEntryStatePage } from "@/modules/customs/BillOfEntryStatePage";
+import { BillOfEntryPrintPage } from "@/modules/customs/BillOfEntryPrintPage";
+import { BillOfExitListPage } from "@/modules/customs/BillOfExitListPage";
+import { BillOfExitCreatePage } from "@/modules/customs/BillOfExitCreatePage";
+import { BillOfExitEditPage } from "@/modules/customs/BillOfExitEditPage";
+import { BillOfExitViewPage } from "@/modules/customs/BillOfExitViewPage";
+import { BillOfExitStatePage } from "@/modules/customs/BillOfExitStatePage";
+import { BillOfExitPrintPage } from "@/modules/customs/BillOfExitPrintPage";
+import { InventoryStockReportPage, WarehouseLocationInventoryReportPage } from "@/modules/customs/BillOfEntryStockReportPage";
+import { BillOfEntrySummaryPage } from "@/modules/customs/BillOfEntrySummaryPage";
+import { BoeInventoryMasterPage } from "@/modules/customs/BoeInventoryMasterPage";
 import { CustomsStatusUpdatePage } from "@/modules/customs/CustomsStatusUpdatePage";
 import { CustomsDocumentPage } from "@/modules/customs/CustomsDocumentPage";
 import { CustomsInvoicesPage } from "@/modules/customs/CustomsInvoicesPage";
@@ -255,6 +271,7 @@ import { PaymentVoucherPage } from "@/modules/accounting/PaymentVoucherPage";
 import { ReceiptVoucherPage } from "@/modules/accounting/ReceiptVoucherPage";
 import { ContraVoucherPage } from "@/modules/accounting/ContraVoucherPage";
 import { LedgerEntryViewPage } from "@/modules/accounting/LedgerEntryViewPage";
+import { ReportsWorkspacePage } from "@/modules/reports/ReportsWorkspacePage";
 import { LedgerReportPage } from "@/modules/reports/accounting/LedgerReportPage";
 import { GeneralLedgerPage } from "@/modules/reports/accounting/GeneralLedgerPage";
 import { CustomerLedgerPage } from "@/modules/reports/accounting/CustomerLedgerPage";
@@ -317,6 +334,7 @@ import { BranchWiseProfitReportPage } from "@/modules/reports/operations/BranchW
 import { RouteWiseProfitReportPage } from "@/modules/reports/operations/RouteWiseProfitReportPage";
 import { DestinationWiseProfitReportPage } from "@/modules/reports/operations/DestinationWiseProfitReportPage";
 import { AuditLogListPage } from "@/modules/audit/AuditLogListPage";
+import { AuditLogsWorkspacePage } from "@/modules/audit/AuditLogsWorkspacePage";
 import { UserActivityLogPage } from "@/modules/audit/UserActivityLogPage";
 import { LoginHistoryPage } from "@/modules/audit/LoginHistoryPage";
 import { EntityChangeLogPage } from "@/modules/audit/EntityChangeLogPage";
@@ -336,6 +354,7 @@ import { NotificationTemplateEditPage } from "@/modules/notifications/Notificati
 import { NotificationHistoryPage } from "@/modules/notifications/NotificationHistoryPage";
 import { UserNotificationPage } from "@/modules/notifications/UserNotificationPage";
 import { NumberingSettingsPage } from "@/modules/settings/NumberingSettingsPage";
+import { SettingsWorkspacePage } from "@/modules/settings/SettingsWorkspacePage";
 import { EmailConfigurationPage } from "@/modules/settings/EmailConfigurationPage";
 import { PrintTemplateListPage } from "@/modules/settings/PrintTemplateListPage";
 import { PrintTemplateDesignerPage } from "@/modules/settings/PrintTemplateDesignerPage";
@@ -377,6 +396,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <RequirePermission permission="Dashboard.Read"><DashboardPage /></RequirePermission> },
+      { path: "administration", element: <AdministrationWorkspacePage /> },
       { path: "tenants", element: <RequirePermission permission="Tenant.Read"><TenantListPage /></RequirePermission> },
       { path: "tenants/new", element: <RequirePermission permission="Tenant.Create"><TenantCreatePage /></RequirePermission> },
       { path: "tenants/:tenantId", element: <RequirePermission permission="Tenant.Read"><TenantViewPage /></RequirePermission> },
@@ -456,6 +476,7 @@ export const router = createBrowserRouter([
       { path: "warehouses/new", element: <RequirePermission permission="Warehouse.Create"><WarehouseCreatePage /></RequirePermission> },
       { path: "warehouses/:warehouseId/edit", element: <RequirePermission permission="Warehouse.Update"><WarehouseEditPage /></RequirePermission> },
       { path: "warehouses/:warehouseId/locations", element: <RequirePermission permission="Warehouse.Read"><WarehouseLocationPage /></RequirePermission> },
+      { path: "inventory-masters", element: <RequirePermission permission="BillOfEntry.Read"><BoeInventoryMasterPage /></RequirePermission> },
       { path: "warehouses/stock", element: <RequirePermission permission="Warehouse.Read"><WarehouseStockPage /></RequirePermission> },
       { path: "warehouses/stock-transfer", element: <RequirePermission permission="Warehouse.Update"><WarehouseStockTransferPage /></RequirePermission> },
       { path: "warehouses/transactions", element: <RequirePermission permission="Warehouse.Read"><WarehouseStockTransactionPage /></RequirePermission> },
@@ -555,6 +576,24 @@ export const router = createBrowserRouter([
       { path: "customs/:customsId/invoices", element: <RequirePermission permission="Invoice.Read"><CustomsInvoicesPage /></RequirePermission> },
       { path: "customs/:customsId/bills", element: <RequirePermission permission="VendorBill.Read"><CustomsVendorBillsPage /></RequirePermission> },
       { path: "customs/:customsId/duty", element: <RequirePermission permission="CustomsClearance.Update"><DutyCalculationPage /></RequirePermission> },
+      { path: "bill-of-entry", element: <RequirePermission permission="BillOfEntry.Read"><BillOfEntryListPage /></RequirePermission> },
+      { path: "bill-of-entry/new", element: <RequirePermission permission="BillOfEntry.Create"><BillOfEntryCreatePage /></RequirePermission> },
+      { path: "bill-of-entry/:billOfEntryId/print", element: <RequirePermission permission="BillOfEntry.Read"><BillOfEntryPrintPage /></RequirePermission> },
+      { path: "bill-of-entry/:billOfEntryId/items/print", element: <RequirePermission permission="BillOfEntry.Read"><BillOfEntryPrintPage mode="items" /></RequirePermission> },
+      { path: "bill-of-entry/:billOfEntryId", element: <RequirePermission permission="BillOfEntry.Read"><BillOfEntryViewPage /></RequirePermission> },
+      { path: "bill-of-entry/:billOfEntryId/edit", element: <RequirePermission permission="BillOfEntry.Update"><BillOfEntryEditPage /></RequirePermission> },
+      { path: "bill-of-entry/:billOfEntryId/state", element: <RequirePermission permission="BillOfEntry.StateUpdate"><BillOfEntryStatePage /></RequirePermission> },
+      { path: "bill-of-exits", element: <RequirePermission permission="BillOfExit.Read"><BillOfExitListPage /></RequirePermission> },
+      { path: "bill-of-exits/create", element: <RequirePermission permission="BillOfExit.Create"><BillOfExitCreatePage /></RequirePermission> },
+      { path: "bill-of-exits/:billOfExitId/print", element: <RequirePermission permission="BillOfExit.Read"><BillOfExitPrintPage /></RequirePermission> },
+      { path: "bill-of-exits/:billOfExitId/items/print", element: <RequirePermission permission="BillOfExit.Read"><BillOfExitPrintPage mode="items" /></RequirePermission> },
+      { path: "bill-of-exits/:billOfExitId", element: <RequirePermission permission="BillOfExit.Read"><BillOfExitViewPage /></RequirePermission> },
+      { path: "bill-of-exits/:billOfExitId/edit", element: <RequirePermission permission="BillOfExit.Update"><BillOfExitEditPage /></RequirePermission> },
+      { path: "bill-of-exits/:billOfExitId/state", element: <RequirePermission permission="BillOfExit.StateUpdate"><BillOfExitStatePage /></RequirePermission> },
+      { path: "bill-of-entry/:customsId/status", element: <RequirePermission permission="CustomsClearance.Update"><CustomsStatusUpdatePage /></RequirePermission> },
+      { path: "bill-of-entry/:customsId/documents", element: <RequirePermission permission="CustomsClearance.Update"><CustomsDocumentPage /></RequirePermission> },
+      { path: "bill-of-entry/:customsId/invoices", element: <RequirePermission permission="Invoice.Read"><CustomsInvoicesPage /></RequirePermission> },
+      { path: "bill-of-entry/:customsId/bills", element: <RequirePermission permission="VendorBill.Read"><CustomsVendorBillsPage /></RequirePermission> },
       { path: "transportation", element: <RequirePermission permission={["Pickup.Read", "DirectShipment.Read", "HouseShipment.Read"]}><TransportationListPage /></RequirePermission> },
       { path: "transportation/new", element: <RequirePermission permission="Pickup.Create"><TransportationCreatePage /></RequirePermission> },
       { path: "transportation/:type/:id/edit", element: <RequirePermission permission={["Pickup.Update", "HouseShipment.Update", "DirectShipment.Update"]}><TransportationEditPage /></RequirePermission> },
@@ -575,8 +614,8 @@ export const router = createBrowserRouter([
       { path: "invoices/:invoiceId/approval", element: <RequirePermission permission="Invoice.Approve"><InvoiceApprovalPage /></RequirePermission> },
       { path: "invoices/:invoiceId/print", element: <RequirePermission permission="Invoice.Print"><InvoicePrintPreviewPage /></RequirePermission> },
       { path: "invoices/:invoiceId/email", element: <RequirePermission permission="Invoice.Export"><InvoiceEmailPage /></RequirePermission> },
-      { path: "reports/email-pdf", element: <RequirePermission permission={["Reports.Export", "Invoice.Export", "Receipt.Export", "HouseShipment.Export", "MasterShipment.Export"]}><EmailPdfReportPage /></RequirePermission> },
-      { path: "reports/email-html", element: <RequirePermission permission={["Reports.Export", "Invoice.Export", "Receipt.Export", "HouseShipment.Export", "MasterShipment.Export"]}><EmailHtmlReportPage /></RequirePermission> },
+      { path: "reports/email-pdf", element: <RequirePermission permission={["Reports.Export", "Invoice.Export", "Receipt.Export", "HouseShipment.Export", "MasterShipment.Export", "BillOfEntry.Read", "BillOfExit.Read"]}><EmailPdfReportPage /></RequirePermission> },
+      { path: "reports/email-html", element: <RequirePermission permission={["Reports.Export", "Invoice.Export", "Receipt.Export", "HouseShipment.Export", "MasterShipment.Export", "BillOfEntry.Read", "BillOfExit.Read"]}><EmailHtmlReportPage /></RequirePermission> },
       { path: "credit-debit-notes", element: <RequirePermission permission="CreditDebitNote.Read"><CreditDebitNoteListPage /></RequirePermission> },
       { path: "credit-debit-notes/new", element: <RequirePermission permission="CreditDebitNote.Create"><CreditDebitNoteCreatePage /></RequirePermission> },
       { path: "credit-debit-notes/:noteId", element: <RequirePermission permission="CreditDebitNote.Read"><CreditDebitNoteViewPage /></RequirePermission> },
@@ -629,6 +668,7 @@ export const router = createBrowserRouter([
       { path: "accounting/receipt-voucher", element: <RequirePermission permission="Accounting.Create"><ReceiptVoucherPage /></RequirePermission> },
       { path: "accounting/contra-voucher", element: <RequirePermission permission="Accounting.Create"><ContraVoucherPage /></RequirePermission> },
       { path: "accounting/ledger-entries", element: <RequirePermission permission="Accounting.Read"><LedgerEntryViewPage /></RequirePermission> },
+      { path: "reports", element: <ReportsWorkspacePage /> },
       { path: "reports/accounting/ledger", element: <RequirePermission permission="Reports.Read"><LedgerReportPage /></RequirePermission> },
       { path: "reports/accounting/general-ledger", element: <RequirePermission permission="Reports.Read"><GeneralLedgerPage /></RequirePermission> },
       { path: "reports/accounting/customer-ledger", element: <RequirePermission permission="Reports.Read"><CustomerLedgerPage /></RequirePermission> },
@@ -648,6 +688,9 @@ export const router = createBrowserRouter([
       { path: "reports/operations/quotation", element: <RequirePermission permission="Reports.Read"><QuotationReportPage /></RequirePermission> },
       { path: "reports/operations/goods-receipt", element: <RequirePermission permission="Reports.Read"><GoodsReceiptReportPage /></RequirePermission> },
       { path: "reports/operations/warehouse-stock", element: <RequirePermission permission="Reports.Read"><WarehouseStockReportPage /></RequirePermission> },
+      { path: "reports/operations/inventory-stock", element: <RequirePermission permission="InventoryStockReport.Read"><InventoryStockReportPage /></RequirePermission> },
+      { path: "reports/operations/bill-of-entry-summary", element: <RequirePermission permission="InventoryStockReport.Read"><BillOfEntrySummaryPage /></RequirePermission> },
+      { path: "reports/operations/warehouse-location-inventory", element: <RequirePermission permission="WarehouseLocationInventoryReport.Read"><WarehouseLocationInventoryReportPage /></RequirePermission> },
       { path: "reports/operations/pickup", element: <RequirePermission permission="Reports.Read"><PickupReportPage /></RequirePermission> },
       { path: "reports/operations/house-shipment", element: <RequirePermission permission="Reports.Read"><HouseShipmentReportPage /></RequirePermission> },
       { path: "reports/operations/master-shipment", element: <RequirePermission permission="Reports.Read"><MasterShipmentReportPage /></RequirePermission> },
@@ -670,6 +713,7 @@ export const router = createBrowserRouter([
       { path: "reports/operations/branch-wise-profit", element: <RequirePermission permission="Profit.Read"><BranchWiseProfitReportPage /></RequirePermission> },
       { path: "reports/operations/route-wise-profit", element: <RequirePermission permission="Profit.Read"><RouteWiseProfitReportPage /></RequirePermission> },
       { path: "reports/operations/destination-wise-profit", element: <RequirePermission permission="Profit.Read"><DestinationWiseProfitReportPage /></RequirePermission> },
+      { path: "audit-logs", element: <AuditLogsWorkspacePage /> },
       { path: "audit", element: <RequirePermission permission="AuditLog.Read"><AuditLogListPage /></RequirePermission> },
       { path: "audit/:auditId", element: <RequirePermission permission="AuditLog.Read"><AuditLogDetailPage /></RequirePermission> },
       { path: "audit/user-activity", element: <RequirePermission permission="AuditLog.Read"><UserActivityLogPage /></RequirePermission> },
@@ -688,6 +732,7 @@ export const router = createBrowserRouter([
       { path: "notifications/templates/:templateId/edit", element: <RequirePermission permission="Notification.Update"><NotificationTemplateEditPage /></RequirePermission> },
       { path: "notifications/history", element: <RequirePermission permission="Notification.Read"><NotificationHistoryPage /></RequirePermission> },
       { path: "notifications/me", element: <RequirePermission permission="Notification.Read"><UserNotificationPage /></RequirePermission> },
+      { path: "settings", element: <SettingsWorkspacePage /> },
       { path: "settings/numbering", element: <RequirePermission permission="Tenant.Read"><NumberingSettingsPage /></RequirePermission> },
       { path: "settings/email-configuration", element: <RequirePermission permission="Tenant.Read"><EmailConfigurationPage /></RequirePermission> },
       { path: "settings/ai-module-json-formats", element: <RequirePermission permission="Tenant.Read"><AiModuleJsonFormatsPage /></RequirePermission> },

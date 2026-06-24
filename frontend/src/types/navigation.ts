@@ -10,8 +10,15 @@ export interface NavigationItem {
   metrics?: string[];
 }
 
-export interface NavigationGroup {
+export interface NavigationSection {
   id: string;
   label: string;
   items: NavigationItem[];
+}
+
+export interface NavigationGroup {
+  id: string;
+  label: string;
+  items?: NavigationItem[];
+  sections?: NavigationSection[];
 }

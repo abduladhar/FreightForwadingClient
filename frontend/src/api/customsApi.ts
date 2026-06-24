@@ -126,6 +126,7 @@ export interface CustomsJobSearchParams {
   search?: string;
   jobNumber?: string;
   declarationNumber?: string;
+  declarationType?: string;
   shipmentReferenceNo?: string;
   clearanceType?: string;
   shipmentType?: string;

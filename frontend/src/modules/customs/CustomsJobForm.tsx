@@ -40,7 +40,7 @@ export function buildCustomsJobInitialValue(job?: CustomsClearanceJobDto | null)
   };
 }
 
-export function CustomsJobForm({ value, onChange, onSubmit, isSubmitting, submitPermission, submitLabel }: { value: CustomsClearanceJobRequest; onChange: (value: CustomsClearanceJobRequest) => void; onSubmit: () => void; isSubmitting?: boolean; submitPermission: string; submitLabel: string }) {
+export function CustomsJobForm({ value, onChange, onSubmit, isSubmitting, submitPermission, submitLabel, lockDeclarationType = false }: { value: CustomsClearanceJobRequest; onChange: (value: CustomsClearanceJobRequest) => void; onSubmit: () => void; isSubmitting?: boolean; submitPermission: string; submitLabel: string; lockDeclarationType?: boolean }) {
   const shippingPorts = useQuery({ queryKey: ["customs-job-shipping-ports"], queryFn: () => getActiveShippingPortsForDropdown() });
   const configurations = useQuery({ queryKey: ["customs-job-configurations"], queryFn: () => searchCustomsConfigurations({ pageNumber: 1, pageSize: 200 }) });
   const declaration = value.declaration ?? { declarationType: "Import" };
@@ -58,7 +58,7 @@ export function CustomsJobForm({ value, onChange, onSubmit, isSubmitting, submit
     <section className="rounded-lg border bg-white p-4">
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-600">{lt("Job Information")}</h3>
       <div className="grid gap-4 md:grid-cols-4">
-        <Field label={lt("Clearance Type")} required><select className="h-10 w-full rounded-md border px-3 text-sm" value={value.clearanceType} onChange={(e) => set({ clearanceType: e.target.value, declaration: { ...declaration, declarationType: e.target.value } })}><option value="Import">{lt("Import")}</option><option value="Export">{lt("Export")}</option><option value="Transit">{lt("Transit")}</option><option value="ReExport">{lt("ReExport")}</option></select></Field>
+        <Field label={lt("Clearance Type")} required><select className="h-10 w-full rounded-md border px-3 text-sm disabled:bg-slate-100 disabled:text-slate-600" value={value.clearanceType} disabled={lockDeclarationType} onChange={(e) => set({ clearanceType: e.target.value, declaration: { ...declaration, declarationType: e.target.value } })}><option value="Import">{lt("Import")}</option><option value="Export">{lt("Export")}</option><option value="Transit">{lt("Transit")}</option><option value="ReExport">{lt("ReExport")}</option></select></Field>
         <Field label={lt("Reference No")}><Input value={value.shipmentReferenceNo ?? ""} onChange={(e) => set({ shipmentReferenceNo: e.target.value })} /></Field>
         <Field label={lt("Customer")}>
           <div className="flex gap-2">
@@ -93,7 +93,7 @@ export function CustomsJobForm({ value, onChange, onSubmit, isSubmitting, submit
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-600">{lt("Declaration")}</h3>
       <div className="grid gap-4 md:grid-cols-4">
         <Field label={lt("Declaration No")}><Input value={declaration.declarationNumber ?? ""} onChange={(e) => setDeclaration({ ...declaration, declarationNumber: e.target.value })} /></Field>
-        <Field label={lt("Declaration Type")}><select className="h-10 w-full rounded-md border px-3 text-sm" value={declaration.declarationType ?? "Import"} onChange={(e) => setDeclaration({ ...declaration, declarationType: e.target.value })}><option value="Import">{lt("Import")}</option><option value="Export">{lt("Export")}</option><option value="Transit">{lt("Transit")}</option><option value="ReExport">{lt("ReExport")}</option></select></Field>
+        <Field label={lt("Declaration Type")}><select className="h-10 w-full rounded-md border px-3 text-sm disabled:bg-slate-100 disabled:text-slate-600" value={declaration.declarationType ?? "Import"} disabled={lockDeclarationType} onChange={(e) => setDeclaration({ ...declaration, declarationType: e.target.value })}><option value="Import">{lt("Import")}</option><option value="Export">{lt("Export")}</option><option value="Transit">{lt("Transit")}</option><option value="ReExport">{lt("ReExport")}</option></select></Field>
         <Field label={lt("Declaration Mode")}><Input value={declaration.declarationMode ?? ""} onChange={(e) => setDeclaration({ ...declaration, declarationMode: e.target.value })} /></Field>
         <Field label={lt("HS Code")}><Input value={declaration.hsCode ?? ""} onChange={(e) => setDeclaration({ ...declaration, hsCode: e.target.value })} /></Field>
         <Field label={lt("Customs Office")}><Input value={declaration.customsOffice ?? ""} onChange={(e) => setDeclaration({ ...declaration, customsOffice: e.target.value })} /></Field>

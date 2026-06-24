@@ -15,6 +15,10 @@ export function vendorBillReturnPath(bill: Pick<VendorBillDto, "sourceType" | "s
       return `/direct-shipments/${bill.sourceId}/bills`;
     case "CustomsClearance":
       return `/customs/${bill.sourceId}/bills`;
+    case "BillOfEntry":
+      return `/vendor-bills?sourceType=BillOfEntry&sourceId=${bill.sourceId}`;
+    case "BillOfExit":
+      return `/vendor-bills?sourceType=BillOfExit&sourceId=${bill.sourceId}`;
     case "Job":
       return `/customs/jobs/${bill.sourceId}/bills`;
     default:

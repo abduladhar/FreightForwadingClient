@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
+import { getBillOfEntry } from "@/api/billOfEntryApi";
+import { getBillOfExit } from "@/api/billOfExitApi";
 import { getActiveChargeHeadsForDropdown } from "@/api/chargeHeadApi";
 import { getCustomsJob } from "@/api/customsApi";
 import { getExchangeRates, getTenantCurrencies } from "@/api/currencyApi";
@@ -24,7 +26,7 @@ import { FinancePartyAutocomplete, type FinancePartyLookup, type FinancePartyTyp
 import { lt } from "@/modules/operationsLocalization";
 
 const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
-const billSourceTypes = ["Pickup", "GoodsReceipt", "HouseShipment", "MasterShipment", "DirectShipment", "CustomsClearance", "Job", "WarehouseService", "TransportationService", "Miscellaneous"];
+const billSourceTypes = ["Pickup", "GoodsReceipt", "HouseShipment", "MasterShipment", "DirectShipment", "CustomsClearance", "BillOfEntry", "BillOfExit", "Job", "WarehouseService", "TransportationService", "Miscellaneous"];
 const partyTypes = ["Customer", "Vendor", "Agent", "Carrier"];
 
 function todayDateLocalValue() {
@@ -111,6 +113,16 @@ export function VendorBillForm({
     queryFn: () => getCustomsJob(value.sourceId!),
     enabled: value.sourceType === "CustomsClearance" && Boolean(value.sourceId)
   });
+  const billOfEntryReference = useQuery({
+    queryKey: ["vendor-bill-source-reference", "BillOfEntry", value.sourceId],
+    queryFn: () => getBillOfEntry(value.sourceId!),
+    enabled: value.sourceType === "BillOfEntry" && Boolean(value.sourceId)
+  });
+  const billOfExitReference = useQuery({
+    queryKey: ["vendor-bill-source-reference", "BillOfExit", value.sourceId],
+    queryFn: () => getBillOfExit(value.sourceId!),
+    enabled: value.sourceType === "BillOfExit" && Boolean(value.sourceId)
+  });
   const jobReference = useQuery({
     queryKey: ["vendor-bill-source-reference", "Job", value.sourceId],
     queryFn: () => getJobByGuid(value.sourceId!),
@@ -130,12 +142,16 @@ export function VendorBillForm({
               ? masterShipmentReference.data ? { id: masterShipmentReference.data.id, number: masterShipmentReference.data.mawbNumber || masterShipmentReference.data.mblNumber || masterShipmentReference.data.masterShipmentNumber } : null
               : value.sourceType === "CustomsClearance"
                 ? customsReference.data ? { id: customsReference.data.id, number: customsReference.data.jobNumber } : null
-                : value.sourceType === "Job"
-                  ? jobReference.data ? { id: jobReference.data.id, number: jobReference.data.jobNumber } : null
-                  : null;
+                : value.sourceType === "BillOfEntry"
+                  ? billOfEntryReference.data ? { id: billOfEntryReference.data.id, number: billOfEntryReference.data.boeNumber } : null
+                  : value.sourceType === "BillOfExit"
+                    ? billOfExitReference.data ? { id: billOfExitReference.data.id, number: billOfExitReference.data.billOfExitNumber } : null
+                    : value.sourceType === "Job"
+                      ? jobReference.data ? { id: jobReference.data.id, number: jobReference.data.jobNumber } : null
+                      : null;
     if (!reference?.number || value.sourceReferenceNo === reference.number) return;
     setValue((current) => ({ ...current, sourceReferenceId: reference.id, sourceReferenceNo: reference.number }));
-  }, [customsReference.data, directShipmentReference.data, goodsReceiptReference.data, houseShipmentReference.data, jobReference.data, masterShipmentReference.data, pickupReference.data, value.sourceReferenceNo, value.sourceType]);
+  }, [billOfEntryReference.data, billOfExitReference.data, customsReference.data, directShipmentReference.data, goodsReceiptReference.data, houseShipmentReference.data, jobReference.data, masterShipmentReference.data, pickupReference.data, value.sourceReferenceNo, value.sourceType]);
 
   const partyType = value.payToPartyType || "Vendor";
   const enabledCurrencies = (currencies.data ?? []).filter((currency) => currency.isEnabled);
@@ -269,7 +285,7 @@ export function VendorBillForm({
           </select>
         </Field>
         <Field label={lt("Source Reference No")}>
-          <Input value={value.sourceReferenceNo ?? ""} readOnly placeholder={value.sourceId ? (pickupReference.isLoading || goodsReceiptReference.isLoading || houseShipmentReference.isLoading || directShipmentReference.isLoading || masterShipmentReference.isLoading || customsReference.isLoading || jobReference.isLoading) ? lt("Loading source reference...") : lt("Assigned by server") : lt("No source selected")} className="bg-slate-50" />
+          <Input value={value.sourceReferenceNo ?? ""} readOnly placeholder={value.sourceId ? (pickupReference.isLoading || goodsReceiptReference.isLoading || houseShipmentReference.isLoading || directShipmentReference.isLoading || masterShipmentReference.isLoading || customsReference.isLoading || billOfEntryReference.isLoading || billOfExitReference.isLoading || jobReference.isLoading) ? lt("Loading source reference...") : lt("Assigned by server") : lt("No source selected")} className="bg-slate-50" />
         </Field>
         <Field label={lt("Bill Date")} required><Input type="date" value={value.billDate} onChange={(e) => { if (!initialValue && value.billCurrencyId !== baseCurrency?.currencyId) shouldApplyDefaultRateRef.current = true; setValue({ ...value, billDate: e.target.value }); }} /></Field>
         <Field label={lt("Due Date")} required><Input type="date" value={value.dueDate} onChange={(e) => setValue({ ...value, dueDate: e.target.value })} /></Field>
@@ -422,6 +438,10 @@ function displaySourceType(sourceType: string) {
       return lt("Direct Shipment");
     case "CustomsClearance":
       return lt("Customs Clearance");
+    case "BillOfEntry":
+      return lt("Bill of Entry");
+    case "BillOfExit":
+      return lt("Bill of Exit");
     case "WarehouseService":
       return lt("Warehouse Service");
     case "TransportationService":

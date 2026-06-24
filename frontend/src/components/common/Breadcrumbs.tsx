@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/app/i18n";
 import { accountingItems, masterDataItems, navigationGroups, primaryNavigation } from "@/layouts/navigation";
 import { lt } from "@/modules/operationsLocalization";
+import type { NavigationGroup } from "@/types/navigation";
 
 export function Breadcrumbs() {
   const location = useLocation();
@@ -11,7 +12,7 @@ export function Breadcrumbs() {
   const crumbs = segments.map((segment, index) => {
     const path = `/${segments.slice(0, index + 1).join("/")}`;
     const nav = primaryNavigation.find((item) => item.path === path);
-    const group = navigationGroups.find((entry) => entry.items.some((item) => item.path === path));
+    const group = navigationGroups.find((entry) => getGroupItems(entry).some((item) => item.path === path));
     const masterItem = masterDataItems.find((item) => item.path === path);
     const accountingItem = accountingItems.find((item) => item.path === path);
     const quotationLabel = quotationBreadcrumbLabel(segments, index, t);
@@ -22,12 +23,12 @@ export function Breadcrumbs() {
     const administrationLabel = administrationBreadcrumbLabel(segments, index);
     const auditLabel = auditBreadcrumbLabel(segments, index);
     const label = quotationLabel ?? rateMasterLabel ?? pickupLabel ?? accountingLabel ?? reportLabel ?? administrationLabel ?? auditLabel ?? (nav && group
-      ? t(`Navigation.${group.id}.Item.${nav.id}.Label`, nav.label)
+      ? lt(t(`Navigation.${group.id}.Item.${nav.id}.Label`, nav.label))
       : masterItem
-        ? t(`MasterData.Item.${masterItem.id}.Label`, masterItem.label)
+        ? lt(t(`MasterData.Item.${masterItem.id}.Label`, masterItem.label))
         : accountingItem
           ? lt(accountingItem.label)
-          : t(`Breadcrumb.${prettify(segment).replace(/\s+/g, "")}`, prettify(segment)));
+          : lt(t(`Breadcrumb.${prettify(segment).replace(/\s+/g, "")}`, prettify(segment))));
     return { path, label };
   });
 
@@ -35,7 +36,7 @@ export function Breadcrumbs() {
     <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-slate-500">
       <Link to="/" className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-slate-100 hover:text-slate-700">
         <Home className="h-3.5 w-3.5" />
-        {t("Common.Home", "Home")}
+        {lt(t("Common.Home", "Home"))}
       </Link>
       {crumbs.map((crumb) => (
         <span key={crumb.path} className="inline-flex items-center gap-1">
@@ -163,4 +164,11 @@ function prettify(value: string) {
     .filter(Boolean)
     .map((part) => part[0]?.toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function getGroupItems(group: NavigationGroup) {
+  return [
+    ...(group.items ?? []),
+    ...(group.sections ?? []).flatMap((section) => section.items)
+  ];
 }

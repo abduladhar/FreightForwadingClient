@@ -43,6 +43,10 @@ function displaySourceType(sourceType?: string | null) {
       return lt("Direct Shipment");
     case "CustomsClearance":
       return lt("Customs Clearance");
+    case "BillOfEntry":
+      return lt("Bill of Entry");
+    case "BillOfExit":
+      return lt("Bill of Exit");
     case "WarehouseService":
       return lt("Warehouse Service");
     case "TransportationService":

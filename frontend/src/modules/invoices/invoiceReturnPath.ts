@@ -15,6 +15,10 @@ export function invoiceReturnPath(invoice: Pick<InvoiceDto, "sourceType" | "sour
       return `/direct-shipments/${invoice.sourceId}/invoices`;
     case "CustomsClearance":
       return `/customs/${invoice.sourceId}/invoices`;
+    case "BillOfEntry":
+      return `/invoices?sourceType=BillOfEntry&sourceId=${invoice.sourceId}`;
+    case "BillOfExit":
+      return `/invoices?sourceType=BillOfExit&sourceId=${invoice.sourceId}`;
     case "Job":
       return `/customs/jobs/${invoice.sourceId}/invoices`;
     default:

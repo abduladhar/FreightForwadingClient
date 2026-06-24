@@ -38,6 +38,7 @@ export const masterDataItems: NavigationItem[] = [
   item("package-types", "Package Types", "/package-types", Boxes, ["PackageType.Read", "User.Read"], "Package code and package name master setup."),
   item("shipping-ports", "Shipping Ports", "/shipping-ports", ShipWheel, ["ShippingPort.Read", "User.Read"], "Shipping port master setup for origin/destination planning."),
   item("job-types", "Job Types", "/job-types", ClipboardList, "JobType.Read", "Job type short codes used for job numbering."),
+  item("inventory-masters", "Inventory Masters", "/inventory-masters", Boxes, "BillOfEntry.Read", "Inventory codes used for Bill of Entry stock and customs item entry."),
   item("warehouses", "Warehouses", "/warehouses", Warehouse, "Warehouse.Read", "Warehouse master, locations, and stock visibility."),
   item("charge-heads", "Charge Heads", "/charge-heads", Calculator, "Accounting.Read", "Charge head to ledger account mappings."),
   item("taxes", "Tax Setup", "/taxes", Scale, "Accounting.Read", "GST/VAT tax rules and ledger integration.")
@@ -57,6 +58,161 @@ export const accountingItems: NavigationItem[] = [
   item("ledger-entry-view", "Ledger Entries", "/accounting/ledger-entries", BadgeDollarSign, "Accounting.Read", "Posted ledger entry view."),
   item("reconciliation", "Reconciliation", "/reconciliation", Scale, "Reconciliation.Read", "Receivable and payable reconciliation."),
   item("salary", "Salary", "/salary", Wallet, "Accounting.Read", "Salary, incentive, and payslip finance support.")
+];
+
+export const reportSections = [
+  {
+    id: "accounting",
+    label: "Accounting Reports",
+    items: [
+      item("reports-ledger", "Ledger Report", "/reports/accounting/ledger", BarChart3, "Reports.Read", "Ledger transactions with debit, credit, and balance."),
+      item("reports-general-ledger", "General Ledger", "/reports/accounting/general-ledger", BarChart3, "Reports.Read", "General ledger entries by account and period."),
+      item("reports-customer-ledger", "Customer Ledger", "/reports/accounting/customer-ledger", BarChart3, "Reports.Read", "Customer-wise receivable ledger report."),
+      item("reports-vendor-ledger", "Vendor Ledger", "/reports/accounting/vendor-ledger", BarChart3, "Reports.Read", "Vendor-wise payable ledger report."),
+      item("reports-bank-book", "Bank Book", "/reports/accounting/bank-book", BarChart3, "Reports.Read", "Bank transactions and running balances."),
+      item("reports-cash-book", "Cash Book", "/reports/accounting/cash-book", BarChart3, "Reports.Read", "Cash transactions and balances."),
+      item("reports-trial-balance", "Trial Balance", "/reports/accounting/trial-balance", BarChart3, "Reports.Read", "Opening, period, and closing debit/credit balances."),
+      item("reports-balance-sheet", "Balance Sheet", "/reports/accounting/balance-sheet", BarChart3, "Reports.Read", "Assets, liabilities, and capital positions."),
+      item("reports-profit-loss", "Profit & Loss", "/reports/accounting/profit-and-loss", BarChart3, "Reports.Read", "Income and expense statement."),
+      item("reports-trading-profit-loss", "Trading P&L", "/reports/accounting/trading-profit-and-loss", BarChart3, "Reports.Read", "Trading income/cost and net profit breakdown."),
+      item("reports-tax-report", "Tax Report", "/reports/accounting/tax-report", BarChart3, "Reports.Read", "Input/output tax and net tax summary."),
+      item("reports-customer-outstanding", "Customer Outstanding", "/reports/accounting/customer-outstanding", BarChart3, "Reports.Read", "Outstanding invoices by customer."),
+      item("reports-vendor-outstanding", "Vendor Outstanding", "/reports/accounting/vendor-outstanding", BarChart3, "Reports.Read", "Outstanding bills by vendor."),
+      item("reports-soa", "Statement of Account", "/reports/accounting/statement-of-account", BarChart3, "Reports.Read", "Opening, transactions, closing, and ageing."),
+      item("reports-currency-gain-loss", "Currency Gain/Loss", "/reports/accounting/currency-gain-loss", BarChart3, "Reports.Read", "Exchange gain/loss movement report."),
+      item("reports-currency-revaluation", "Currency Revaluation", "/reports/accounting/currency-revaluation", BarChart3, "Reports.Read", "Revaluation impact across currencies.")
+    ]
+  },
+  {
+    id: "operations",
+    label: "Operational Reports",
+    items: [
+      item("reports-op-quotation", "Quotation Report", "/reports/operations/quotation", BarChart3, "Reports.Read", "Operational quotation pipeline report."),
+      item("reports-op-goods-receipt", "Goods Receipt Report", "/reports/operations/goods-receipt", BarChart3, "Reports.Read", "Goods receipt movement report."),
+      item("reports-op-warehouse-stock", "Warehouse Stock Report", "/reports/operations/warehouse-stock", BarChart3, "Reports.Read", "Warehouse stock by goods/location."),
+      item("reports-op-inventory-stock", "Inventory Stock Report", "/reports/operations/inventory-stock", BarChart3, "InventoryStockReport.Read", "BOE inventory stock by actual, available, inbound, and outbound buckets."),
+      item("reports-op-boe-summary", "Bill of Entry Summary", "/reports/operations/bill-of-entry-summary", BarChart3, "InventoryStockReport.Read", "BOE item inventory summary by available count."),
+      item("reports-op-location-inventory", "Warehouse Location Inventory", "/reports/operations/warehouse-location-inventory", BarChart3, "WarehouseLocationInventoryReport.Read", "BOE inventory stock by warehouse location."),
+      item("reports-op-pickup", "Pickup Report", "/reports/operations/pickup", BarChart3, "Reports.Read", "Pickup assignment and status report."),
+      item("reports-op-house", "House Shipment Report", "/reports/operations/house-shipment", BarChart3, "Reports.Read", "House shipment execution report."),
+      item("reports-op-master", "Master Shipment Report", "/reports/operations/master-shipment", BarChart3, "Reports.Read", "Master shipment consolidation report."),
+      item("reports-op-direct", "Direct Shipment Report", "/reports/operations/direct-shipment", BarChart3, "Reports.Read", "Direct shipment operations report."),
+      item("reports-op-customs", "Customs Report", "/reports/operations/customs-clearance", BarChart3, "Reports.Read", "Customs clearance and duty report."),
+      item("reports-op-unbilled", "Unbilled Shipment", "/reports/operations/unbilled-shipment", BarChart3, "Reports.Read", "Shipment work pending billing."),
+      item("reports-op-pending-bill", "Pending Bill Report", "/reports/operations/pending-bill", BarChart3, "Reports.Read", "Pending vendor bill operational report."),
+      item("reports-op-ageing", "Shipment Ageing", "/reports/operations/shipment-ageing", BarChart3, "Reports.Read", "Shipment ageing and turnaround report.")
+    ]
+  },
+  {
+    id: "profit",
+    label: "Profit Reports",
+    items: [
+      item("reports-profit-shipment", "Shipment Profit", "/reports/operations/shipment-profit", BarChart3, "Profit.Read", "Shipment-wise profitability report."),
+      item("reports-profit-customer", "Customer Profit", "/reports/operations/customer-wise-profit", BarChart3, "Profit.Read", "Customer-wise profitability report."),
+      item("reports-profit-salesman", "Salesman Profit", "/reports/operations/salesman-wise-profit", BarChart3, "Profit.Read", "Salesman-wise profitability report."),
+      item("reports-profit-agent", "Agent Profit", "/reports/operations/agent-wise-profit", BarChart3, "Profit.Read", "Agent-wise profitability report."),
+      item("reports-profit-branch", "Branch Profit", "/reports/operations/branch-wise-profit", BarChart3, "Profit.Read", "Branch-wise profitability report."),
+      item("reports-profit-route", "Route Profit", "/reports/operations/route-wise-profit", BarChart3, "Profit.Read", "Route-wise profitability report."),
+      item("reports-profit-destination", "Destination Profit", "/reports/operations/destination-wise-profit", BarChart3, "Profit.Read", "Destination-wise profitability report.")
+    ]
+  }
+];
+
+export const administrationSections = [
+  {
+    id: "access",
+    label: "Access Control",
+    items: [
+      item("users", "Users", "/users", ShieldCheck, "User.Read", "User management, lock status, and role assignment."),
+      item("roles", "Roles", "/roles", ShieldCheck, "Role.Read", "Role definitions and role lifecycle management."),
+      item("permission-matrix", "Permission Matrix", "/permissions/matrix", ShieldCheck, "Permission.Read", "Role-permission assignment matrix.")
+    ]
+  },
+  {
+    id: "people",
+    label: "People Administration",
+    items: [
+      item("employees", "Employees", "/employees", Users, "Employee.Read", "Employee master, designations, Salesman eligibility, targets, and incentives.")
+    ]
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    items: [
+      item("notification-templates", "Notification Templates", "/notifications/templates", Bell, "Notification.Read", "Template CRUD for event/channel/language combinations."),
+      item("notification-history", "Notification History", "/notifications/history", Bell, "Notification.Read", "Delivery status, retries, and queue monitoring."),
+      item("my-notifications", "My Notifications", "/notifications/me", Bell, "Notification.Read", "Current user in-app notifications.")
+    ]
+  }
+];
+
+export const auditLogSections = [
+  {
+    id: "activity",
+    label: "Activity Audit",
+    items: [
+      item("audit", "Audit Log Search", "/audit", PackageCheck, "AuditLog.Read", "Audit events with deep filtering and detail view."),
+      item("audit-user-activity", "User Activity", "/audit/user-activity", PackageCheck, "AuditLog.Read", "User activity timeline and access traces."),
+      item("audit-login-history", "Login History", "/audit/login-history", PackageCheck, "AuditLog.Read", "Successful and failed login/logout events."),
+      item("audit-api-request-logs", "API Request Logs", "/audit/api-requests", PackageCheck, "AuditLog.Read", "API request-level audit traces.")
+    ]
+  },
+  {
+    id: "business",
+    label: "Business Audit",
+    items: [
+      item("audit-entity-changes", "Entity Changes", "/audit/entity-changes", PackageCheck, "AuditLog.Read", "Old/new value change tracking by entity."),
+      item("audit-financial", "Financial Audit", "/audit/financial", PackageCheck, "AuditLog.Read", "Financial transaction audit logs."),
+      item("audit-report-access", "Report Access", "/audit/reports", PackageCheck, "AuditLog.Read", "Report access trail.")
+    ]
+  },
+  {
+    id: "output",
+    label: "Output Audit",
+    items: [
+      item("audit-export-logs", "Export Logs", "/audit/exports", PackageCheck, "AuditLog.Read", "CSV/Excel/PDF export trail."),
+      item("audit-print-logs", "Print Logs", "/audit/prints", PackageCheck, "AuditLog.Read", "Print action logs."),
+      item("audit-email-logs", "Email Logs", "/audit/emails", PackageCheck, "AuditLog.Read", "Email send trail and outcomes."),
+      item("audit-file-logs", "File Access Logs", "/audit/files", PackageCheck, "AuditLog.Read", "File access and download/upload logs.")
+    ]
+  }
+];
+
+export const settingsSections = [
+  {
+    id: "tenant",
+    label: "Tenant Settings",
+    items: [
+      item("tenant-settings", "Tenant Settings", "/tenants", Settings, "Tenant.Read", "Tenant and branch level ERP settings."),
+      item("branch-settings", "Branch Settings", "/branches", Settings, "Branch.Read", "Branch setup and branch-specific configuration."),
+      item("currency-setup", "Tenant Currencies", "/currencies/tenant-setup", Settings, "Currency.Update", "Enable currencies and set base currency."),
+      item("language-setup", "Tenant Languages", "/languages/tenant-setup", Settings, "Language.Update", "Enable languages and default language."),
+      item("translations", "Translations", "/translations", Settings, "Language.Read", "Translation lookup, editor, and missing report.")
+    ]
+  },
+  {
+    id: "warehouse",
+    label: "Warehouse Settings",
+    items: [
+      item("warehouse-stock", "Warehouse Stock", "/warehouses/stock", Settings, "Warehouse.Read", "Available, reserved, damaged, and returned stock."),
+      item("warehouse-transfer", "Stock Transfer", "/warehouses/stock-transfer", Settings, "Warehouse.Update", "Transfer stock between active warehouse locations."),
+      item("warehouse-transactions", "Stock Transactions", "/warehouses/transactions", Settings, "Warehouse.Read", "Warehouse stock movement history."),
+      item("warehouse-available-goods", "Available Goods", "/warehouses/available-goods", Settings, "Warehouse.Read", "Goods receipt item lookup by availability."),
+      item("warehouse-damaged-goods", "Damaged Goods", "/warehouses/damaged-goods", Settings, "Warehouse.Update", "Record and track damaged goods."),
+      item("warehouse-returned-goods", "Returned Goods", "/warehouses/returned-goods", Settings, "Warehouse.Update", "Record and track returned goods.")
+    ]
+  },
+  {
+    id: "system",
+    label: "System Settings",
+    items: [
+      item("numbering-settings", "Numbering Settings", "/settings/numbering", Settings, "Tenant.Read", "Document numbering formats by module and branch."),
+      item("email-configuration", "Email Configuration", "/settings/email-configuration", Mail, "Tenant.Read", "SMTP sender setup for HTML and PDF customer reports."),
+      item("print-templates", "Print Templates", "/settings/print-templates", Settings, "Tenant.Read", "Print template list and designer."),
+      item("label-templates", "Label Templates", "/settings/label-templates", Settings, "Tenant.Read", "Destination-aware shipment label templates."),
+      item("approval-workflows", "Approval Workflows", "/settings/approval-workflows", Settings, "Tenant.Read", "Single/multi-level approval workflow designer.")
+    ]
+  }
 ];
 
 export const navigationGroups: NavigationGroup[] = [
@@ -102,6 +258,8 @@ export const navigationGroups: NavigationGroup[] = [
       item("house-shipments", "House Shipments", "/house-shipments", ShipWheel, "HouseShipment.Read", "House shipment planning and loading."),
       item("master-shipments", "Master Shipments", "/master-shipments", ShipWheel, "MasterShipment.Read", "Consolidation and cost allocation."),
       item("direct-shipments", "Direct Shipments", "/direct-shipments", ShipWheel, "DirectShipment.Read", "Direct shipment workflow and billing linkage."),
+      item("bill-of-entry", "Bill of Entry", "/bill-of-entry", FileText, "BillOfEntry.Read", "Import declaration, BOE inventory stock, and state approvals."),
+      item("bill-of-exits", "Bill of Exit", "/bill-of-exits", FileText, "BillOfExit.Read", "Outbound declaration, FIFO inventory issue, and approval workflow."),
       item("customs", "Customs Clearance", "/customs", ClipboardList, "CustomsClearance.Read", "Customs declaration, duty/tax calculations, and status management."),
       item("customs-jobs", "Jobs", "/customs/jobs", FileText, "Job.Read", "Customs clearance job records with generated job numbers.")
     ]
@@ -130,97 +288,36 @@ export const navigationGroups: NavigationGroup[] = [
     id: "reports",
     label: "Reports",
     items: [
-      item("reports-ledger", "Ledger Report", "/reports/accounting/ledger", BarChart3, "Reports.Read", "Ledger transactions with debit, credit, and balance."),
-      item("reports-general-ledger", "General Ledger", "/reports/accounting/general-ledger", BarChart3, "Reports.Read", "General ledger entries by account and period."),
-      item("reports-customer-ledger", "Customer Ledger", "/reports/accounting/customer-ledger", BarChart3, "Reports.Read", "Customer-wise receivable ledger report."),
-      item("reports-vendor-ledger", "Vendor Ledger", "/reports/accounting/vendor-ledger", BarChart3, "Reports.Read", "Vendor-wise payable ledger report."),
-      item("reports-bank-book", "Bank Book", "/reports/accounting/bank-book", BarChart3, "Reports.Read", "Bank transactions and running balances."),
-      item("reports-cash-book", "Cash Book", "/reports/accounting/cash-book", BarChart3, "Reports.Read", "Cash transactions and balances."),
-      item("reports-trial-balance", "Trial Balance", "/reports/accounting/trial-balance", BarChart3, "Reports.Read", "Opening, period, and closing debit/credit balances."),
-      item("reports-balance-sheet", "Balance Sheet", "/reports/accounting/balance-sheet", BarChart3, "Reports.Read", "Assets, liabilities, and capital positions."),
-      item("reports-profit-loss", "Profit & Loss", "/reports/accounting/profit-and-loss", BarChart3, "Reports.Read", "Income and expense statement."),
-      item("reports-trading-profit-loss", "Trading P&L", "/reports/accounting/trading-profit-and-loss", BarChart3, "Reports.Read", "Trading income/cost and net profit breakdown."),
-      item("reports-tax-report", "Tax Report", "/reports/accounting/tax-report", BarChart3, "Reports.Read", "Input/output tax and net tax summary."),
-      item("reports-customer-outstanding", "Customer Outstanding", "/reports/accounting/customer-outstanding", BarChart3, "Reports.Read", "Outstanding invoices by customer."),
-      item("reports-vendor-outstanding", "Vendor Outstanding", "/reports/accounting/vendor-outstanding", BarChart3, "Reports.Read", "Outstanding bills by vendor."),
-      item("reports-soa", "Statement of Account", "/reports/accounting/statement-of-account", BarChart3, "Reports.Read", "Opening, transactions, closing, and ageing."),
-      item("reports-currency-gain-loss", "Currency Gain/Loss", "/reports/accounting/currency-gain-loss", BarChart3, "Reports.Read", "Exchange gain/loss movement report."),
-      item("reports-currency-revaluation", "Currency Revaluation", "/reports/accounting/currency-revaluation", BarChart3, "Reports.Read", "Revaluation impact across currencies."),
-      item("reports-op-quotation", "Quotation Report", "/reports/operations/quotation", BarChart3, "Reports.Read", "Operational quotation pipeline report."),
-      item("reports-op-goods-receipt", "Goods Receipt Report", "/reports/operations/goods-receipt", BarChart3, "Reports.Read", "Goods receipt movement report."),
-      item("reports-op-warehouse-stock", "Warehouse Stock Report", "/reports/operations/warehouse-stock", BarChart3, "Reports.Read", "Warehouse stock by goods/location."),
-      item("reports-op-pickup", "Pickup Report", "/reports/operations/pickup", BarChart3, "Reports.Read", "Pickup assignment and status report."),
-      item("reports-op-house", "House Shipment Report", "/reports/operations/house-shipment", BarChart3, "Reports.Read", "House shipment execution report."),
-      item("reports-op-master", "Master Shipment Report", "/reports/operations/master-shipment", BarChart3, "Reports.Read", "Master shipment consolidation report."),
-      item("reports-op-direct", "Direct Shipment Report", "/reports/operations/direct-shipment", BarChart3, "Reports.Read", "Direct shipment operations report."),
-      item("reports-op-customs", "Customs Report", "/reports/operations/customs-clearance", BarChart3, "Reports.Read", "Customs clearance and duty report."),
-      item("reports-op-pending-bill", "Pending Bill Report", "/reports/operations/pending-bill", BarChart3, "Reports.Read", "Pending vendor bill operational report."),
-      item("reports-op-pending-pod", "Pending POD Report", "/reports/operations/pending-pod", BarChart3, "Reports.Read", "Pending POD follow-up report."),
-      item("reports-op-ageing", "Shipment Ageing", "/reports/operations/shipment-ageing", BarChart3, "Reports.Read", "Shipment ageing and turnaround report."),
-      item("reports-profit-shipment", "Shipment Profit", "/reports/operations/shipment-profit", BarChart3, "Profit.Read", "Shipment-wise profitability report."),
-      item("reports-profit-customer", "Customer Profit", "/reports/operations/customer-wise-profit", BarChart3, "Profit.Read", "Customer-wise profitability report."),
-      item("reports-profit-salesman", "Salesman Profit", "/reports/operations/salesman-wise-profit", BarChart3, "Profit.Read", "Salesman-wise profitability report."),
-      item("reports-profit-agent", "Agent Profit", "/reports/operations/agent-wise-profit", BarChart3, "Profit.Read", "Agent-wise profitability report."),
-      item("reports-profit-branch", "Branch Profit", "/reports/operations/branch-wise-profit", BarChart3, "Profit.Read", "Branch-wise profitability report."),
-      item("reports-profit-route", "Route Profit", "/reports/operations/route-wise-profit", BarChart3, "Profit.Read", "Route-wise profitability report."),
-      item("reports-profit-destination", "Destination Profit", "/reports/operations/destination-wise-profit", BarChart3, "Profit.Read", "Destination-wise profitability report.")
+      item("reports-workspace", "Reports", "/reports", BarChart3, reportSections.flatMap((section) => section.items.flatMap((entry) => Array.isArray(entry.permission) ? entry.permission : entry.permission ? [entry.permission] : [])), "Open accounting, operational, and profit reports from one workspace.")
     ]
   },
   {
     id: "administration",
     label: "Administration",
     items: [
-      item("users", "Users", "/users", ShieldCheck, "User.Read", "User management, lock status, and role assignment."),
-      item("employees", "Employees", "/employees", Users, "Employee.Read", "Employee master, designations, Salesman eligibility, targets, and incentives."),
-      item("roles", "Roles", "/roles", ShieldCheck, "Role.Read", "Role definitions and role lifecycle management."),
-      item("permission-matrix", "Permission Matrix", "/permissions/matrix", ShieldCheck, "Permission.Read", "Role-permission assignment matrix."),
-      item("notification-templates", "Notification Templates", "/notifications/templates", Bell, "Notification.Read", "Template CRUD for event/channel/language combinations."),
-      item("notification-history", "Notification History", "/notifications/history", Bell, "Notification.Read", "Delivery status, retries, and queue monitoring."),
-      item("my-notifications", "My Notifications", "/notifications/me", Bell, "Notification.Read", "Current user in-app notifications.")
+      item("administration-workspace", "Administration", "/administration", ShieldCheck, administrationSections.flatMap((section) => section.items.flatMap((entry) => Array.isArray(entry.permission) ? entry.permission : entry.permission ? [entry.permission] : [])), "Open access control, people administration, and notification screens from one workspace.")
     ]
   },
   {
     id: "audit-logs",
     label: "Audit Logs",
     items: [
-      item("audit", "Audit Log Search", "/audit", PackageCheck, "AuditLog.Read", "Audit events with deep filtering and detail view."),
-      item("audit-user-activity", "User Activity", "/audit/user-activity", PackageCheck, "AuditLog.Read", "User activity timeline and access traces."),
-      item("audit-login-history", "Login History", "/audit/login-history", PackageCheck, "AuditLog.Read", "Successful and failed login/logout events."),
-      item("audit-entity-changes", "Entity Changes", "/audit/entity-changes", PackageCheck, "AuditLog.Read", "Old/new value change tracking by entity."),
-      item("audit-financial", "Financial Audit", "/audit/financial", PackageCheck, "AuditLog.Read", "Financial transaction audit logs."),
-      item("audit-report-access", "Report Access", "/audit/reports", PackageCheck, "AuditLog.Read", "Report access trail."),
-      item("audit-export-logs", "Export Logs", "/audit/exports", PackageCheck, "AuditLog.Read", "CSV/Excel/PDF export trail."),
-      item("audit-print-logs", "Print Logs", "/audit/prints", PackageCheck, "AuditLog.Read", "Print action logs."),
-      item("audit-email-logs", "Email Logs", "/audit/emails", PackageCheck, "AuditLog.Read", "Email send trail and outcomes."),
-      item("audit-file-logs", "File Access Logs", "/audit/files", PackageCheck, "AuditLog.Read", "File access and download/upload logs."),
-      item("audit-api-request-logs", "API Request Logs", "/audit/api-requests", PackageCheck, "AuditLog.Read", "API request-level audit traces.")
+      item("audit-logs-workspace", "Audit Logs", "/audit-logs", PackageCheck, auditLogSections.flatMap((section) => section.items.flatMap((entry) => Array.isArray(entry.permission) ? entry.permission : entry.permission ? [entry.permission] : [])), "Open activity, business, output, file, and API audit screens from one workspace.")
     ]
   },
   {
     id: "settings",
     label: "Settings",
     items: [
-      item("tenant-settings", "Tenant Settings", "/tenants", Settings, "Tenant.Read", "Tenant and branch level ERP settings."),
-      item("branch-settings", "Branch Settings", "/branches", Settings, "Branch.Read", "Branch setup and branch-specific configuration."),
-      item("currency-setup", "Tenant Currencies", "/currencies/tenant-setup", Settings, "Currency.Update", "Enable currencies and set base currency."),
-      item("language-setup", "Tenant Languages", "/languages/tenant-setup", Settings, "Language.Update", "Enable languages and default language."),
-      item("translations", "Translations", "/translations", Settings, "Language.Read", "Translation lookup, editor, and missing report."),
-      item("warehouse-stock", "Warehouse Stock", "/warehouses/stock", Settings, "Warehouse.Read", "Available, reserved, damaged, and returned stock."),
-      item("warehouse-transfer", "Stock Transfer", "/warehouses/stock-transfer", Settings, "Warehouse.Update", "Transfer stock between active warehouse locations."),
-      item("warehouse-transactions", "Stock Transactions", "/warehouses/transactions", Settings, "Warehouse.Read", "Warehouse stock movement history."),
-      item("warehouse-available-goods", "Available Goods", "/warehouses/available-goods", Settings, "Warehouse.Read", "Goods receipt item lookup by availability."),
-      item("warehouse-damaged-goods", "Damaged Goods", "/warehouses/damaged-goods", Settings, "Warehouse.Update", "Record and track damaged goods."),
-      item("warehouse-returned-goods", "Returned Goods", "/warehouses/returned-goods", Settings, "Warehouse.Update", "Record and track returned goods."),
-      item("numbering-settings", "Numbering Settings", "/settings/numbering", Settings, "Tenant.Read", "Document numbering formats by module and branch."),
-      item("email-configuration", "Email Configuration", "/settings/email-configuration", Mail, "Tenant.Read", "SMTP sender setup for HTML and PDF customer reports."),
-      item("print-templates", "Print Templates", "/settings/print-templates", Settings, "Tenant.Read", "Print template list and designer."),
-      item("label-templates", "Label Templates", "/settings/label-templates", Settings, "Tenant.Read", "Destination-aware shipment label templates."),
-      item("approval-workflows", "Approval Workflows", "/settings/approval-workflows", Settings, "Tenant.Read", "Single/multi-level approval workflow designer.")
+      item("settings-workspace", "Settings", "/settings", Settings, settingsSections.flatMap((section) => section.items.flatMap((entry) => Array.isArray(entry.permission) ? entry.permission : entry.permission ? [entry.permission] : [])), "Open tenant, warehouse, and system settings from one workspace.")
     ]
   }
 ];
 
-export const primaryNavigation: NavigationItem[] = navigationGroups.flatMap((group) => group.items);
+export const primaryNavigation: NavigationItem[] = navigationGroups.flatMap((group) => [
+  ...(group.items ?? []),
+  ...(group.sections ?? []).flatMap((section) => section.items)
+]);
 
 function item(
   id: string,

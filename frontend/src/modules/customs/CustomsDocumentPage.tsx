@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useParams } from "react-router-dom";
 import { getCustomsJob } from "@/api/customsApi";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,8 +20,10 @@ const documentCategoryOptions = [
 
 export function CustomsDocumentPage() {
   const { customsId } = useParams();
+  const location = useLocation();
   const query = useQuery({ queryKey: ["customs-job", customsId], queryFn: () => getCustomsJob(customsId!), enabled: Boolean(customsId) });
-  if (!customsId) return <Navigate to="/customs" replace />;
+  const basePath = location.pathname.startsWith("/bill-of-entry") ? "/bill-of-entry" : "/customs";
+  if (!customsId) return <Navigate to={basePath} replace />;
 
   return (
     <div className="space-y-4">
